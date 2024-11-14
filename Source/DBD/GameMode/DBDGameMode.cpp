@@ -1,8 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DBDGameMode.h"
-#include "DBDCharacter.h"
+#include "../Character/DBDCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+
 
 ADBDGameMode::ADBDGameMode()
 {
