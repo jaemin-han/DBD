@@ -75,3 +75,6 @@ DerivedDataCache/*
 
 # visual studio config file
 .vsconfig
+
+# rider user config file
+.idea
