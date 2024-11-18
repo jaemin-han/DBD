@@ -78,3 +78,6 @@ DerivedDataCache/*
 
 # rider user config file
 .idea
+
+# 소스 파일
+Content/ParagonGrux
