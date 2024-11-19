@@ -31,6 +31,9 @@ AKiller::AKiller()
 	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon"));
 	Weapon->SetupAttachment(GetMesh(), FName("WeaponSocket_l"));
 
+	// weapon no collision preset
+	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 	SetActorScale3D(FVector(1.5f));
 }
 

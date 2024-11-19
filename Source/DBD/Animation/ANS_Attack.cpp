@@ -25,12 +25,12 @@ FHitResult UANS_Attack::PerformSphereTrace(USkeletalMeshComponent* MeshComp)
 	FHitResult HitResult;
 	float SphereRadius = 50.0f;
 
-	bool bHit = MeshComp->GetWorld()->SweepSingleByChannel(
+	bool bHit = MeshComp->GetWorld()->SweepSingleByObjectType(
 		HitResult,
 		StartLocation,
 		EndLocation,
 		FQuat::Identity,
-		ECC_Visibility,
+		FCollisionObjectQueryParams(ECC_Pawn),
 		FCollisionShape::MakeSphere(SphereRadius),
 		Params
 		);
