@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Character/DBD_Surviori_AnimInstance.h"
@@ -7,7 +7,7 @@
 void UDBD_Surviori_AnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	// ³»°¡ ºÙ¾îÀÖ´Â Pawn °¡Á®¿À±â
+	// ë‚´ê°€ ë¶™ì–´ìžˆëŠ” Pawn ê°€ì ¸ì˜¤ê¸°
 	Player = Cast<ADBD_Player>(TryGetPawnOwner());
 }
 

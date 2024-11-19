@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "DBD_Player.h"
@@ -11,6 +11,10 @@ void ADBD_Player::BeginPlay()
 	Super::BeginPlay();
 
 	Health = MaxHealth;
+
+	// Interation í•¨ìˆ˜ë¥¼ 0.2ì´ˆë§ˆë‹¤ í˜¸ì¶œ
+	FTimerHandle interactionTimer;
+	GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
 }
 
 void ADBD_Player::Tick(float DeltaTime)
@@ -45,9 +49,23 @@ void ADBD_Player::MinusHp()
 	UpdateHP(1);
 }
 
+void ADBD_Player::Interaction()
+{
+	FVector startPos = GetActorLocation();
+	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
+
+	FHitResult hitResult;
+	FCollisionQueryParams collisionParams;
+	collisionParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
+
+	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
+}
+
 void ADBD_Player::Run()
 {
-	// Health°¡ 1ÀÌ¸é ¸®ÅÏ
+	// Healthê°€ 1ì´ë©´ ë¦¬í„´
 	if (Health == 1) return;
 
 	IsRunning = true;
@@ -56,7 +74,7 @@ void ADBD_Player::Run()
 
 void ADBD_Player::RunStop()
 {
-	// Health°¡ 1ÀÌ¸é ¸®ÅÏ
+	// Healthê°€ 1ì´ë©´ ë¦¬í„´
 	if (Health == 1) return;
 
 	IsRunning = false;
@@ -65,7 +83,7 @@ void ADBD_Player::RunStop()
 
 void ADBD_Player::Crouch()
 {
-	// Health°¡ 3ÀÏ¶§¸¸ ÀÛµ¿
+	// Healthê°€ 3ì¼ë•Œë§Œ ì‘ë™
 	if (Health != 3) return;
 
 	IsCrouching = true;
@@ -74,7 +92,7 @@ void ADBD_Player::Crouch()
 
 void ADBD_Player::CrouchStop()
 {
-	// Health°¡ 3ÀÏ¶§¸¸ ÀÛµ¿
+	// Healthê°€ 3ì¼ë•Œë§Œ ì‘ë™
 	if (Health != 3) return;
 
 	IsCrouching = false;
@@ -100,7 +118,7 @@ void ADBD_Player::UpdateHP(int32 Value)
 	// crouch : WalkSpeed 113
 	// 2 : WalkSpeed 226, RunSpeed : 400
 	// 1 : WalkSpeed 70
-	// ÇÇ°İ½Ã 2ÃÊ ½ºÇÇµå : 600
+	// í”¼ê²©ì‹œ 2ì´ˆ ìŠ¤í”¼ë“œ : 600
 
 	if (Health == 3)
 	{

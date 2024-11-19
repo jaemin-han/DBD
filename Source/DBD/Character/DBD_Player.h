@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -19,17 +19,24 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-
-	void PlusHp();
-	void MinusHp();
 	void Run();
 	void RunStop();
 	void Crouch();
 	void CrouchStop();
+
+
+
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	// ì„ì‹œìš©
+	void PlusHp();
+	void MinusHp();
+
+
+	void Interaction();
+
 public:
-	// »ıÁ¸ÀÚÀÇ HP ¾÷µ¥ÀÌÆ® ÇÔ¼ö
+	// ìƒì¡´ìì˜ HP ì—…ë°ì´íŠ¸ í•¨ìˆ˜
 	void UpdateHP(int32 Damage);
 	void UpdateSpeed();
 
@@ -39,11 +46,13 @@ public:
 	inline bool GetCrouching() const {return IsCrouching;}
 
 private:
-	// ÀÓ½Ã¿ë Ã¼·Â º¯°æ Å°°ª
+	// ì„ì‹œìš© ì²´ë ¥ ë³€ê²½ í‚¤ê°’
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PlusHpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MinusHpAction;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* RunAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -51,15 +60,15 @@ private:
 
 
 
-	// »ıÁ¸ÀÚ Ã¼·Â
+	// ìƒì¡´ì ì²´ë ¥
 	UPROPERTY(EditAnywhere, Category = "Survivor")
-	int32 Health; // 3 : ¸ÖÂÄ 2 : ºÎ»ó 1 : Áß»ó 0 : Á×À½
+	int32 Health; // 3 : ë©€ì©¡ 2 : ë¶€ìƒ 1 : ì¤‘ìƒ 0 : ì£½ìŒ
 
 	UPROPERTY(EditAnywhere, Category = "Survivor")
 	int32 MaxHealth = 3; 
 
-	// ¶Ù´ÂÁö ¾È¶Ù´ÂÁö Ã¼Å© º¯¼ö
+	// ë›°ëŠ”ì§€ ì•ˆë›°ëŠ”ì§€ ì²´í¬ ë³€ìˆ˜
 	bool IsRunning = false;
-	// Crouch »óÅÂÀÎÁö Ã¼Å© º¯¼ö
+	// Crouch ìƒíƒœì¸ì§€ ì²´í¬ ë³€ìˆ˜
 	bool IsCrouching = false;
 };
