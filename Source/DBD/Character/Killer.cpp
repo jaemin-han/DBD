@@ -5,7 +5,9 @@
 
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Gimmick/DBD_Interface_Gimmick.h"
 
 
 // Sets default values
@@ -33,8 +35,13 @@ AKiller::AKiller()
 
 	// weapon no collision preset
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// sphere collision component for search gimmick
+	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
+	SearchGimmickSphere->SetupAttachment(RootComponent);
+	SearchGimmickSphere->SetSphereRadius(100.0f);
 	
-	SetActorScale3D(FVector(1.5f));
+	SetActorScale3D(FVector(1.2f));
 }
 
 // Called when the game starts or when spawned
@@ -55,6 +62,8 @@ void AKiller::Attack()
 void AKiller::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	GetNearGimmick();
+	Debug();
 }
 
 // Called to bind functionality to input
@@ -66,5 +75,42 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// bind attack action
 	EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKiller::Attack);
 
+	// InteractionAction 에 대한 바인딩 추가
+	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);
 	
 }
+
+void AKiller::GetNearGimmick()
+{
+	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
+	TArray<AActor*> OverlappingActors;
+	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
+	AActor* NewNearGimmick = nullptr;
+	for (AActor* OverlappingActor : OverlappingActors)
+	{
+		if (OverlappingActor->GetClass()->ImplementsInterface(UDBD_Interface_Gimmick::StaticClass()))
+		{
+			NewNearGimmick = OverlappingActor;
+			break;
+		}
+	}
+	NearGimmick = NewNearGimmick;
+}
+
+void AKiller::Debug()
+{
+	// NearGimmick 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
+	FString DebugString = NearGimmick.GetObject() ? NearGimmick.GetObject()->GetName() : TEXT("None");
+	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
+	
+}
+
+void AKiller::Interact()
+{
+	// NearGimmick 이 유효한 경우 Interaction 함수 호출
+	if (NearGimmick.GetObject())
+	{
+		NearGimmick->Interaction();
+	}
+}
+

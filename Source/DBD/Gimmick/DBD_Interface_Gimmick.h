@@ -22,4 +22,6 @@ class DBD_API IDBD_Interface_Gimmick
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+	// Gimimick 이 상호작용할 때 호출되는 함수
+	virtual void Interaction() = 0;
 };
