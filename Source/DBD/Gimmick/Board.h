@@ -12,11 +12,24 @@ UCLASS()
 class DBD_API ABoard : public AActor, public IDBD_Interface_Gimmick
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* BoardMeshComp;
 
-public:	
+	// 판자가 내려간 후, 플레이어가 판자와 겹치는 위치에 있지 않게 하기 위해 위치를 설정한다.
+	// front 나 back 중 가까운 위치로 플레이어를 이동시킨다.
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* FrontIndicator;
+	UPROPERTY(EditAnywhere)
+	class USphereComponent* BackIndicator;
+
+	// 판자가 내려간 후, 플레이어가 판자를 넘어갈 수 없게 보이지 않는 벽을 생성한다
+	// 판자를 내린 후에 물리적 충돌이 활성화되고, 플레이어가 판자를 넘어갈 수 없게 된다.
+	// 판자가 부서진 후에는 엑터가 제거된다. (혹시 모르니 물리적 충돌을 비활성화한다.)
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* WallComp;
+
+public:
 	// Sets default values for this actor's properties
 	ABoard();
 
@@ -24,7 +37,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -38,5 +51,4 @@ public:
 	float TargetRoll;
 	// 현재 roll 각도
 	float CurrentRoll;
-
 };
