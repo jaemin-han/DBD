@@ -25,7 +25,7 @@ private:
 private:
 	// attack montage
 	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
-	UAnimMontage* AttackMontage;
+	UAnimMontage* KillerMontage;
 
 	// weapon static mesh component
 	UPROPERTY(EditAnywhere, Category = Weapon, meta = (AllowPrivate))
@@ -59,5 +59,6 @@ public:
 	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 
 	void Debug();
+	void Stun();
 	void Interact();
 };

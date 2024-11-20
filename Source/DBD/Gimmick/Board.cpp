@@ -3,6 +3,7 @@
 
 #include "Gimmick/Board.h"
 
+#include "Character/Killer.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -68,37 +69,26 @@ void ABoard::Interaction()
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Board Interaction"));
 	bIsInteracted = true;
 
+	// 판자를 내리는 공간에 캐틱터들이 존재하면 엑터들을 이동시킨 후, 물리 충돌 활성화
 	TArray<AActor*> OverlappingActors;
 	WallComp->GetOverlappingActors(OverlappingActors);
-
-	// OverlappingActors 이 비었는지 확인
-	if (OverlappingActors.IsEmpty())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("OverlappingActors is Empty"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("OverlappingActors is not Empty"));
-	}
 	
 	for (AActor* Actor : OverlappingActors)
 	{
 		float FrontDistance = FVector::Dist(FrontIndicator->GetComponentLocation(), Actor->GetActorLocation());
 		float BackDistance = FVector::Dist(BackIndicator->GetComponentLocation(), Actor->GetActorLocation());
 		if (FrontDistance < BackDistance)
-		{
 			Actor->SetActorLocation(FrontIndicator->GetComponentLocation());
-			// debug ue_log
-			UE_LOG(LogTemp, Warning, TEXT("FrontDistance: %f"), FrontDistance);
-		}
 		else
-		{
 			Actor->SetActorLocation(BackIndicator->GetComponentLocation());
-			// debug ue_log
-			UE_LOG(LogTemp, Warning, TEXT("BackDistance: %f"), BackDistance);
-		}
-	}
 
+		// 킬러가 판자에 맞으면, 기절 상태로 만든다.
+		AKiller* Killer = Cast<AKiller>(Actor);
+		if (Killer)
+			Killer->Stun();
+	}
 	WallComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
+	
 
 }

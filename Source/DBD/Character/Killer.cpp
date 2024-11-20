@@ -54,7 +54,7 @@ void AKiller::Attack()
 {
 	UE_LOG(LogTemp, Display, TEXT("Attack"));
 	// play montage
-	PlayAnimMontage(AttackMontage);
+	PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
 	
 }
 
@@ -103,6 +103,12 @@ void AKiller::Debug()
 	FString DebugString = NearGimmick.GetObject() ? NearGimmick.GetObject()->GetName() : TEXT("None");
 	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
 	
+}
+
+void AKiller::Stun()
+{
+	// Stun 몽타주 실행
+	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
 }
 
 void AKiller::Interact()
