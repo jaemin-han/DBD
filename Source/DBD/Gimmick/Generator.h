@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DBD_Interface_Gimmick.h"
 #include "Generator.generated.h"
 
 // 발전기 액터 클래스 -> 생존자의 발전기 애니메이션 상호작용
 UCLASS()
-class DBD_API AGenerator : public AActor
+class DBD_API AGenerator : public AActor, public IDBD_Interface_Gimmick
 {
 	GENERATED_BODY()
 	
@@ -26,5 +27,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void Interaction(bool IsExec) override;
 
 };

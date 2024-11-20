@@ -23,8 +23,10 @@ protected:
 	void RunStop();
 	void Crouch();
 	void CrouchStop();
-
-
+	void PushInteractGenerator();
+	void NonPushInteractGenerator();
+	void Parkour();
+	
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -39,11 +41,14 @@ public:
 	// 생존자의 HP 업데이트 함수
 	void UpdateHP(int32 Damage);
 	void UpdateSpeed();
+	void ParkourFinish();
+
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	inline int32 GetHealth() const {return Health;}
 	inline bool GetIsRunning() const {return IsRunning;}
 	inline bool GetCrouching() const {return IsCrouching;}
+	inline bool GetIsInteractGenerator() const {return IsInteractGenerator;}
 
 private:
 	// 임시용 체력 변경 키값
@@ -57,6 +62,13 @@ private:
 	UInputAction* RunAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* CrouchAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* InteractionAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ParkourAction;
+
+	UPROPERTY(EditAnywhere)
+	class UAnimMontage* ParkourMontage;
 
 
 
@@ -71,4 +83,12 @@ private:
 	bool IsRunning = false;
 	// Crouch 상태인지 체크 변수
 	bool IsCrouching = false;
+	// Generator 상호작용 체크 변수 
+	bool IsInteractGenerator = false;
+	bool IsInteractWindows = false;
+
+
+	// LineTrace와 Actor들과 닿았는지 체크하는 변수
+	bool IsReachGenerator = false;
+	bool IsReachWindows = false;
 };

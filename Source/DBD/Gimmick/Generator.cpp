@@ -36,3 +36,11 @@ void AGenerator::Tick(float DeltaTime)
 
 }
 
+void AGenerator::Interaction(bool IsExec)
+{
+	if (IsExec)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
+	}
+}
+

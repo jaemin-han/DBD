@@ -52,7 +52,7 @@ void ABoard::Tick(float DeltaTime)
 	}
 }
 
-void ABoard::Interaction()
+void ABoard::Interaction(bool IsExec)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Board Interaction"));
 	bIsInteracted = true;

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Killer.h"
@@ -110,7 +110,7 @@ void AKiller::Interact()
 	// NearGimmick 이 유효한 경우 Interaction 함수 호출
 	if (NearGimmick.GetObject())
 	{
-		NearGimmick->Interaction();
+		NearGimmick->Interaction(true); // 11-20 15:15 LSH 매개변수 수정
 	}
 }
 

@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DBD_Interface_Gimmick.h"
 #include "Windows.generated.h"
 
 
 // 창틀 액터 클래스 -> 파쿠르 애니메이션
 UCLASS()
-class DBD_API AWindows : public AActor
+class DBD_API AWindows : public AActor, public IDBD_Interface_Gimmick
 {
 	GENERATED_BODY()
 	
@@ -27,4 +28,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void Interaction(bool IsExec) override;
 };

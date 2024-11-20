@@ -19,5 +19,14 @@ void UDBD_Surviori_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		Health = Player->GetHealth();
 		IsRunning = Player->GetIsRunning();
 		IsCrouching = Player->GetCrouching();
+		IsGenerator = Player->GetIsInteractGenerator();
+	}
+}
+
+void UDBD_Surviori_AnimInstance::AnimNotify_OnParkourFinish()
+{
+	if (Player)
+	{
+		Player->ParkourFinish();
 	}
 }

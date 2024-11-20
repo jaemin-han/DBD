@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 
+#include "Gimmick/DBD_Interface_Gimmick.h"
+
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
@@ -30,6 +32,12 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	{
 		EnhancedInputComponent->BindAction(PlusHpAction, ETriggerEvent::Started, this, &ADBD_Player::PlusHp);
 		EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
+
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::Parkour);
+
+		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
+		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
+
 
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ADBD_Player::Run);
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ADBD_Player::RunStop);
@@ -59,6 +67,31 @@ void ADBD_Player::Interaction()
 	collisionParams.AddIgnoredActor(this);
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
+	if (bHit)
+	{
+		if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
+		{	
+			// HitActor가 Generator라면
+			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("Generator"))
+			{
+				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
+				gimmick->Interaction(IsInteractGenerator); // 게이지 UI 생성 함수
+				IsReachGenerator = true;
+			}
+
+			else if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("Windows"))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Windows"));
+				IsReachWindows =  true;
+			}
+		}
+	}
+	else
+	{
+		IsReachGenerator = false;
+		IsReachWindows = false;
+		IsInteractGenerator = false;
+	}
 
 	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
 }
@@ -97,6 +130,35 @@ void ADBD_Player::CrouchStop()
 
 	IsCrouching = false;
 	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
+}
+
+void ADBD_Player::PushInteractGenerator()
+{
+	if (not IsReachGenerator) return;
+	
+	IsInteractGenerator = true;
+}
+
+void ADBD_Player::NonPushInteractGenerator()
+{
+	//if (not IsReachGenerator) return;
+	UE_LOG(LogTemp, Warning, TEXT("NonPushInteractGenerator"));
+	IsInteractGenerator = false;
+}
+
+void ADBD_Player::Parkour()
+{
+	if (not IsReachWindows) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Parkour"));
+	PlayAnimMontage(ParkourMontage, 1.f);
+	IsReachWindows = false;
+}
+
+void ADBD_Player::ParkourFinish()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
+	StopAnimMontage(ParkourMontage);
 }
 
 void ADBD_Player::UpdateHP(int32 Value)
