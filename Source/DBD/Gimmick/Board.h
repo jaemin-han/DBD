@@ -13,7 +13,7 @@ class DBD_API ABoard : public AActor, public IDBD_Interface_Gimmick
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	UStaticMeshComponent* BoardMeshComp;
 
 	// 판자가 내려간 후, 플레이어가 판자와 겹치는 위치에 있지 않게 하기 위해 위치를 설정한다.
@@ -28,6 +28,8 @@ class DBD_API ABoard : public AActor, public IDBD_Interface_Gimmick
 	// 판자가 부서진 후에는 엑터가 제거된다. (혹시 모르니 물리적 충돌을 비활성화한다.)
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* WallComp;
+
+
 
 public:
 	// Sets default values for this actor's properties
@@ -51,4 +53,10 @@ public:
 	float TargetRoll;
 	// 현재 roll 각도
 	float CurrentRoll;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetGeometryCollision();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void DestroyGeometryCollision();
 };

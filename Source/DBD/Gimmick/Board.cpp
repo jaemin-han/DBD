@@ -31,6 +31,7 @@ ABoard::ABoard()
 	FrontIndicator->SetupAttachment(RootComponent);
 	BackIndicator = CreateDefaultSubobject<USphereComponent>(TEXT("BackIndicator"));
 	BackIndicator->SetupAttachment(RootComponent);
+
 }
 
 // Called when the game starts or when spawned
@@ -61,6 +62,11 @@ void ABoard::Tick(float DeltaTime)
 		bIsFallen = true;
 		bIsInteracted = false;
 		BoardMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, TargetRoll));
+
+		// 판자가 모두 내려가면, BoardMeshComp를 제거하고 GeometryComp를 생성한다.
+		SetGeometryCollision();
+		DestroyGeometryCollision();
+		
 	}
 }
 
