@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "AN_DestroyBoard.generated.h"
+#include "AN_DestroyPallet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DBD_API UAN_DestroyBoard : public UAnimNotify
+class DBD_API UAN_DestroyPallet : public UAnimNotify
 {
 	GENERATED_BODY()
 

@@ -59,8 +59,10 @@ public:
 	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 
 	void Debug();
+	// 판자에 맞았을 때 발동되는 함수
 	void Stun();
-	void DestroyBoard();
+	// 내려진 판자를 부수는 함수
+	void DestroyPallet();
 	void Interact();
 
 public:

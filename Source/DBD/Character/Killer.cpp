@@ -115,9 +115,10 @@ void AKiller::Stun()
 	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
 }
 
-void AKiller::DestroyBoard()
+void AKiller::DestroyPallet()
 {
-	PlayAnimMontage(KillerMontage, 0.5f, FName("DestroyBoard"));
+	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Red, TEXT("DestroyPallet"));
+	PlayAnimMontage(KillerMontage, 0.5f, FName("DestroyPallet"));
 }
 
 void AKiller::Interact()

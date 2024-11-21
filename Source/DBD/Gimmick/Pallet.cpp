@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Gimmick/Board.h"
+#include "Gimmick/Pallet.h"
 
 #include "Character/Killer.h"
 #include "Components/BoxComponent.h"
@@ -10,7 +10,7 @@
 #include "UObject/ConstructorHelpers.h"
 
 // Sets default values
-ABoard::ABoard()
+APallet::APallet()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,8 +23,8 @@ ABoard::ABoard()
 	WallComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	SetRootComponent(WallComp);
 
-	BoardMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoardMeshComp"));
-	BoardMeshComp->SetupAttachment(RootComponent);
+	PalletMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PalletMeshComp"));
+	PalletMeshComp->SetupAttachment(RootComponent);
 
 	// Front, Back Indicator
 	FrontIndicator = CreateDefaultSubobject<USphereComponent>(TEXT("FrontIndicator"));
@@ -34,7 +34,7 @@ ABoard::ABoard()
 }
 
 // Called when the game starts or when spawned
-void ABoard::BeginPlay()
+void APallet::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -43,7 +43,7 @@ void ABoard::BeginPlay()
 }
 
 // Called every frame
-void ABoard::Tick(float DeltaTime)
+void APallet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -54,22 +54,22 @@ void ABoard::Tick(float DeltaTime)
 		return;
 
 	CurrentRoll += 180.0f * DeltaTime;
-	BoardMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentRoll));
+	PalletMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentRoll));
 
 	if (TargetRoll - CurrentRoll < KINDA_SMALL_NUMBER)
 	{
 		bIsFallen = true;
 		bIsInteracted = false;
-		BoardMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, TargetRoll));
+		PalletMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, TargetRoll));
 	}
 }
 
-void ABoard::Interaction(AActor* Caller)
+void APallet::Interaction(AActor* Caller)
 {
 	// 상호작용 중이 아니고, 판자가 서 있으면 판자 내리기 수행
 	if (bIsInteracted == false && bIsFallen == false)
 	{
-		BoardFall();
+		PalletFall();
 		return;
 	}
 
@@ -78,20 +78,20 @@ void ABoard::Interaction(AActor* Caller)
 	{
 		if (AKiller* Killer = Cast<AKiller>(Caller))
 		{
-			Killer->DestroyBoard();
+			Killer->DestroyPallet();
 		}
 		else
 		{
 			// ue_log killer
-			UE_LOG(LogTemp, Error, TEXT("ABoard::Interaction - Failed to cast AKiller"));
+			UE_LOG(LogTemp, Error, TEXT("APallet::Interaction - Failed to cast AKiller"));
 		}
 		return;
 	}
 }
 
-void ABoard::BoardFall()
+void APallet::PalletFall()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Board Interaction"));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Pallet Interaction"));
 	bIsInteracted = true;
 
 	// 판자를 내리는 공간에 캐틱터들이 존재하면 엑터들을 이동시킨 후, 물리 충돌 활성화

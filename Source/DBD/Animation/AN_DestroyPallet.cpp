@@ -1,23 +1,23 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AN_DestroyBoard.h"
+#include "AN_DestroyPallet.h"
 
 #include "Character/Killer.h"
-#include "Gimmick/Board.h"
+#include "Gimmick/Pallet.h"
 
 class AKiller;
 
-void UAN_DestroyBoard::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+void UAN_DestroyPallet::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                               const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	if (AKiller* Killer = Cast<AKiller>(MeshComp->GetOwner()))
 	{
-		if (ABoard* Board = Cast<ABoard>(Killer->NearGimmick.GetObject()))
+		if (APallet* Board = Cast<APallet>(Killer->NearGimmick.GetObject()))
 		{
-			Board->DestroyBoard();
+			Board->DestroyPallet();
 		}
 		else
 		{
