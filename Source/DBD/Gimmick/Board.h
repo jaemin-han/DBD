@@ -28,7 +28,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interaction(bool IsExec) override;
+	virtual void Interaction() override;
+	virtual void FailedInteraction() override;
 
 	// board 가 이미 넘어진 상태인가
 	bool bIsFallen = false;

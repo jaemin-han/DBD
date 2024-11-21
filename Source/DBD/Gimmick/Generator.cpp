@@ -6,6 +6,9 @@
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
+#include "UI/GaugeUI.h"
+
+
 // Sets default values
 AGenerator::AGenerator()
 {
@@ -18,8 +21,6 @@ AGenerator::AGenerator()
 	{
 		GeneratorMeshComp->SetStaticMesh(generatorMeshCompAsset.Object);
 	}
-
-
 }
 
 // Called when the game starts or when spawned
@@ -27,6 +28,17 @@ void AGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (GaugeUIWidgetClass)
+	{
+		GaugeUI = Cast<UGaugeUI>(CreateWidget(GetWorld(), GaugeUIWidgetClass));
+		if (GaugeUI)
+		{
+			GaugeUI->AddToViewport();
+			UE_LOG(LogTemp, Log, TEXT("GaugeUI Create Success"));
+
+			GaugeUI->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
 }
 
 // Called every frame
@@ -36,11 +48,16 @@ void AGenerator::Tick(float DeltaTime)
 
 }
 
-void AGenerator::Interaction(bool IsExec)
+void AGenerator::Interaction()
 {
-	if (IsExec)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
-	}
+	UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
+	GaugeUI->SetVisibility(ESlateVisibility::Visible);
+	GaugeUI->UpdateGauge(0.2f);
+}
+
+void AGenerator::FailedInteraction()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
+	GaugeUI->SetVisibility(ESlateVisibility::Hidden);
 }
 

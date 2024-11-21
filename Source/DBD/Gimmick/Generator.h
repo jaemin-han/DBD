@@ -28,6 +28,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interaction(bool IsExec) override;
+	virtual void Interaction() override;
+	virtual void FailedInteraction() override;
 
+	// 발전기 게이지 UI
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class UGaugeUI> GaugeUIWidgetClass;
+
+	UPROPERTY()
+	class UGaugeUI* GaugeUI;
 };

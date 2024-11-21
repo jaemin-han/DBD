@@ -110,7 +110,7 @@ void AKiller::Interact()
 	// NearGimmick 이 유효한 경우 Interaction 함수 호출
 	if (NearGimmick.GetObject())
 	{
-		NearGimmick->Interaction(true); // 11-20 15:15 LSH 매개변수 수정
+		NearGimmick->Interaction();
 	}
 }
 

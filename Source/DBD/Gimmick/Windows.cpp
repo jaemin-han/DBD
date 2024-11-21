@@ -36,8 +36,12 @@ void AWindows::Tick(float DeltaTime)
 
 }
 
-void AWindows::Interaction(bool IsExec)
+void AWindows::Interaction()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Windows Interaction"));
+}
+
+void AWindows::FailedInteraction()
+{
 }
 

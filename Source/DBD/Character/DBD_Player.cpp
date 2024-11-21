@@ -72,18 +72,28 @@ void ADBD_Player::Interaction()
 		if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
 		{	
 			// HitActor가 Generator라면
-			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("Generator"))
+			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator"))
 			{
 				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
-				gimmick->Interaction(IsInteractGenerator); // 게이지 UI 생성 함수
 				IsReachGenerator = true;
-			}
 
-			else if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("Windows"))
+				if (IsInteractGenerator)
+				{
+					gimmick->Interaction(); // 게이지 UI 생성 함수
+				}
+				else
+				{
+					gimmick->FailedInteraction(); // 게이지 UI 제거 함수
+				}
+			}
+			// HitActor가 Windows라면
+			else if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Windows"))
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Windows"));
 				IsReachWindows =  true;
 			}
+			// HitActor가 Board라면
+			// HitActor가 출구라면
 		}
 	}
 	else
@@ -142,7 +152,7 @@ void ADBD_Player::PushInteractGenerator()
 void ADBD_Player::NonPushInteractGenerator()
 {
 	//if (not IsReachGenerator) return;
-	UE_LOG(LogTemp, Warning, TEXT("NonPushInteractGenerator"));
+	//UE_LOG(LogTemp, Warning, TEXT("NonPushInteractGenerator"));
 	IsInteractGenerator = false;
 }
 
