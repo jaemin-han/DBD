@@ -60,5 +60,9 @@ public:
 
 	void Debug();
 	void Stun();
+	void DestroyBoard();
 	void Interact();
+
+public:
+	bool bStunned = false;
 };

@@ -52,6 +52,9 @@ void AKiller::BeginPlay()
 
 void AKiller::Attack()
 {
+	if (bStunned)
+		return;
+	
 	UE_LOG(LogTemp, Display, TEXT("Attack"));
 	// play montage
 	PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
@@ -108,15 +111,21 @@ void AKiller::Debug()
 void AKiller::Stun()
 {
 	// Stun 몽타주 실행
+	bStunned = true;
 	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
+}
+
+void AKiller::DestroyBoard()
+{
+	PlayAnimMontage(KillerMontage, 0.5f, FName("DestroyBoard"));
 }
 
 void AKiller::Interact()
 {
 	// NearGimmick 이 유효한 경우 Interaction 함수 호출
-	if (NearGimmick.GetObject())
+	if (NearGimmick.GetObject() && !bStunned)
 	{
-		NearGimmick->Interaction();
+		NearGimmick->Interaction(this);
 	}
 }
 

@@ -18,18 +18,16 @@ class DBD_API ABoard : public AActor, public IDBD_Interface_Gimmick
 
 	// 판자가 내려간 후, 플레이어가 판자와 겹치는 위치에 있지 않게 하기 위해 위치를 설정한다.
 	// front 나 back 중 가까운 위치로 플레이어를 이동시킨다.
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	class USphereComponent* FrontIndicator;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	class USphereComponent* BackIndicator;
 
 	// 판자가 내려간 후, 플레이어가 판자를 넘어갈 수 없게 보이지 않는 벽을 생성한다
 	// 판자를 내린 후에 물리적 충돌이 활성화되고, 플레이어가 판자를 넘어갈 수 없게 된다.
 	// 판자가 부서진 후에는 엑터가 제거된다. (혹시 모르니 물리적 충돌을 비활성화한다.)
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	class UBoxComponent* WallComp;
-
-
 
 public:
 	// Sets default values for this actor's properties
@@ -43,7 +41,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interaction() override;
+	virtual void Interaction(AActor* Caller = nullptr) override;	
 
 	// board 가 이미 넘어진 상태인가
 	bool bIsFallen = false;
@@ -54,9 +52,9 @@ public:
 	// 현재 roll 각도
 	float CurrentRoll;
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void SetGeometryCollision();
+	UFUNCTION()
+	void BoardFall();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void DestroyGeometryCollision();
+	void DestroyBoard();
 };

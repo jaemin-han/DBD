@@ -31,7 +31,6 @@ ABoard::ABoard()
 	FrontIndicator->SetupAttachment(RootComponent);
 	BackIndicator = CreateDefaultSubobject<USphereComponent>(TEXT("BackIndicator"));
 	BackIndicator->SetupAttachment(RootComponent);
-
 }
 
 // Called when the game starts or when spawned
@@ -62,15 +61,35 @@ void ABoard::Tick(float DeltaTime)
 		bIsFallen = true;
 		bIsInteracted = false;
 		BoardMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, TargetRoll));
-
-		// 판자가 모두 내려가면, BoardMeshComp를 제거하고 GeometryComp를 생성한다.
-		SetGeometryCollision();
-		DestroyGeometryCollision();
-		
 	}
 }
 
-void ABoard::Interaction()
+void ABoard::Interaction(AActor* Caller)
+{
+	// 상호작용 중이 아니고, 판자가 서 있으면 판자 내리기 수행
+	if (bIsInteracted == false && bIsFallen == false)
+	{
+		BoardFall();
+		return;
+	}
+
+	// 상호작용 중이 아니고, 판자가 넘어져 있고, 상호작용하는 엑터가 킬러라면 판자를 부셔요
+	if (bIsInteracted == false && bIsFallen == true)
+	{
+		if (AKiller* Killer = Cast<AKiller>(Caller))
+		{
+			Killer->DestroyBoard();
+		}
+		else
+		{
+			// ue_log killer
+			UE_LOG(LogTemp, Error, TEXT("ABoard::Interaction - Failed to cast AKiller"));
+		}
+		return;
+	}
+}
+
+void ABoard::BoardFall()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Board Interaction"));
 	bIsInteracted = true;
@@ -78,11 +97,12 @@ void ABoard::Interaction()
 	// 판자를 내리는 공간에 캐틱터들이 존재하면 엑터들을 이동시킨 후, 물리 충돌 활성화
 	TArray<AActor*> OverlappingActors;
 	WallComp->GetOverlappingActors(OverlappingActors);
-	
+
 	for (AActor* Actor : OverlappingActors)
 	{
 		float FrontDistance = FVector::Dist(FrontIndicator->GetComponentLocation(), Actor->GetActorLocation());
 		float BackDistance = FVector::Dist(BackIndicator->GetComponentLocation(), Actor->GetActorLocation());
+
 		if (FrontDistance < BackDistance)
 			Actor->SetActorLocation(FrontIndicator->GetComponentLocation());
 		else
@@ -94,7 +114,4 @@ void ABoard::Interaction()
 			Killer->Stun();
 	}
 	WallComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-
-	
-
 }
