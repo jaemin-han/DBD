@@ -65,6 +65,22 @@ public:
 	void DestroyPallet();
 	void Interact();
 
+	// 체력이 0인 생존자를 들처매는 함수
+	void CarrySurvivor();
+
+	// 옮기고 있는 생존자를 갈고리에 거는 함수
+	UFUNCTION()
+	void HangSurvivorOnHook();
+
+	// 가까이에 있는 생존자
+	UPROPERTY()
+	class ADBD_Player* NearSurvivor;
+	// 옮기고 있는 생존자
+	UPROPERTY()
+	class ADBD_Player* CarriedSurvivor;
+
+	FName CarrySocketName = "CarrySocket";
+
 public:
 	bool bStunned = false;
 };

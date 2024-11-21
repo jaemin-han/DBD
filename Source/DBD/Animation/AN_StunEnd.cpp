@@ -6,10 +6,13 @@
 #include "Character/Killer.h"
 
 void UAN_StunEnd::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-                      const FAnimNotifyEventReference& EventReference)
+                         const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	auto* Killer = Cast<AKiller>(MeshComp->GetOwner());
-	Killer->bStunned = false;
+	if (Killer)
+	{
+		Killer->bStunned = false;
+	}
 }

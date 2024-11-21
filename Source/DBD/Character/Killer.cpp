@@ -2,12 +2,16 @@
 
 
 #include "Killer.h"
+#include "Killer.h"
 
+#include "DBD_Player.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/ArrowComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
+#include "Gimmick/Hanger.h"
 
 
 // Sets default values
@@ -16,7 +20,7 @@ AKiller::AKiller()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bUseControllerRotationYaw = true;
-	
+
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	// mesh
@@ -40,7 +44,7 @@ AKiller::AKiller()
 	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
 	SearchGimmickSphere->SetupAttachment(RootComponent);
 	SearchGimmickSphere->SetSphereRadius(100.0f);
-	
+
 	SetActorScale3D(FVector(1.2f));
 }
 
@@ -54,11 +58,10 @@ void AKiller::Attack()
 {
 	if (bStunned)
 		return;
-	
+
 	UE_LOG(LogTemp, Display, TEXT("Attack"));
 	// play montage
 	PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
-	
 }
 
 // Called every frame
@@ -80,7 +83,7 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	// InteractionAction 에 대한 바인딩 추가
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);
-	
+	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::CarrySurvivor);
 }
 
 void AKiller::GetNearGimmick()
@@ -89,15 +92,18 @@ void AKiller::GetNearGimmick()
 	TArray<AActor*> OverlappingActors;
 	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
 	AActor* NewNearGimmick = nullptr;
+	ADBD_Player* NewNearSurvivor = nullptr;
 	for (AActor* OverlappingActor : OverlappingActors)
 	{
 		if (OverlappingActor->GetClass()->ImplementsInterface(UDBD_Interface_Gimmick::StaticClass()))
 		{
 			NewNearGimmick = OverlappingActor;
-			break;
 		}
+
+		NewNearSurvivor = Cast<ADBD_Player>(OverlappingActor);
 	}
 	NearGimmick = NewNearGimmick;
+	NearSurvivor = NewNearSurvivor;
 }
 
 void AKiller::Debug()
@@ -105,7 +111,9 @@ void AKiller::Debug()
 	// NearGimmick 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
 	FString DebugString = NearGimmick.GetObject() ? NearGimmick.GetObject()->GetName() : TEXT("None");
 	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
-	
+	// NearSurvivor 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
+	DebugString = NearSurvivor ? NearSurvivor->GetName() : TEXT("None");
+	GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Red, DebugString);
 }
 
 void AKiller::Stun()
@@ -130,3 +138,72 @@ void AKiller::Interact()
 	}
 }
 
+void AKiller::CarrySurvivor()
+{
+	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
+	if (CarriedSurvivor)
+	{
+		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+		if (PrimitiveComponent)
+		{
+			PrimitiveComponent->SetSimulatePhysics(true);
+			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		CarriedSurvivor = nullptr;
+		return;
+	}
+
+	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
+	if (NearSurvivor && NearSurvivor->GetHealth() == 1)
+	{
+		/*
+		*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
+		*	예를 들어 생존자의 상태를 enum으로 관리하고, 해당 상태에 따라 애니메이션을 변경하도록 하는 방식
+		*	이 함수를 진행하면 생존자의 상태를 업힘? 으로 변경하고 
+		*/
+
+		// todo: 생존자 상태 변경
+
+
+		CarriedSurvivor = NearSurvivor;
+		CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
+		                                   CarrySocketName);
+
+		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+		// PrimitiveComponent 의 이름을 출력,
+		// todo: 확인해보니 캡슐 실린더인데, 이것만 물리나 충돌을 제어하는건 의미가 없는데, 고민해보자
+		// UE_LOG(LogTemp, Display, TEXT("PrimitiveComponent : %s"), *PrimitiveComponent->GetName());
+		//
+		// if (PrimitiveComponent)
+		// {
+		// 	PrimitiveComponent->SetSimulatePhysics(false);
+		// 	PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// }
+	}
+}
+
+void AKiller::HangSurvivorOnHook()
+{
+	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
+	
+	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
+	
+	if (CarriedSurvivor && Hanger)
+	{
+		// todo: 생존자의 상태를 갈고리에 걸린 상태로 변경
+
+		
+		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
+		UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+		if (PrimitiveComp)
+		{
+			PrimitiveComp->SetSimulatePhysics(false);
+			PrimitiveComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		
+		CarriedSurvivor = nullptr;
+		
+	}
+}

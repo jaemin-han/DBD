@@ -12,6 +12,14 @@ class DBD_API AHanger : public AActor, public IDBD_Interface_Gimmick
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* MeshComp;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	class UArrowComponent* HangPosition;
+	
+
 public:
 	// Sets default values for this actor's properties
 	AHanger();
