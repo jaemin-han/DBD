@@ -25,7 +25,7 @@ private:
 private:
 	// attack montage
 	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
-	UAnimMontage* AttackMontage;
+	UAnimMontage* KillerMontage;
 
 	// weapon static mesh component
 	UPROPERTY(EditAnywhere, Category = Weapon, meta = (AllowPrivate))
@@ -59,5 +59,28 @@ public:
 	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 
 	void Debug();
+	// 판자에 맞았을 때 발동되는 함수
+	void Stun();
+	// 내려진 판자를 부수는 함수
+	void DestroyPallet();
 	void Interact();
+
+	// 체력이 0인 생존자를 들처매는 함수
+	void CarrySurvivor();
+
+	// 옮기고 있는 생존자를 갈고리에 거는 함수
+	UFUNCTION()
+	void HangSurvivorOnHook();
+
+	// 가까이에 있는 생존자
+	UPROPERTY()
+	class ADBD_Player* NearSurvivor;
+	// 옮기고 있는 생존자
+	UPROPERTY()
+	class ADBD_Player* CarriedSurvivor;
+
+	FName CarrySocketName = "CarrySocket";
+
+public:
+	bool bStunned = false;
 };

@@ -28,7 +28,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interaction() override;
+	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
 
 	void UpdateRoundGauge();
