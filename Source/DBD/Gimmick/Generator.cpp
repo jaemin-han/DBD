@@ -48,7 +48,7 @@ void AGenerator::Tick(float DeltaTime)
 
 }
 
-void AGenerator::Interaction()
+void AGenerator::Interaction(AActor* Caller)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
 	GaugeUI->SetVisibility(ESlateVisibility::Visible);

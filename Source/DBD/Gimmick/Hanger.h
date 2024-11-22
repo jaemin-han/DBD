@@ -3,29 +3,32 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "DBD_Interface_Gimmick.h"
-#include "Windows.generated.h"
+#include "GameFramework/Actor.h"
+#include "Hanger.generated.h"
 
-
-// 창틀 액터 클래스 -> 파쿠르 애니메이션
 UCLASS()
-class DBD_API AWindows : public AActor, public IDBD_Interface_Gimmick
+class DBD_API AHanger : public AActor, public IDBD_Interface_Gimmick
 {
 	GENERATED_BODY()
-	
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* WindowFrameMeshComp;
 
-public:	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* MeshComp;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	class UArrowComponent* HangPosition;
+	
+
+public:
 	// Sets default values for this actor's properties
-	AWindows();
+	AHanger();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
