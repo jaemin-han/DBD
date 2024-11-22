@@ -8,14 +8,14 @@
 
 
 UENUM(BlueprintType)
-enum class EPlayerState : uint8
+enum class ESurvivorState : uint8
 {
-	Death	= 0,		// 죽음 상태
-	Hp1		= 1,		// 체력이 1인 상태
-	Hp2		= 2,		// 체력이 2인 상태
-	Hp3		= 3,		// 체력이 3인 상태
-	Piggyback = 4,	// 업힌 상태
-	Hang	= 5,		// 갈고리에 걸린 상태	
+	Death UMETA(DisplayName = "Death"),			// 죽음 상태
+	Hp1	UMETA(DisplayName = "Hp1"),				// 체력이 1인 상태
+	Hp2	UMETA(DisplayName = "Hp2"),				// 체력이 2인 상태
+	Hp3	UMETA(DisplayName = "Hp3"),				// 체력이 3인 상태
+	Piggyback UMETA(DisplayName = "Piggyback"),	// 업힌 상태
+	Hang UMETA(DisplayName = "Hang"),			// 갈고리에 걸린 상태	
 };
 
 UCLASS()
@@ -63,10 +63,18 @@ public:
 	inline bool GetIsRunning() const {return IsRunning;}
 	inline bool GetCrouching() const {return IsCrouching;}
 	inline bool GetIsInteractGenerator() const {return IsInteractGenerator;}
+	inline bool GetIsPiggyBack() const {return IsPiggyback;}
+	inline bool GetIsHang() const {return IsHang;}
 
 
 	// 다른 클래스에서도 사용할 수 있도록
-	void ChangePlayerState(EPlayerState playerState);
+	void ChangeSurvivorState(ESurvivorState survivorState);
+
+
+	// PlayerStatr Get함수
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	inline ESurvivorState GetSurvivorState() const {return SurvivorState;}
+
 
 private:
 	// 임시용 체력 변경 키값
@@ -86,11 +94,11 @@ private:
 	UInputAction* ParkourAction;
 
 	UPROPERTY(EditAnywhere)
-	class UAnimMontage* ParkourMontage;
+	class UAnimMontage* StateMontage;
 
 	// 플레이어 상태값
 	//UPROPERTY(EditAnywhere, Category = "PlayerState")
-	EPlayerState PlayerState;
+	ESurvivorState SurvivorState;
 
 	// 생존자 체력
 	UPROPERTY(EditAnywhere, Category = "Survivor")
@@ -99,6 +107,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Survivor")
 	int32 MaxHealth = 3; 
 
+	// 상태값 체크 변수 (업힌상태, 갈고리에 걸린 상태)
+	bool IsPiggyback = false;
+	bool IsHang = false;
+
+
 	// 뛰는지 안뛰는지 체크 변수
 	bool IsRunning = false;
 	// Crouch 상태인지 체크 변수
@@ -106,6 +119,7 @@ private:
 	// Generator 상호작용 체크 변수 
 	bool IsInteractGenerator = false;
 	bool IsInteractWindows = false;
+
 
 
 	// LineTrace와 Actor들과 닿았는지 체크하는 변수

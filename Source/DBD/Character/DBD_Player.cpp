@@ -13,7 +13,7 @@ void ADBD_Player::BeginPlay()
 	Super::BeginPlay();
 
 	Health = MaxHealth;
-
+	SurvivorState= ESurvivorState::Hp3;
 	// Interation 함수를 0.2초마다 호출
 	//FTimerHandle interactionTimer;
 	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
@@ -163,42 +163,62 @@ void ADBD_Player::Parkour()
 	if (not IsReachWindows) return;
 
 	UE_LOG(LogTemp, Warning, TEXT("Parkour"));
-	PlayAnimMontage(ParkourMontage, 1.f);
+	PlayAnimMontage(StateMontage, 1.f, TEXT("Parkour"));
 	IsReachWindows = false;
 }
 
 void ADBD_Player::ParkourFinish()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
-	StopAnimMontage(ParkourMontage);
+	StopAnimMontage(StateMontage);
+}
+
+void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
+{
+	SurvivorState = survivorState;
 }
 
 void ADBD_Player::ChangePlayerAnimation()
 {
-	switch (PlayerState)
+	switch (SurvivorState)
 	{
-	case EPlayerState::Death:
+	case ESurvivorState::Death:
 		//PlayerState = playerState;
 		break;
-	case EPlayerState::Hp1:
+	case ESurvivorState::Hp1:
+		IsPiggyback = false;
+		IsHang = false;
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		break;
-	case EPlayerState::Hp2:
+	case ESurvivorState::Hp2:
+		IsPiggyback = false;
+		IsHang = false;
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		break;
-	case EPlayerState::Hp3:
+	case ESurvivorState::Hp3:
+		IsPiggyback = false;
+		IsHang = false;
+		// CharacterMovement 활성화
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		break;
-	case EPlayerState::Piggyback:
+	case ESurvivorState::Piggyback:
+		IsPiggyback = true;
+		IsHang = false;
+		// MovementComponent 비활성화
+		GetCharacterMovement()->DisableMovement();
+		//PlayAnimMontage(StateMontage, 1.f, TEXT("Piggy"));
 		break;
-	case EPlayerState::Hang:
+	case ESurvivorState::Hang:
+		IsHang = true;
+		IsPiggyback = false; 
+		GetCharacterMovement()->DisableMovement();
+		//PlayAnimMontage(StateMontage, 1.f, TEXT("Hang"));
 		break;
 	default:
 		break;
 	}
 }
 
-void ADBD_Player::ChangePlayerState(EPlayerState playerState)
-{
-	PlayerState = playerState;
-}
 
 void ADBD_Player::UpdateHP(int32 Value)
 {
@@ -206,49 +226,42 @@ void ADBD_Player::UpdateHP(int32 Value)
 	Health -= Value;
 	
 
-	if (Health > MaxHealth)
+	if (Health > 5)
 	{
-		Health = MaxHealth;
+		Health = 5;
 	}
-	else if (Health < 0)
+	else if (Health < 1)
 	{
-		Health = 0;
+		Health = 1;
 	}
 
-	PlayerState = (EPlayerState)Health;
+	SurvivorState = (ESurvivorState)Health;
 	// 3 : WalkSpeed 226, RunSpeed : 400
 	// crouch : WalkSpeed 113
 	// 2 : WalkSpeed 226, RunSpeed : 400
 	// 1 : WalkSpeed 70
 	// 피격시 2초 스피드 : 600
-
-	//if (PlayerState == EPlayerState::Hp3)
-	//{
-	//	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
-	//}
-	//else if (PlayerState == EPlayerState::Hp2)
-	//{
-	//	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
-	//}
-	//else if (PlayerState == EPlayerState::Hp1)
-	//{
-	//	GetCharacterMovement()->MaxWalkSpeed = 70.0f;
-	//}
 	UpdateSpeed();
+
+	// 임시
+	ChangePlayerAnimation();
+
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Health : %d"), Health));
+	//FString string = GetDisplayNameTextByIndex(SurvivorState).toString();
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("State : %d"), (int)SurvivorState));
 }
 
 void ADBD_Player::UpdateSpeed()
 {
-	switch (PlayerState)
+	switch (SurvivorState)
 	{
-	case EPlayerState::Hp1:
+	case ESurvivorState::Hp1:
 		GetCharacterMovement()->MaxWalkSpeed = 70.0f;
 		break;
-	case EPlayerState::Hp2:
+	case ESurvivorState::Hp2:
 		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
 		break;
-	case EPlayerState::Hp3:
+	case ESurvivorState::Hp3:
 		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
 		break;
 	default:

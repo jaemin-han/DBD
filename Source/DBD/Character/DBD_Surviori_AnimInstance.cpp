@@ -16,10 +16,14 @@ void UDBD_Surviori_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (Player)
 	{
-		Health = Player->GetHealth();
+		//Health = Player->GetHealth();
+		Health = (int32)Player->GetSurvivorState();
 		IsRunning = Player->GetIsRunning();
 		IsCrouching = Player->GetCrouching();
 		IsGenerator = Player->GetIsInteractGenerator();
+		IsPiggyBack = Player->GetIsPiggyBack();
+		IsHang = Player->GetIsHang();
+
 	}
 }
 

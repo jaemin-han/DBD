@@ -32,7 +32,13 @@ private:
 	bool IsCrouching;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	bool IsGenerator; 
+	bool IsGenerator;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool IsPiggyBack;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool IsHang;
 
 public:
 	// Reload 애니메이션 끝나는 부분에 실행되는 함수
