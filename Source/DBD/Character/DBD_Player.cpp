@@ -5,8 +5,10 @@
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Components/SphereComponent.h"
 
 #include "Gimmick/DBD_Interface_Gimmick.h"
+#include "Gimmick/Pallet.h"
 
 void ADBD_Player::BeginPlay()
 {
@@ -24,6 +26,7 @@ void ADBD_Player::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	Interaction();
+	GetNearPallet();
 }
 
 void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -36,6 +39,7 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
 
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::Parkour);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::DropdownPallet);
 
 		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
 		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
@@ -108,6 +112,19 @@ void ADBD_Player::Interaction()
 	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
 }
 
+void ADBD_Player::GetNearPallet()
+{
+	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
+	TArray<AActor*> OverlappingActors;
+	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
+	APallet* NewNearPallet = nullptr;
+	for (AActor* OverlappingActor : OverlappingActors)
+	{
+		NewNearPallet = Cast<APallet>(OverlappingActor);
+	}
+	NearPallet = NewNearPallet;
+}
+
 void ADBD_Player::Run()
 {
 	// Health가 1이면 리턴
@@ -167,6 +184,14 @@ void ADBD_Player::Parkour()
 	IsReachWindows = false;
 }
 
+void ADBD_Player::DropdownPallet()
+{
+	if (NearPallet)
+	{
+		NearPallet->Interaction(this);
+	}
+}
+
 void ADBD_Player::ParkourFinish()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
@@ -217,6 +242,12 @@ void ADBD_Player::ChangePlayerAnimation()
 	default:
 		break;
 	}
+}
+
+ADBD_Player::ADBD_Player()
+{
+	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
+	SearchGimmickSphere->SetupAttachment(RootComponent);
 }
 
 

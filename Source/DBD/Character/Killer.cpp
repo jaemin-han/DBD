@@ -154,7 +154,7 @@ void AKiller::CarrySurvivor()
 		*/
 
 		// todo: 생존자 상태 변경
-		NearSurvivor->ChangePlayerState(EPlayerState::Piggyback);
+		NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
 
 		CarriedSurvivor = NearSurvivor;
 		CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
@@ -190,7 +190,7 @@ void AKiller::DropDownSurvivor()
 		}
 		// 생존자의 CharacterMovementComponent 의 MovementMode 를 Walking 으로 변경
 		CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		CarriedSurvivor->ChangePlayerState(EPlayerState::Hp1);
+		CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hp1);
 		CarriedSurvivor = nullptr;
 	}
 }
@@ -206,7 +206,7 @@ void AKiller::HangSurvivorOnHook()
 	if (CarriedSurvivor && Hanger)
 	{
 		// todo: 생존자의 상태를 갈고리에 걸린 상태로 변경
-		CarriedSurvivor->ChangePlayerState(EPlayerState::Hang);
+		CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
 
 		// 실행되었는지 확인하는 코드
 		UE_LOG(LogTemp, Display, TEXT("HangSurvivorOnHook"));

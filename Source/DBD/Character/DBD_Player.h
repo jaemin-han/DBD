@@ -22,6 +22,9 @@ UCLASS()
 class DBD_API ADBD_Player : public ADBDCharacter
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pallet", meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* SearchGimmickSphere;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -35,6 +38,7 @@ protected:
 	void PushInteractGenerator();
 	void NonPushInteractGenerator();
 	void Parkour();
+	void DropdownPallet();
 	
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -45,13 +49,16 @@ protected:
 
 
 	void Interaction();
-
+	
+	// 플레이어와 근처의 판자를 가져와서 할당하는 함수
+	void GetNearPallet();
 
 	// 상태에 따른 플레이어 애니메이션 변경함수
 	void ChangePlayerAnimation();
 
 
 public:
+	ADBD_Player();
 	// 생존자의 HP 업데이트 함수
 	void UpdateHP(int32 Damage);
 	void UpdateSpeed();
@@ -125,4 +132,9 @@ private:
 	// LineTrace와 Actor들과 닿았는지 체크하는 변수
 	bool IsReachGenerator = false;
 	bool IsReachWindows = false;
+
+	// 싱호작용 중인 기믹 저장 변수 - GetNearGimmick 함수에서 할당됨
+	UPROPERTY(VisibleAnywhere)
+	class APallet* NearPallet;
+
 };
