@@ -22,6 +22,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* InteractionAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DropDownSurvivorAction;
+	
 private:
 	// attack montage
 	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
@@ -67,16 +70,17 @@ public:
 
 	// 체력이 0인 생존자를 들처매는 함수
 	void CarrySurvivor();
+	void DropDownSurvivor();
 
 	// 옮기고 있는 생존자를 갈고리에 거는 함수
 	UFUNCTION()
 	void HangSurvivorOnHook();
 
 	// 가까이에 있는 생존자
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* NearSurvivor;
 	// 옮기고 있는 생존자
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* CarriedSurvivor;
 
 	FName CarrySocketName = "CarrySocket";

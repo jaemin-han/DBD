@@ -52,6 +52,7 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 void AKiller::Attack()
@@ -84,6 +85,7 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// InteractionAction 에 대한 바인딩 추가
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::CarrySurvivor);
+	EnhancedInputComponent->BindAction(DropDownSurvivorAction, ETriggerEvent::Started, this, &AKiller::DropDownSurvivor);
 }
 
 void AKiller::GetNearGimmick()
@@ -140,22 +142,10 @@ void AKiller::Interact()
 
 void AKiller::CarrySurvivor()
 {
-	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
-	if (CarriedSurvivor)
-	{
-		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		if (PrimitiveComponent)
-		{
-			PrimitiveComponent->SetSimulatePhysics(true);
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		}
-		CarriedSurvivor = nullptr;
-		return;
-	}
+
 
 	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
-	if (NearSurvivor && NearSurvivor->GetHealth() == 1)
+	if (NearSurvivor && NearSurvivor->GetHealth() == 1 && CarriedSurvivor == nullptr)
 	{
 		/*
 		*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
@@ -165,21 +155,41 @@ void AKiller::CarrySurvivor()
 
 		// todo: 생존자 상태 변경
 
-
 		CarriedSurvivor = NearSurvivor;
 		CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
 		                                   CarrySocketName);
 
+		// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 끔
 		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		// PrimitiveComponent 의 이름을 출력,
-		// todo: 확인해보니 캡슐 실린더인데, 이것만 물리나 충돌을 제어하는건 의미가 없는데, 고민해보자
-		// UE_LOG(LogTemp, Display, TEXT("PrimitiveComponent : %s"), *PrimitiveComponent->GetName());
-		//
-		// if (PrimitiveComponent)
-		// {
-		// 	PrimitiveComponent->SetSimulatePhysics(false);
-		// 	PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		// }
+		USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
+		if (PrimitiveComponent && SkeletalMeshComponent)
+		{
+			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		// 생존자의 CharacterMovementComponent 의 MovementMode 를 None 으로 변경
+		CarriedSurvivor->GetCharacterMovement()->DisableMovement();
+	}
+}
+
+void AKiller::DropDownSurvivor()
+{
+	UE_LOG(LogTemp, Display, TEXT("DropDownSurvivor"));
+	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
+	if (CarriedSurvivor)
+	{
+		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
+		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+		USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
+		if (PrimitiveComponent && SkeletalMeshComponent)
+		{
+			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		// 생존자의 CharacterMovementComponent 의 MovementMode 를 Walking 으로 변경
+		CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		CarriedSurvivor = nullptr;
 	}
 }
 
@@ -188,21 +198,18 @@ void AKiller::HangSurvivorOnHook()
 	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
 	
 	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
+	// Hanger 에 무엇이 있는지 디버그
+	UE_LOG(LogTemp, Display, TEXT("Hanger: %s"), *Hanger->GetName());
 	
 	if (CarriedSurvivor && Hanger)
 	{
 		// todo: 생존자의 상태를 갈고리에 걸린 상태로 변경
 
+		// 실행되었는지 확인하는 코드
+		UE_LOG(LogTemp, Display, TEXT("HangSurvivorOnHook"));
 		
 		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
-		UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		if (PrimitiveComp)
-		{
-			PrimitiveComp->SetSimulatePhysics(false);
-			PrimitiveComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-		
 		CarriedSurvivor = nullptr;
 		
 	}
