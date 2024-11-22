@@ -67,18 +67,23 @@ void APallet::Tick(float DeltaTime)
 void APallet::Interaction(AActor* Caller)
 {
 	// 상호작용 중이 아니고, 판자가 서 있으면 판자 내리기 수행
-	if (bIsInteracted == false && bIsFallen == false)
+	if (bIsInteracted == false && bIsFallen == false && not Cast<AKiller>(Caller))
 	{
 		PalletFall();
 		return;
 	}
-
 	// 상호작용 중이 아니고, 판자가 넘어져 있고, 상호작용하는 엑터가 킬러라면 판자를 부셔요
 	if (bIsInteracted == false && bIsFallen == true)
 	{
 		if (AKiller* Killer = Cast<AKiller>(Caller))
 		{
-			Killer->DestroyPallet();
+			// killer 가 판자를 바라볼 때 판자를 부슬 수 있다
+			FVector KillerForward = Killer->GetActorForwardVector();
+			FVector KillertoPallet = GetActorLocation() - Killer->GetActorLocation();
+			KillertoPallet.Normalize();
+			// 두 백터의 내적이 0.5 이상이면 판자를 부술 수 있다 (30도 이내)
+			if (FVector::DotProduct(KillerForward, KillertoPallet) > 0.86602540378f)
+				Killer->DestroyPallet();
 		}
 		else
 		{
