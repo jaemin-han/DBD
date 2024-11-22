@@ -31,10 +31,14 @@ public:
 	virtual void Interaction() override;
 	virtual void FailedInteraction() override;
 
+	void UpdateRoundGauge();
+
 	// 발전기 게이지 UI
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<class UGaugeUI> GaugeUIWidgetClass;
 
 	UPROPERTY()
 	class UGaugeUI* GaugeUI;
+
+	bool IsRoundGauge = false;
 };

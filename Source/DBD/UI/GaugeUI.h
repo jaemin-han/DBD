@@ -14,12 +14,21 @@ class DBD_API UGaugeUI : public UUserWidget
 {
 	GENERATED_BODY()
 	
+	virtual void NativeConstruct() override;
+
 public:
 	void UpdateGauge(float time);
+	bool UpdateRoundPercent(float time);
+
+	void VisibleRondGauge(bool IsVisible);
 
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Gauge;
+
+	UPROPERTY(meta = (BindWidget))
+	class URoundGaugeUI* RoundGauge;
+
 
 	float Percent = 0;
 };

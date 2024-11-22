@@ -52,12 +52,45 @@ void AGenerator::Interaction()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
 	GaugeUI->SetVisibility(ESlateVisibility::Visible);
-	GaugeUI->UpdateGauge(0.2f);
+	GaugeUI->UpdateGauge(GetWorld()->DeltaTimeSeconds);
+	UE_LOG(LogTemp, Log, TEXT("Random %f"), GetWorld()->DeltaTimeSeconds); 
+	// 120프레임 -> 0.008초 -> random
+	// 60 프레임 -> 0.016초 -> random
+	// 30 프레임 -> 0.033초 -> random
+	if (not IsRoundGauge)
+	{
+		float random = FMath::RandRange(0.0f, 1.0f); // 1%
+		UE_LOG(LogTemp, Log, TEXT("Random %f"), random);
+		//
+		if (random < GetWorld()->DeltaTimeSeconds * 0.1f)
+		{
+			IsRoundGauge = true;
+		}
+	}
+
+	UpdateRoundGauge();
 }
 
 void AGenerator::FailedInteraction()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
 	GaugeUI->SetVisibility(ESlateVisibility::Hidden);
+	IsRoundGauge = false;
+}
+
+void AGenerator::UpdateRoundGauge()
+{
+	if (IsRoundGauge)
+	{
+		GaugeUI->VisibleRondGauge(true);
+		if (GaugeUI->UpdateRoundPercent(GetWorld()->DeltaTimeSeconds))
+		{
+			IsRoundGauge = false;
+		}
+	}
+	else
+	{
+		GaugeUI->VisibleRondGauge(false);
+	}
 }
 

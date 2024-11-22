@@ -15,13 +15,15 @@ void ADBD_Player::BeginPlay()
 	Health = MaxHealth;
 
 	// Interation 함수를 0.2초마다 호출
-	FTimerHandle interactionTimer;
-	GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
+	//FTimerHandle interactionTimer;
+	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
 }
 
 void ADBD_Player::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	Interaction();
 }
 
 void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -171,10 +173,38 @@ void ADBD_Player::ParkourFinish()
 	StopAnimMontage(ParkourMontage);
 }
 
+void ADBD_Player::ChangePlayerAnimation()
+{
+	switch (PlayerState)
+	{
+	case EPlayerState::Death:
+		//PlayerState = playerState;
+		break;
+	case EPlayerState::Hp1:
+		break;
+	case EPlayerState::Hp2:
+		break;
+	case EPlayerState::Hp3:
+		break;
+	case EPlayerState::Piggyback:
+		break;
+	case EPlayerState::Hang:
+		break;
+	default:
+		break;
+	}
+}
+
+void ADBD_Player::ChangePlayerState(EPlayerState playerState)
+{
+	PlayerState = playerState;
+}
+
 void ADBD_Player::UpdateHP(int32 Value)
 {
 	// Value : Damage or Heal
 	Health -= Value;
+	
 
 	if (Health > MaxHealth)
 	{
@@ -185,41 +215,41 @@ void ADBD_Player::UpdateHP(int32 Value)
 		Health = 0;
 	}
 
-
+	PlayerState = (EPlayerState)Health;
 	// 3 : WalkSpeed 226, RunSpeed : 400
 	// crouch : WalkSpeed 113
 	// 2 : WalkSpeed 226, RunSpeed : 400
 	// 1 : WalkSpeed 70
 	// 피격시 2초 스피드 : 600
 
-	if (Health == 3)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
-	}
-	else if (Health == 2)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
-	}
-	else if (Health == 1)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = 70.0f;
-	}
-
+	//if (PlayerState == EPlayerState::Hp3)
+	//{
+	//	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
+	//}
+	//else if (PlayerState == EPlayerState::Hp2)
+	//{
+	//	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
+	//}
+	//else if (PlayerState == EPlayerState::Hp1)
+	//{
+	//	GetCharacterMovement()->MaxWalkSpeed = 70.0f;
+	//}
+	UpdateSpeed();
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Health : %d"), Health));
 }
 
 void ADBD_Player::UpdateSpeed()
 {
-	switch (Health)
+	switch (PlayerState)
 	{
-	case 3:
-		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
-		break;
-	case 2:
-		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
-		break;
-	case 1:
+	case EPlayerState::Hp1:
 		GetCharacterMovement()->MaxWalkSpeed = 70.0f;
+		break;
+	case EPlayerState::Hp2:
+		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
+		break;
+	case EPlayerState::Hp3:
+		GetCharacterMovement()->MaxWalkSpeed = 226.0f;
 		break;
 	default:
 		break;
