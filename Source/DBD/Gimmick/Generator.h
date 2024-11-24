@@ -41,4 +41,8 @@ public:
 	class UGaugeUI* GaugeUI;
 
 	bool IsRoundGauge = false;
+
+	// 발전기 활성화가 됬는지 판단 여부 변수
+	UPROPERTY(EditAnywhere, Category = "Generator")
+	bool IsActivated = false;
 };

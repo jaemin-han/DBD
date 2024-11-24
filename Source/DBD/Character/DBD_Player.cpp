@@ -8,7 +8,18 @@
 #include "Components/SphereComponent.h"
 
 #include "Gimmick/DBD_Interface_Gimmick.h"
+#include "Components/CapsuleComponent.h"
+
+// 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
+#include "Gimmick/Door.h"
+
+ADBD_Player::ADBD_Player()
+{
+	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
+	SearchGimmickSphere->SetupAttachment(RootComponent);
+
+}
 
 void ADBD_Player::BeginPlay()
 {
@@ -38,11 +49,14 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(PlusHpAction, ETriggerEvent::Started, this, &ADBD_Player::PlusHp);
 		EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
 
+		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Triggered, this, &ADBD_Player::ExitDoor);
+
+		// 추후 하나의 함수내에서 구분하여 처리할 예정
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::Parkour);
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::DropdownPallet);
 
-		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
-		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
+		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
+		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
 
 
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ADBD_Player::Run);
@@ -78,7 +92,11 @@ void ADBD_Player::Interaction()
 		if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
 		{	
 			// HitActor가 Generator라면
-			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator"))
+			// 이후 변경 (각각 NameOrLabel로 찾는 거를 어떻게 더 효율적으로 변경할수있을지 생각)
+			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator") 
+			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator2") 
+			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator3")
+			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator4"))
 			{
 				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
 				IsReachGenerator = true;
@@ -95,7 +113,7 @@ void ADBD_Player::Interaction()
 			// HitActor가 Windows라면
 			else if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Windows"))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Windows"));
+				UE_LOG(LogTemp, Warning, TEXT("%s"), *hitResult.GetActor()->GetActorNameOrLabel());
 				IsReachWindows =  true;
 			}
 			// HitActor가 Board라면
@@ -192,6 +210,16 @@ void ADBD_Player::DropdownPallet()
 	}
 }
 
+void ADBD_Player::ExitDoor()
+{
+	UE_LOG(LogTemp, Log, TEXT("ExitDoor"));
+	UE_LOG(LogTemp, Log, TEXT("IsOverlapDoor : %d"), IsOverlapDoor);
+	if (IsOverlapDoor)
+	{
+		Door->Interaction();
+	}
+}
+
 void ADBD_Player::ParkourFinish()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
@@ -244,12 +272,39 @@ void ADBD_Player::ChangePlayerAnimation()
 	}
 }
 
-ADBD_Player::ADBD_Player()
+void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
-	SearchGimmickSphere->SetupAttachment(RootComponent);
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Gimmick BeginOverlap"));
+		// 만약 OtherActor가 Door라면
+		if (OtherActor->GetActorNameOrLabel() == TEXT("BP_Door2") or OtherActor->GetActorNameOrLabel() == TEXT("BP_Door"))
+		{
+			IsOverlapDoor = true;
+			Door = Cast<ADoor>(gimmick);
+		}
+	}
 }
 
+void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorEndOverlap(OtherActor);
+
+	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Gimmick EndOverlap"));
+		// 만약 OtherActor가 Door라면
+		if (OtherActor->GetActorNameOrLabel() == TEXT("BP_Door2") or OtherActor->GetActorNameOrLabel() == TEXT("BP_Door"))
+		{
+			IsOverlapDoor = false;
+			IsInteractDoor = false;
+			gimmick->FailedInteraction();
+			Door = nullptr;
+		}
+	}
+}
 
 void ADBD_Player::UpdateHP(int32 Value)
 {

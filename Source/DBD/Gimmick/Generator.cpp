@@ -46,6 +46,10 @@ void AGenerator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (GaugeUI->GetIsFullGauge())
+	{
+		IsActivated = true;
+	}
 }
 
 void AGenerator::Interaction(AActor* Caller)

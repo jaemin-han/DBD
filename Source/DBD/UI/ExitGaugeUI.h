@@ -4,38 +4,27 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "GaugeUI.generated.h"
+#include "ExitGaugeUI.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DBD_API UGaugeUI : public UUserWidget
+class DBD_API UExitGaugeUI : public UUserWidget
 {
 	GENERATED_BODY()
 	
-	virtual void NativeConstruct() override;
-
 public:
-	void UpdateGauge(float time);
-	bool UpdateRoundPercent(float time);
-
-	void VisibleRondGauge(bool IsVisible);
+	void UpdateExitGauge(float time);
 
 
 	inline bool GetIsFullGauge() const {return IsFullGauge;}
-public:
-	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* Gauge;
-
-	UPROPERTY(meta = (BindWidget))
-	class URoundGaugeUI* RoundGauge;
-
-
-
-
 
 private:
+	UPROPERTY(meta = (BindWidget))
+	class UProgressBar* ExitGauge;
+
 	float Percent = 0;
+
 	bool IsFullGauge = false;
 };
