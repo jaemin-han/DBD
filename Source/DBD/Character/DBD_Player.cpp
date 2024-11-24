@@ -10,15 +10,16 @@
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Components/CapsuleComponent.h"
 
+#include "Kismet/GameplayStatics.h"
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
+#include "Gimmick/Windows.h"
 
 ADBD_Player::ADBD_Player()
 {
 	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
 	SearchGimmickSphere->SetupAttachment(RootComponent);
-
 }
 
 void ADBD_Player::BeginPlay()
@@ -38,6 +39,11 @@ void ADBD_Player::Tick(float DeltaTime)
 
 	Interaction();
 	GetNearPallet();
+
+	if (IsParkour)
+	{
+		MoveAlongQuadraticBezier(DeltaTime);
+	}
 }
 
 void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -197,9 +203,29 @@ void ADBD_Player::Parkour()
 {
 	if (not IsReachWindows) return;
 
+	TArray<AActor*> Windows;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWindows::StaticClass(), Windows);
+	Window = Cast<AWindows>(Windows[0]);
+
+	// 캐릭터와 Window의 길이구하기
+	float dist = FVector::Distance(GetActorLocation(), Window->GetActorLocation());
+	if(dist > 100.0f) return; // 너무 멀면 파쿠르 하지 않기
+
+	// 2차 베지에 곡선 계산
+	//P0 = GetActorLocation();
+	//P1 = P0 + GetActorUpVector() * 100.0f;
+	//P2 = P1 + GetActorForwardVector() * dist;
+
+	// 3차 베지에 곡선 계산
+	P0 = GetActorLocation();
+	P1 = P0 + GetActorUpVector() * 120.0f;
+	P2 = P1 + GetActorForwardVector() * dist * 2;
+	P3 = P0 + GetActorForwardVector() * dist * 2;
+
 	UE_LOG(LogTemp, Warning, TEXT("Parkour"));
 	PlayAnimMontage(StateMontage, 1.f, TEXT("Parkour"));
 	IsReachWindows = false;
+	IsParkour = true;
 }
 
 void ADBD_Player::DropdownPallet()
@@ -352,5 +378,61 @@ void ADBD_Player::UpdateSpeed()
 		break;
 	default:
 		break;
+	}
+}
+
+/**베지에 곡선 활용
+* 2차 베지에 곡선
+* P0 : 시작점, P1 : 제어점, P2 : 끝점, t : 시간
+* B(t) = (1 - t)^2 * P0 + 2 * (1 - t) * t * P1 + t^2 * P2
+*/
+FVector ADBD_Player::CalculateQuadraticBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2)
+{
+	float oneMinusT = 1.0f - t;
+	FVector result = oneMinusT * oneMinusT * p0 +
+					2 * oneMinusT * t * p1 +
+					t * t * p2;
+
+	return result;
+}
+/*
+* 3차 베지에 곡선
+* P0 : 시작점, P1 : 제어점1, P2 : 제어점2, P3 : 끝점, t : 시간
+* B(t) = (1 - t)^3 * P0 + 3 * (1 - t)^2 * t * P1 + 3 * (1 - t) * t^2 * P2 + t^3 * P3
+*/
+FVector ADBD_Player::CalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3)
+{
+	float oneMinusT = 1.0f - t;
+	FVector result = oneMinusT * oneMinusT * oneMinusT * p0 +
+					3 * oneMinusT * oneMinusT * t * p1 +
+					3 * oneMinusT * t * t * p2 +
+					t * t * t * p3;
+
+	return result;
+}
+
+void ADBD_Player::MoveAlongQuadraticBezier(float DeltaTime)
+{
+	UE_LOG(LogTemp, Warning, TEXT("MoveAlongQuadraticBezier"));
+	
+	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
+	static float time = 0.0f;
+	time += DeltaTime;
+
+
+	// 2차 베지에 곡선 계산
+	// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
+	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
+
+	// 3차 베지에 곡선 계산
+	float t = FMath::Clamp(time/0.5f, 0.0f, 1.0f);
+	FVector newPos = CalculateBezierPoint(t, P0, P1, P2, P3);
+
+	SetActorLocation(newPos);
+	if (t >= 1.0f)
+	{
+		time = 0.0f;
+		IsParkour = false;
+		return;
 	}
 }

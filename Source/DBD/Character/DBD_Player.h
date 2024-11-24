@@ -60,6 +60,18 @@ protected:
 	// 상태에 따른 플레이어 애니메이션 변경함수
 	void ChangePlayerAnimation();
 
+
+	// 베지에 곡선을 활용한 파쿠르 애니메이션 만들기
+	FVector CalculateQuadraticBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2);
+	FVector CalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3);
+	void MoveAlongQuadraticBezier(float DeltaTime);
+
+	FVector P0;
+	FVector P1;
+	FVector P2;
+	FVector P3;
+
+
 public:
 	ADBD_Player();
 	// 생존자의 HP 업데이트 함수
@@ -112,6 +124,7 @@ private:
 	//UPROPERTY(EditAnywhere, Category = "PlayerState")
 	ESurvivorState SurvivorState;
 
+
 	// 생존자 체력
 	UPROPERTY(EditAnywhere, Category = "Survivor")
 	int32 Health; // 3 : 멀쩡 2 : 부상 1 : 중상 0 : 죽음
@@ -128,6 +141,8 @@ private:
 	bool IsRunning = false;				// 뛰는중이니?
 	// Crouch 상태인지 체크 변수
 	bool IsCrouching = false;			// 앉아있니?
+	// 파쿠르 중인지 체크 변수
+	bool IsParkour = false;				// 파쿠르 중이니?
 	// Generator 상호작용 체크 변수 
 	bool IsInteractGenerator = false;	// 발전기와 상호작용 했니? -> 했으면 : 발전기 애니메이션 실행, 게이지 시작
 	bool IsInteractWindows = false;		// 창문과 상호작용 했니? -> 했으면 : 파쿠르 애니메이션 실행
@@ -147,4 +162,5 @@ private:
 
 	class ADoor* Door;	// 출입구 액터 저장 변수
 
+	class AWindows* Window;
 };
