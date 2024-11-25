@@ -196,6 +196,7 @@ void ADBD_Player::PushInteractGenerator()
 	if (not IsReachGenerator) return;
 	
 	IsInteractGenerator = true;
+	GetCharacterMovement()->DisableMovement();
 }
 
 void ADBD_Player::NonPushInteractGenerator()
@@ -203,6 +204,7 @@ void ADBD_Player::NonPushInteractGenerator()
 	//if (not IsReachGenerator) return;
 	//UE_LOG(LogTemp, Warning, TEXT("NonPushInteractGenerator"));
 	IsInteractGenerator = false;
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
 
 void ADBD_Player::Parkour()

@@ -69,6 +69,7 @@ void AGenerator::Interaction(AActor* Caller)
 		if (random < GetWorld()->DeltaTimeSeconds * 0.1f)
 		{
 			IsRoundGauge = true;
+			GaugeUI->SetActivatedRoundGauge(true);
 		}
 	}
 
@@ -90,6 +91,7 @@ void AGenerator::UpdateRoundGauge()
 		if (GaugeUI->UpdateRoundPercent(GetWorld()->DeltaTimeSeconds))
 		{
 			IsRoundGauge = false;
+			GaugeUI->SetActivatedRoundGauge(false);
 		}
 	}
 	else

@@ -21,6 +21,10 @@ void UGaugeUI::UpdateGauge(float time)
 		return;
 	}
 	
+	// RoundGauge가 활성화 되어있다면 리턴 시켜주기
+	//if (ActivatedRoundGauge) return;
+
+
 	// time = 0.2로 들어오는데 이거를 100퍼로 나눴을때
 	// 초당 0.01씩 증가하게 만들기 위해서
 	//Percent += time * 0.011f;		// 실제 적용
@@ -33,6 +37,9 @@ void UGaugeUI::UpdateGauge(float time)
 bool UGaugeUI::UpdateRoundPercent(float time)
 {
 	if (!RoundGauge) return false;
+	if (not ActivatedRoundGauge) return false;
+
+
 	// time = 0.2로 들어오는데 이거를 100퍼로 나눴을때
 	// 초당 33씩 증가하게 만들기 위해서
 	RoundGauge->Percent += time * 0.5f;
@@ -40,6 +47,7 @@ bool UGaugeUI::UpdateRoundPercent(float time)
 	// float percent += 100 * DeltaTime;
 
 	RoundGauge->UpdatePercent();
+	//RoundGauge->RenderTransform.Angle = 360.0f * RoundGauge->Percent;
 
 	UE_LOG(LogTemp, Log, TEXT("UpdateRondPercent"));
 	// 다 찼거나, 플레이어가 스페이스바를 올바르게 눌렀을 때

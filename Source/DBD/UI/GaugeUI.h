@@ -24,6 +24,7 @@ public:
 
 
 	inline bool GetIsFullGauge() const {return IsFullGauge;}
+	inline void SetActivatedRoundGauge(bool value) { ActivatedRoundGauge = value; }
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Gauge;
@@ -38,4 +39,5 @@ public:
 private:
 	float Percent = 0;
 	bool IsFullGauge = false;
+	bool ActivatedRoundGauge = false;
 };
