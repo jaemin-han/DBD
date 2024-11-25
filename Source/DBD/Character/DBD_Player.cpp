@@ -145,8 +145,14 @@ void ADBD_Player::GetNearPallet()
 	for (AActor* OverlappingActor : OverlappingActors)
 	{
 		NewNearPallet = Cast<APallet>(OverlappingActor);
+		if (NewNearPallet)
+			break;
 	}
 	NearPallet = NewNearPallet;
+
+	// debug NearPallet
+	FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
+	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
 }
 
 void ADBD_Player::Run()

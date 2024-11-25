@@ -69,7 +69,7 @@ void AKiller::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	GetNearGimmick();
-	Debug();
+	// Debug();
 }
 
 // Called to bind functionality to input
