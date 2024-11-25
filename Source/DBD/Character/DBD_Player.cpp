@@ -60,6 +60,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		// 추후 하나의 함수내에서 구분하여 처리할 예정
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::Parkour);
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::DropdownPallet);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::GeneratorSkillCheck);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Completed, this, &ADBD_Player::ReleasedGeneratorSkillCheck);
 
 		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
 		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
@@ -110,10 +112,15 @@ void ADBD_Player::Interaction()
 				if (IsInteractGenerator)
 				{
 					gimmick->Interaction(); // 게이지 UI 생성 함수
+					IsSkillCheckZone = true;
+					if (IsSkillCheckZone)
+					{
+					}
 				}
 				else
 				{
 					gimmick->FailedInteraction(); // 게이지 UI 제거 함수
+					IsSpaceBar = false;
 				}
 			}
 			// HitActor가 Windows라면
@@ -274,6 +281,21 @@ void ADBD_Player::ExitDoor()
 	{
 		Door->Interaction();
 	}
+}
+
+void ADBD_Player::GeneratorSkillCheck()
+{
+	if (IsSkillCheckZone)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GeneratorSkillCheck"));
+		IsSpaceBar = true;
+	}
+}
+
+void ADBD_Player::ReleasedGeneratorSkillCheck()
+{
+	IsSkillCheckZone = false;
+	IsSpaceBar = false;
 }
 
 void ADBD_Player::ParkourFinish()

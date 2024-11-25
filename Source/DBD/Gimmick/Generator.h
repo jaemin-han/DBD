@@ -33,6 +33,9 @@ public:
 
 	void UpdateRoundGauge();
 
+	inline bool SetIsActivatedSkillCheckZone(bool value) { return IsActivatedSkillCheckZone = value; }
+
+public:
 	// 발전기 게이지 UI
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<class UGaugeUI> GaugeUIWidgetClass;
@@ -45,4 +48,9 @@ public:
 	// 발전기 활성화가 됬는지 판단 여부 변수
 	UPROPERTY(EditAnywhere, Category = "Generator")
 	bool IsActivated = false;
+
+
+private:
+	// 스킬체크 존 활성화 여부
+	bool IsActivatedSkillCheckZone = false;
 };

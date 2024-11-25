@@ -40,6 +40,8 @@ protected:
 	void Parkour();
 	void DropdownPallet();
 	void ExitDoor();
+	void GeneratorSkillCheck();
+	void ReleasedGeneratorSkillCheck();
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -87,7 +89,7 @@ public:
 	inline bool GetIsInteractGenerator() const {return IsInteractGenerator;}
 	inline bool GetIsPiggyBack() const {return IsPiggyback;}
 	inline bool GetIsHang() const {return IsHang;}
-
+	inline bool GetIsSpaceBar() const {return IsSpaceBar;}
 
 	// 다른 클래스에서도 사용할 수 있도록
 	void ChangeSurvivorState(ESurvivorState survivorState);
@@ -143,11 +145,16 @@ private:
 	bool IsCrouching = false;			// 앉아있니?
 	// 파쿠르 중인지 체크 변수
 	bool IsParkour = false;				// 파쿠르 중이니?
+
+	// 스페이스바를 눌렀는지
+	bool IsSpaceBar = false;			// 스페이스바 눌렀니?
+
+
 	// Generator 상호작용 체크 변수 
 	bool IsInteractGenerator = false;	// 발전기와 상호작용 했니? -> 했으면 : 발전기 애니메이션 실행, 게이지 시작
 	bool IsInteractWindows = false;		// 창문과 상호작용 했니? -> 했으면 : 파쿠르 애니메이션 실행
 	bool IsInteractDoor = false;		// 문과 상호작용 했니? -> 했으면 : 문 게이지 애니메이션 실행, 게이지 시작
-
+	bool IsSkillCheckZone = false;		// 스킬체크가 활성화 됬나?
 
 	// LineTrace와 Actor들과 닿았는지 체크하는 변수
 	bool IsReachGenerator = false;		// 발전기와 라인트레이스가 닿았니?

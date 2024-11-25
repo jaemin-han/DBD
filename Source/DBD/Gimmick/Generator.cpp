@@ -8,7 +8,6 @@
 
 #include "UI/GaugeUI.h"
 
-
 // Sets default values
 AGenerator::AGenerator()
 {
@@ -28,6 +27,8 @@ void AGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	
+
 	if (GaugeUIWidgetClass)
 	{
 		GaugeUI = Cast<UGaugeUI>(CreateWidget(GetWorld(), GaugeUIWidgetClass));
@@ -54,21 +55,25 @@ void AGenerator::Tick(float DeltaTime)
 
 void AGenerator::Interaction(AActor* Caller)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
+	//UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
 	GaugeUI->SetVisibility(ESlateVisibility::Visible);
 	GaugeUI->UpdateGauge(GetWorld()->DeltaTimeSeconds);
-	UE_LOG(LogTemp, Log, TEXT("Random %f"), GetWorld()->DeltaTimeSeconds); 
+	//UE_LOG(LogTemp, Log, TEXT("Random %f"), GetWorld()->DeltaTimeSeconds); 
 	// 120프레임 -> 0.008초 -> random
 	// 60 프레임 -> 0.016초 -> random
 	// 30 프레임 -> 0.033초 -> random
+
+
 	if (not IsRoundGauge)
 	{
 		float random = FMath::RandRange(0.0f, 1.0f); // 1%
-		UE_LOG(LogTemp, Log, TEXT("Random %f"), random);
+		//UE_LOG(LogTemp, Log, TEXT("Random %f"), random);
 		//
-		if (random < GetWorld()->DeltaTimeSeconds * 0.1f)
+		if (random < GetWorld()->DeltaTimeSeconds * 0.5f)
 		{
 			IsRoundGauge = true;
+			float rand = FMath::RandRange(0.2f, 0.7f);
+			GaugeUI->SetSkillCheckZone(rand);
 			GaugeUI->SetActivatedRoundGauge(true);
 		}
 	}
@@ -78,7 +83,7 @@ void AGenerator::Interaction(AActor* Caller)
 
 void AGenerator::FailedInteraction()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
+	//UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
 	GaugeUI->SetVisibility(ESlateVisibility::Hidden);
 	IsRoundGauge = false;
 }
