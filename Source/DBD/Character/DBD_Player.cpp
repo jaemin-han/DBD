@@ -133,7 +133,7 @@ void ADBD_Player::Interaction()
 		IsInteractGenerator = false;
 	}
 
-	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
+	//DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
 }
 
 void ADBD_Player::GetNearPallet()
@@ -201,15 +201,37 @@ void ADBD_Player::NonPushInteractGenerator()
 
 void ADBD_Player::Parkour()
 {
-	if (not IsReachWindows) return;
+	//if (not IsReachWindows) return;
 
-	TArray<AActor*> Windows;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWindows::StaticClass(), Windows);
-	Window = Cast<AWindows>(Windows[0]);
+	TArray<AActor*> AllActors;
+	TArray<AWindows*> Windows;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWindows::StaticClass(), AllActors);
+	for (AActor* actor : AllActors)
+	{
+		if (AWindows* win = Cast<AWindows>(actor))
+		{
+			Windows.Add(win);
+		}
+	}
+	//Window = Cast<AWindows>(Windows[0]);
+
+	float closestDist = std::numeric_limits<float>::max();
+	AWindows* closestWindow = nullptr;
+	float dist = 0.0f;
+	for (AWindows* window : Windows)
+	{
+		dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+		UE_LOG(LogTemp, Error, TEXT("Distance : %f"), dist);
+		if (dist < closestDist)
+		{
+			// 최단 거리 갱신
+			closestDist = dist;
+			closestWindow = window;
+		}
+	}
 
 	// 캐릭터와 Window의 길이구하기
-	float dist = FVector::Distance(GetActorLocation(), Window->GetActorLocation());
-	if(dist > 100.0f) return; // 너무 멀면 파쿠르 하지 않기
+	if(closestDist > 100.0f) return; // 너무 멀면 파쿠르 하지 않기
 
 	// 2차 베지에 곡선 계산
 	//P0 = GetActorLocation();
@@ -219,8 +241,8 @@ void ADBD_Player::Parkour()
 	// 3차 베지에 곡선 계산
 	P0 = GetActorLocation();
 	P1 = P0 + GetActorUpVector() * 120.0f;
-	P2 = P1 + GetActorForwardVector() * dist * 2;
-	P3 = P0 + GetActorForwardVector() * dist * 2;
+	P2 = P1 + GetActorForwardVector() * closestDist * 2;
+	P3 = P0 + GetActorForwardVector() * closestDist * 2;
 
 	UE_LOG(LogTemp, Warning, TEXT("Parkour"));
 	PlayAnimMontage(StateMontage, 1.f, TEXT("Parkour"));
@@ -426,7 +448,7 @@ void ADBD_Player::MoveAlongQuadraticBezier(float DeltaTime)
 	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
 
 	// 3차 베지에 곡선 계산
-	float t = FMath::Clamp(time/0.5f, 0.0f, 1.0f);
+	float t = FMath::Clamp(time, 0.0f, 1.0f);
 	FVector newPos = CalculateBezierPoint(t, P0, P1, P2, P3);
 
 	SetActorLocation(newPos);
