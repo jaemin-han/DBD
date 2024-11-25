@@ -52,7 +52,6 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 void AKiller::Attack()
@@ -85,7 +84,8 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// InteractionAction 에 대한 바인딩 추가
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::CarrySurvivor);
-	EnhancedInputComponent->BindAction(DropDownSurvivorAction, ETriggerEvent::Started, this, &AKiller::DropDownSurvivor);
+	EnhancedInputComponent->BindAction(DropDownSurvivorAction, ETriggerEvent::Started, this,
+	                                   &AKiller::DropDownSurvivor);
 }
 
 void AKiller::GetNearGimmick()
@@ -142,8 +142,6 @@ void AKiller::Interact()
 
 void AKiller::CarrySurvivor()
 {
-
-
 	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
 	if (NearSurvivor && NearSurvivor->GetHealth() == 1 && CarriedSurvivor == nullptr)
 	{
@@ -198,22 +196,18 @@ void AKiller::DropDownSurvivor()
 void AKiller::HangSurvivorOnHook()
 {
 	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
-	
 	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
-	// Hanger 에 무엇이 있는지 디버그
-	UE_LOG(LogTemp, Display, TEXT("Hanger: %s"), *Hanger->GetName());
+	if (!Hanger)
+		return;
 	
 	if (CarriedSurvivor && Hanger)
 	{
-		// todo: 생존자의 상태를 갈고리에 걸린 상태로 변경
-		CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
+		PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
 
-		// 실행되었는지 확인하는 코드
-		UE_LOG(LogTemp, Display, TEXT("HangSurvivorOnHook"));
-		
-		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
-		CarriedSurvivor = nullptr;
-		
+		// AN_HangOnHook.cpp 에서 처리하도록 수정
+		// CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
+		// CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		// CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
+		// CarriedSurvivor = nullptr;
 	}
 }

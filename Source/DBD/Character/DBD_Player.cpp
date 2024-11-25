@@ -255,6 +255,7 @@ void ADBD_Player::ParkourFinish()
 void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
 {
 	SurvivorState = survivorState;
+	ChangePlayerAnimation();
 }
 
 void ADBD_Player::ChangePlayerAnimation()
