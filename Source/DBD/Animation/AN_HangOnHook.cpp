@@ -21,6 +21,6 @@ void UAN_HangOnHook::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase*
 
 	CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
 	CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	CarriedSurvivor = nullptr;
 }
