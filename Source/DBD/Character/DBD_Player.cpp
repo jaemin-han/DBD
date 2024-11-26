@@ -9,6 +9,7 @@
 
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Components/CapsuleComponent.h"
+#include "UI/InteractionUI.h"
 
 #include "Kismet/GameplayStatics.h"
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
@@ -28,6 +29,19 @@ void ADBD_Player::BeginPlay()
 
 	Health = MaxHealth;
 	SurvivorState= ESurvivorState::Hp3;
+
+	if (MainUIClass)
+	{
+		MainUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), MainUIClass));
+		if (MainUI)
+		{
+			MainUI->AddToViewport();
+			UE_LOG(LogTemp, Log, TEXT("MainUI Create Success"));
+
+			MainUI->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+
 	// Interation 함수를 0.2초마다 호출
 	//FTimerHandle interactionTimer;
 	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
@@ -43,6 +57,15 @@ void ADBD_Player::Tick(float DeltaTime)
 	if (IsParkour)
 	{
 		MoveAlongQuadraticBezier(DeltaTime);
+	}
+	
+	if (Gimmick)
+	{
+		VisibleMainUI(true, Gimmick->GetGimmickName());
+	}
+	else
+	{
+		VisibleMainUI(false, TEXT(""));
 	}
 }
 
@@ -108,6 +131,7 @@ void ADBD_Player::Interaction()
 			{
 				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
 				IsReachGenerator = true;
+				Gimmick = gimmick;
 
 				if (IsInteractGenerator)
 				{
@@ -124,10 +148,21 @@ void ADBD_Player::Interaction()
 				}
 			}
 			// HitActor가 Windows라면
-			else if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Windows"))
+			else if (gimmick->GetGimmickName() == TEXT("Windows"))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("%s"), *hitResult.GetActor()->GetActorNameOrLabel());
+				UE_LOG(LogTemp, Warning, TEXT(" Windows"));
 				IsReachWindows =  true;
+				AWindows* window = Cast<AWindows>(gimmick);
+				float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+
+				// 3차 베지에 곡선 계산
+				P0 = GetActorLocation();
+				P1 = P0 + GetActorUpVector() * 120.0f;
+				P2 = P1 + GetActorForwardVector() * dist * 2;
+				P3 = P0 + GetActorForwardVector() * dist * 2;
+
+				
+				Gimmick = gimmick;
 			}
 			// HitActor가 Board라면
 			// HitActor가 출구라면
@@ -138,9 +173,10 @@ void ADBD_Player::Interaction()
 		IsReachGenerator = false;
 		IsReachWindows = false;
 		IsInteractGenerator = false;
+		if (not IsOverlapDoor) Gimmick = nullptr;
 	}
 
-	//DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
+	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
 }
 
 void ADBD_Player::GetNearPallet()
@@ -160,6 +196,11 @@ void ADBD_Player::GetNearPallet()
 	// debug NearPallet
 	FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
 	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
+
+	if (NearPallet)
+	{
+		Gimmick = NearPallet;
+	}
 }
 
 void ADBD_Player::Run()
@@ -216,48 +257,48 @@ void ADBD_Player::NonPushInteractGenerator()
 
 void ADBD_Player::Parkour()
 {
-	//if (not IsReachWindows) return;
+	if (not IsReachWindows) return;
 
-	TArray<AActor*> AllActors;
-	TArray<AWindows*> Windows;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWindows::StaticClass(), AllActors);
-	for (AActor* actor : AllActors)
-	{
-		if (AWindows* win = Cast<AWindows>(actor))
-		{
-			Windows.Add(win);
-		}
-	}
-	//Window = Cast<AWindows>(Windows[0]);
-
-	float closestDist = std::numeric_limits<float>::max();
-	AWindows* closestWindow = nullptr;
-	float dist = 0.0f;
-	for (AWindows* window : Windows)
-	{
-		dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
-		UE_LOG(LogTemp, Error, TEXT("Distance : %f"), dist);
-		if (dist < closestDist)
-		{
-			// 최단 거리 갱신
-			closestDist = dist;
-			closestWindow = window;
-		}
-	}
-
-	// 캐릭터와 Window의 길이구하기
-	if(closestDist > 100.0f) return; // 너무 멀면 파쿠르 하지 않기
-
-	// 2차 베지에 곡선 계산
+	//TArray<AActor*> AllActors;
+	//TArray<AWindows*> Windows;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWindows::StaticClass(), AllActors);
+	//for (AActor* actor : AllActors)
+	//{
+	//	if (AWindows* win = Cast<AWindows>(actor))
+	//	{
+	//		Windows.Add(win);
+	//	}
+	//}
+	////Window = Cast<AWindows>(Windows[0]);
+	//
+	//float closestDist = std::numeric_limits<float>::max();
+	//AWindows* closestWindow = nullptr;
+	//float dist = 0.0f;
+	//for (AWindows* window : Windows)
+	//{
+	//	dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+	//	UE_LOG(LogTemp, Error, TEXT("Distance : %f"), dist);
+	//	if (dist < closestDist)
+	//	{
+	//		// 최단 거리 갱신
+	//		closestDist = dist;
+	//		closestWindow = window;
+	//	}
+	//}
+	//
+	//// 캐릭터와 Window의 길이구하기
+	//if(closestDist > 100.0f) return; // 너무 멀면 파쿠르 하지 않기
+	//
+	//// 2차 베지에 곡선 계산
+	////P0 = GetActorLocation();
+	////P1 = P0 + GetActorUpVector() * 100.0f;
+	////P2 = P1 + GetActorForwardVector() * dist;
+	//
+	//// 3차 베지에 곡선 계산
 	//P0 = GetActorLocation();
-	//P1 = P0 + GetActorUpVector() * 100.0f;
-	//P2 = P1 + GetActorForwardVector() * dist;
-
-	// 3차 베지에 곡선 계산
-	P0 = GetActorLocation();
-	P1 = P0 + GetActorUpVector() * 120.0f;
-	P2 = P1 + GetActorForwardVector() * closestDist * 2;
-	P3 = P0 + GetActorForwardVector() * closestDist * 2;
+	//P1 = P0 + GetActorUpVector() * 120.0f;
+	//P2 = P1 + GetActorForwardVector() * closestDist * 2;
+	//P3 = P0 + GetActorForwardVector() * closestDist * 2;
 
 	UE_LOG(LogTemp, Warning, TEXT("Parkour"));
 	PlayAnimMontage(StateMontage, 1.f, TEXT("Parkour"));
@@ -275,8 +316,8 @@ void ADBD_Player::DropdownPallet()
 
 void ADBD_Player::ExitDoor()
 {
-	UE_LOG(LogTemp, Log, TEXT("ExitDoor"));
-	UE_LOG(LogTemp, Log, TEXT("IsOverlapDoor : %d"), IsOverlapDoor);
+	//UE_LOG(LogTemp, Log, TEXT("ExitDoor"));
+	//UE_LOG(LogTemp, Log, TEXT("IsOverlapDoor : %d"), IsOverlapDoor);
 	if (IsOverlapDoor)
 	{
 		Door->Interaction();
@@ -308,6 +349,15 @@ void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
 {
 	SurvivorState = survivorState;
 	ChangePlayerAnimation();
+}
+
+void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name)
+{
+	if (MainUI)
+	{
+		MainUI->SetVisibility(IsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+		MainUI->SetGimmickName(Name);
+	}
 }
 
 void ADBD_Player::ChangePlayerAnimation()
@@ -363,6 +413,7 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 		{
 			IsOverlapDoor = true;
 			Door = Cast<ADoor>(gimmick);
+			Gimmick = gimmick;
 		}
 	}
 }
@@ -381,6 +432,7 @@ void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 			IsInteractDoor = false;
 			gimmick->FailedInteraction();
 			Door = nullptr;
+			//Gimmick = nullptr;
 		}
 	}
 }

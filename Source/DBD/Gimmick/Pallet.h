@@ -29,6 +29,8 @@ class DBD_API APallet : public AActor, public IDBD_Interface_Gimmick
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	class UBoxComponent* WallComp;
 
+	FString Name = TEXT("Pallet");
+
 public:
 	// Sets default values for this actor's properties
 	APallet();
@@ -43,6 +45,7 @@ public:
 
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
+	virtual FString GetGimmickName() override;
 	
 
 	// board 가 이미 넘어진 상태인가

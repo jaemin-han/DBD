@@ -94,12 +94,12 @@ public:
 	// 다른 클래스에서도 사용할 수 있도록
 	void ChangeSurvivorState(ESurvivorState survivorState);
 
+	void VisibleMainUI(bool IsVisible, FString Name);
+
 
 	// PlayerStatr Get함수
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	inline ESurvivorState GetSurvivorState() const {return SurvivorState;}
-
-
 private:
 	// 임시용 체력 변경 키값
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -126,6 +126,15 @@ private:
 	//UPROPERTY(EditAnywhere, Category = "PlayerState")
 	ESurvivorState SurvivorState;
 
+
+	// MainUI 추가
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class UInteractionUI> MainUIClass;		// 이후 플레이 UI가 추가된다면 MainUI 클래스로 변경
+	UPROPERTY()
+	class UInteractionUI* MainUI;
+
+
+	class IDBD_Interface_Gimmick* Gimmick;
 
 	// 생존자 체력
 	UPROPERTY(EditAnywhere, Category = "Survivor")
@@ -155,6 +164,8 @@ private:
 	bool IsInteractWindows = false;		// 창문과 상호작용 했니? -> 했으면 : 파쿠르 애니메이션 실행
 	bool IsInteractDoor = false;		// 문과 상호작용 했니? -> 했으면 : 문 게이지 애니메이션 실행, 게이지 시작
 	bool IsSkillCheckZone = false;		// 스킬체크가 활성화 됬나?
+	bool IsInteractPallet = false;		// 판자와 상호작용 했니? -> 했으면 : 판자 애니메이션 실행
+
 
 	// LineTrace와 Actor들과 닿았는지 체크하는 변수
 	bool IsReachGenerator = false;		// 발전기와 라인트레이스가 닿았니?

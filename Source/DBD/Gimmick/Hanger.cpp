@@ -44,3 +44,8 @@ void AHanger::Interaction(AActor* Caller)
 void AHanger::FailedInteraction()
 {
 }
+
+FString AHanger::GetGimmickName()
+{
+	return Name;
+}

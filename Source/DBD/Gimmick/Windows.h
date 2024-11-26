@@ -31,4 +31,8 @@ public:
 
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
+	virtual FString GetGimmickName() override;
+
+private:
+	FString Name = TEXT("Windows");
 };

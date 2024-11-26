@@ -98,6 +98,11 @@ void APallet::FailedInteraction()
 {
 }
 
+FString APallet::GetGimmickName()
+{
+	return Name;
+}
+
 void APallet::PalletFall()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Pallet Interaction"));

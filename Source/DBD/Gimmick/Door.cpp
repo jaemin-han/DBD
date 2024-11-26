@@ -73,7 +73,7 @@ void ADoor::Tick(float DeltaTime)
 
 void ADoor::Interaction(AActor* Caller)
 {
-	UE_LOG(LogTemp, Log, TEXT(" Door Interaction"));
+	//UE_LOG(LogTemp, Log, TEXT(" Door Interaction"));
 	if (not IsDoorActivated) return;
 	if (not ExitGaugeUI) return;
 
@@ -88,6 +88,11 @@ void ADoor::FailedInteraction()
 	
 	UE_LOG(LogTemp, Log, TEXT("Door Failed Interaction"));
 	ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
+}
+
+FString ADoor::GetGimmickName()
+{
+	return Name;
 }
 
 void ADoor::OpenExitDoor()

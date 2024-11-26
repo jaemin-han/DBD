@@ -30,6 +30,7 @@ public:
 
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
+	virtual FString GetGimmickName() override;
 
 	void UpdateRoundGauge();
 
@@ -53,4 +54,6 @@ public:
 private:
 	// 스킬체크 존 활성화 여부
 	bool IsActivatedSkillCheckZone = false;
+
+	FString Name = TEXT("Generator");
 };

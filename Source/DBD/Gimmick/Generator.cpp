@@ -88,6 +88,11 @@ void AGenerator::FailedInteraction()
 	IsRoundGauge = false;
 }
 
+FString AGenerator::GetGimmickName()
+{
+	return Name;
+}
+
 void AGenerator::UpdateRoundGauge()
 {
 	if (IsRoundGauge)

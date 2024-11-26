@@ -15,6 +15,7 @@ class DBD_API AHanger : public AActor, public IDBD_Interface_Gimmick
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* MeshComp;
 
+	FString Name = TEXT("Hanger");
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	class UArrowComponent* HangPosition;
@@ -34,4 +35,5 @@ public:
 
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
+	virtual FString GetGimmickName() override;
 };

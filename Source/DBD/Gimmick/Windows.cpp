@@ -45,3 +45,8 @@ void AWindows::FailedInteraction()
 {
 }
 
+FString AWindows::GetGimmickName()
+{
+	return Name;
+}
+

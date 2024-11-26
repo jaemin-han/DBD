@@ -25,4 +25,6 @@ public:
 	// Gimimick 이 상호작용할 때 호출되는 함수
 	virtual void Interaction(AActor* Caller = nullptr) = 0;
 	virtual void FailedInteraction() = 0;
+	virtual FString GetGimmickName() = 0;
+	//virtual FString GetInteractKey() = 0;
 };
