@@ -10,7 +10,8 @@
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Components/CapsuleComponent.h"
 #include "UI/InteractionUI.h"
-
+#include "Engine/DecalActor.h"
+#include "Gimmick/Decal.h"
 #include "Kismet/GameplayStatics.h"
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
@@ -156,21 +157,6 @@ void ADBD_Player::Interaction()
 				bIsSearchWindows = true;
 				SetBezierPoint(gimmick);
 
-				//IsReachWindows =  true;
-				//
-				//AWindows* window = Cast<AWindows>(gimmick);
-				//float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
-				//
-				//if (IsParkour)
-				//{
-				//	// 3차 베지에 곡선 계산
-				//	P0 = GetActorLocation();
-				//	P1 = P0 + GetActorUpVector() * 120.0f;
-				//	P2 = P1 + GetActorForwardVector() * dist * 2;
-				//	P3 = P0 + GetActorForwardVector() * dist * 2;
-				//}
-
-
 				
 				Gimmick = gimmick;
 			}
@@ -220,6 +206,14 @@ void ADBD_Player::Run()
 
 	IsRunning = true;
 	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
+
+	SpawnDecalTime += GetWorld()->GetDeltaSeconds();
+
+	if (SpawnDecalTime > 0.2f)
+	{
+		SpawnDecal();
+		SpawnDecalTime = 0.0f;
+	}
 }
 
 void ADBD_Player::RunStop()
@@ -228,6 +222,7 @@ void ADBD_Player::RunStop()
 	if (Health == 1) return;
 
 	IsRunning = false;
+	SpawnDecalTime = 0.0f;
 	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
 }
 
@@ -411,6 +406,30 @@ void ADBD_Player::ChangePlayerAnimation()
 	default:
 		break;
 	}
+}
+
+void ADBD_Player::SpawnDecal()
+{
+	ADecal* decal = GetWorld()->SpawnActor<ADecal>(DecalFactory);
+	// 큐브의 위치를 나의 앞방향으로 100만큼 떨어진 위치에 놓자.	
+	//FVector loc = GetActorLocation() + FVector(0, 100, -GetActorLocation().Z);
+	FVector loc = GetActorLocation() + GetActorForwardVector() * -110 + GetActorUpVector() * -GetActorLocation().Z;
+	decal->SetActorLocation(loc);
+	// 큐브의 회전값을 나의 회전값으로 설정
+	//FRotator rot = GetActorRotation() + FRotator(-90, GetActorRotation().Yaw, GetActorRotation().Roll);
+	FRotator rot = GetActorRotation() + FRotator(-90, FMath::RandRange(0.0f, 360.0f), GetActorRotation().Roll);
+	decal->SetActorRotation(rot);
+	decal->SetActorScale3D(FVector(0.3f));
+
+	ADecal* decalLR = GetWorld()->SpawnActor<ADecal>(DecalFactory);
+	// 큐브의 위치를 나의 앞방향으로 100만큼 떨어진 위치에 놓자.	
+	//FVector locL = GetActorLocation() + FVector(0, 60, -30);
+	FVector locL = GetActorLocation() + GetActorForwardVector() * -110 + GetActorUpVector() * -30;
+	decalLR->SetActorLocation(locL);
+	// 큐브의 회전값을 나의 회전값으로 설정
+	FRotator rotL = GetActorRotation() + FRotator(GetActorRotation().Pitch, 90, FMath::RandRange(0.0f, 360.0f));
+	decalLR->SetActorRotation(rotL);
+	decalLR->SetActorScale3D(FVector(0.80f, 0.3f, 0.26f));
 }
 
 void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)

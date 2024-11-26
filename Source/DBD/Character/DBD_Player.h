@@ -23,6 +23,8 @@ class DBD_API ADBD_Player : public ADBDCharacter
 {
 	GENERATED_BODY()
 
+	ADBD_Player();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pallet", meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* SearchGimmickSphere;
 	
@@ -62,6 +64,7 @@ protected:
 	// 상태에 따른 플레이어 애니메이션 변경함수
 	void ChangePlayerAnimation();
 
+	void SpawnDecal();
 
 	// 베지에 곡선을 활용한 파쿠르 애니메이션 만들기
 	FVector CalculateQuadraticBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2);
@@ -75,7 +78,7 @@ protected:
 
 
 public:
-	ADBD_Player();
+	
 	// 생존자의 HP 업데이트 함수
 	void UpdateHP(int32 Damage);
 	void UpdateSpeed();
@@ -100,6 +103,8 @@ public:
 	// PlayerStatr Get함수
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	inline ESurvivorState GetSurvivorState() const {return SurvivorState;}
+
+
 private:
 	// 임시용 체력 변경 키값
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -135,6 +140,13 @@ private:
 
 
 	class IDBD_Interface_Gimmick* Gimmick;
+	
+
+	// DecalComponent 추가하기
+	UPROPERTY(EditAnywhere, Category = "Decal")
+	TSubclassOf<class ADecal> DecalFactory;
+
+	float SpawnDecalTime = 0.2f;
 
 	// 생존자 체력
 	UPROPERTY(EditAnywhere, Category = "Survivor")
