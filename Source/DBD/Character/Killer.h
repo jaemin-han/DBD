@@ -44,6 +44,8 @@ protected:
 	// attack function
 	void Attack();
 
+	virtual bool IsAttacking() const override { return bIsAttacking; };
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -75,7 +77,7 @@ public:
 
 public:
 	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
-	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
+	// TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 	// 가까이에 있는 생존자
 	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* NearSurvivor;
@@ -86,6 +88,8 @@ public:
 	FName CarrySocketName = "CarrySocket";
 	// 킬러가 스턴 상태인가요?
 	bool bStunned = false;
+	// 킬러가 공격 중인가요?
+	bool bIsAttacking = false;
 
 private:
 	// attack montage

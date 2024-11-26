@@ -53,6 +53,7 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
+	ParkourSpeed = 0.5f;
 
 	// Interaction UI 생성
 	if (InteractionUIClass)
@@ -74,6 +75,14 @@ void AKiller::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("InteractionUIClass is nullptr"));
 	}
+
+	// 파쿠르라 완료되지 않아도 애니메이션이 끝나면 FinishParkourFunc 함수를 호출
+	// 이렇게 하면 넘는 중에 공격 해도 괜찮음
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
+	}
 }
 
 void AKiller::Attack()
@@ -81,15 +90,19 @@ void AKiller::Attack()
 	if (bStunned)
 		return;
 
-	UE_LOG(LogTemp, Display, TEXT("Attack"));
-	// play montage
-	PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
+	// 파쿠르 중이 아닐 때 && 공격 중이 아닐 때에만 공격 가능
+	if (!bIsParkour && !bIsAttacking)
+	{
+		bIsAttacking = true;
+		PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
+	}
 }
 
 // Called every frame
 void AKiller::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	GetNearSurvivor();
 	GetNearGimmick();
 	Debug();
@@ -135,20 +148,31 @@ void AKiller::GetNearGimmick()
 {
 	// line trace 를 통해 킬러의 전방에 있는 기믹을 찾아 NearGimmick 에 할당
 	FVector Start = GetActorLocation();
+	Start.Z -= 90.0f;
 	FVector End = Start + GetActorForwardVector() * 100.0f;
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionQueryParams;
 	CollisionQueryParams.AddIgnoredActor(this);
 
 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionQueryParams);
+	// debug line trace
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.1f, 0, 1.0f);
 	if (HitResult.GetActor() && HitResult.GetActor()->GetClass()->ImplementsInterface(
 		UDBD_Interface_Gimmick::StaticClass()))
 	{
 		NearGimmick = HitResult.GetActor();
+
+		// todo: 부모에서 bIsSearchWindows 변수를 사용하기 위해 할당, 이후에 부모 클래스로 모두 옮기자
+		if (NearGimmick->GetGimmickName() == "Windows")
+		{
+			bIsSearchWindows = true;
+		}
 	}
 	else
 	{
 		NearGimmick = nullptr;
+
+		bIsSearchWindows = false;
 	}
 }
 

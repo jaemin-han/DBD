@@ -87,10 +87,10 @@ void ADBDCharacter::SetBezierPoint(class IDBD_Interface_Gimmick* gimmick)
 		vP2 = vP1 + GetActorForwardVector() * dist * 2;
 		vP3 = vP0 + GetActorForwardVector() * dist * 2;
 	}
-
 }
 
-FVector ADBDCharacter::FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3)
+FVector ADBDCharacter::FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2,
+                                             const FVector& p3)
 {
 	float oneMinusT = 1.0f - t;
 	FVector result = oneMinusT * oneMinusT * oneMinusT * p0 +
@@ -105,7 +105,7 @@ void ADBDCharacter::FMoveAlongQuadraticBezier(float DeltaTime)
 {
 	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
 	static float time = 0.0f;
-	time += DeltaTime;
+	time += DeltaTime * ParkourSpeed;
 
 
 	// 2차 베지에 곡선 계산
@@ -150,9 +150,11 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADBDCharacter::Look);
 
 		// Change Character
-		EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this, &ADBDCharacter::ChangeCharacter);
+		EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this,
+		                                   &ADBDCharacter::ChangeCharacter);
 
-		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &ADBDCharacter::ParkourFunc);
+		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this,
+		                                   &ADBDCharacter::ParkourFunc);
 	}
 	else
 	{
@@ -204,8 +206,12 @@ void ADBDCharacter::ParkourFunc()
 	if (not bIsSearchWindows) return;
 	if (bIsPushKey) return;
 
-	//UE_LOG(LogTemp, Warning, TEXT("Parkour"));
-	PlayAnimMontage(ParkourMontage, 1.f, TEXT("Parkour"));
+	if (IsAttacking())
+		return;
+
+	SetBezierPoint(NearGimmick.GetInterface());
+
+	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
 	bIsSearchWindows = false;
 	bIsParkour = true;
 	GetCharacterMovement()->DisableMovement();
@@ -217,6 +223,14 @@ void ADBDCharacter::FinishParkourFunc()
 	StopAnimMontage(ParkourMontage);
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bIsPushKey = false;
+}
+
+void ADBDCharacter::OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage == ParkourMontage)
+	{
+		FinishParkourFunc();
+	}
 }
 
 void ADBDCharacter::ChangeCharacter()
