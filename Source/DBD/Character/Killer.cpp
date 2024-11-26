@@ -2,16 +2,17 @@
 
 
 #include "Killer.h"
-#include "Killer.h"
 
 #include "DBD_Player.h"
 #include "EnhancedInputComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
-#include "Components/ArrowComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Gimmick/Hanger.h"
+#include "Gimmick/Pallet.h"
+#include "UI/InteractionUI.h"
 
 
 // Sets default values
@@ -52,6 +53,27 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Interaction UI 생성
+	if (InteractionUIClass)
+	{
+		InteractionUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), InteractionUIClass));
+		if (InteractionUI)
+		{
+			InteractionUI->AddToViewport();
+			UE_LOG(LogTemp, Log, TEXT("InteractionUI Create Success"));
+
+			InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("InteractionUI Create Failed"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("InteractionUIClass is nullptr"));
+	}
 }
 
 void AKiller::Attack()
@@ -68,8 +90,15 @@ void AKiller::Attack()
 void AKiller::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	GetNearSurvivor();
 	GetNearGimmick();
-	// Debug();
+	Debug();
+
+	// InteractionUI 표시
+	if (InteractionUI)
+	{
+		ShowInteractionUI();
+	}
 }
 
 // Called to bind functionality to input
@@ -88,24 +117,94 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	                                   &AKiller::DropDownSurvivor);
 }
 
-void AKiller::GetNearGimmick()
+void AKiller::GetNearSurvivor()
 {
 	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
 	TArray<AActor*> OverlappingActors;
 	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
-	AActor* NewNearGimmick = nullptr;
 	ADBD_Player* NewNearSurvivor = nullptr;
+
 	for (AActor* OverlappingActor : OverlappingActors)
 	{
-		if (OverlappingActor->GetClass()->ImplementsInterface(UDBD_Interface_Gimmick::StaticClass()))
-		{
-			NewNearGimmick = OverlappingActor;
-		}
-
 		NewNearSurvivor = Cast<ADBD_Player>(OverlappingActor);
 	}
-	NearGimmick = NewNearGimmick;
 	NearSurvivor = NewNearSurvivor;
+}
+
+void AKiller::GetNearGimmick()
+{
+	// line trace 를 통해 킬러의 전방에 있는 기믹을 찾아 NearGimmick 에 할당
+	FVector Start = GetActorLocation();
+	FVector End = Start + GetActorForwardVector() * 100.0f;
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionQueryParams;
+	CollisionQueryParams.AddIgnoredActor(this);
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionQueryParams);
+	if (HitResult.GetActor() && HitResult.GetActor()->GetClass()->ImplementsInterface(
+		UDBD_Interface_Gimmick::StaticClass()))
+	{
+		NearGimmick = HitResult.GetActor();
+	}
+	else
+	{
+		NearGimmick = nullptr;
+	}
+}
+
+void AKiller::ShowInteractionUI()
+{
+	// 기믹이 유효한 경우
+	if (NearGimmick)
+	{
+		// 기믹의 이름이 Pallet 인 경우
+		if (NearGimmick->GetGimmickName() == "Pallet")
+		{
+			// 판자가 쓰러져 있는 경우
+			auto* Pallet = Cast<APallet>(NearGimmick.GetObject());
+			if (Pallet->bIsFallen)
+			{
+				SetInteractionUI(true, Pallet->GetGimmickName(), Pallet->GetInteractKey());
+			}
+		}
+		// 기믹의 이름이 Hanger 인 경우
+		else if (NearGimmick->GetGimmickName() == "Hanger")
+		{
+			// 지금 들고 있는 생존자가 있는 경우
+			if (CarriedSurvivor)
+			{
+				SetInteractionUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+			}
+		}
+		// 기믹의 이름이 Window 인 경우
+		else if (NearGimmick->GetGimmickName() == "Window")
+		{
+			SetInteractionUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+		}
+	}
+	// 기믹이 유요하지 않고, 근처에 빈사 상태 생존자가 있는 경우
+	else if (NearSurvivor)
+	{
+		// 빈사 상태인가요?
+		if (NearSurvivor->GetSurvivorState() == ESurvivorState::Hp1)
+		{
+			SetInteractionUI(true, TEXT("Carry Survivor"), TEXT("Space"));
+		}
+	}
+	else
+	{
+		SetInteractionUI(false, TEXT(""), TEXT(""));
+	}
+}
+
+void AKiller::SetInteractionUI(bool IsVisible, FString Name, FString Key)
+{
+	if (InteractionUI)
+	{
+		InteractionUI->SetVisibility(IsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+		InteractionUI->SetGimmickName(Name);
+		InteractionUI->SetInteractKey(Key);
+	}
 }
 
 void AKiller::Debug()
@@ -199,7 +298,7 @@ void AKiller::HangSurvivorOnHook()
 	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
 	if (!Hanger)
 		return;
-	
+
 	if (CarriedSurvivor && Hanger)
 	{
 		PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));

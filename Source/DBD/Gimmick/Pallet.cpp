@@ -77,20 +77,13 @@ void APallet::Interaction(AActor* Caller)
 	{
 		if (AKiller* Killer = Cast<AKiller>(Caller))
 		{
-			// killer 가 판자를 바라볼 때 판자를 부슬 수 있다
-			FVector KillerForward = Killer->GetActorForwardVector();
-			FVector KillertoPallet = GetActorLocation() - Killer->GetActorLocation();
-			KillertoPallet.Normalize();
-			// 두 백터의 내적이 0.5 이상이면 판자를 부술 수 있다 (30도 이내)
-			if (FVector::DotProduct(KillerForward, KillertoPallet) > 0.86602540378f)
-				Killer->DestroyPallet();
+			Killer->DestroyPallet();
 		}
 		else
 		{
 			// ue_log killer
 			UE_LOG(LogTemp, Error, TEXT("APallet::Interaction - Failed to cast AKiller"));
 		}
-		return;
 	}
 }
 

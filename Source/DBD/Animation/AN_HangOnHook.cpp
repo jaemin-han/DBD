@@ -22,5 +22,6 @@ void UAN_HangOnHook::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase*
 	CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
 	CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	CarriedSurvivor = nullptr;
+	// 살인마 클래스의 CarriedSurvivor 변수를 nullptr로 초기화
+	Killer->CarriedSurvivor = nullptr;
 }

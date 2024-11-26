@@ -24,11 +24,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* DropDownSurvivorAction;
-	
-private:
-	// attack montage
-	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
-	UAnimMontage* KillerMontage;
 
 	// weapon static mesh component
 	UPROPERTY(EditAnywhere, Category = Weapon, meta = (AllowPrivate))
@@ -57,10 +52,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
+	// 근처에 있는 생존자를 가져오는 함수
+	void GetNearSurvivor();
+	// 전방에 있는 기믹을 가져오는 함수
 	void GetNearGimmick();
-	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
-
+	void ShowInteractionUI();
+	void SetInteractionUI(bool IsVisible, FString Name, FString Key);
 	void Debug();
 	// 판자에 맞았을 때 발동되는 함수
 	void Stun();
@@ -76,15 +73,27 @@ public:
 	UFUNCTION()
 	void HangSurvivorOnHook();
 
+public:
+	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
+	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 	// 가까이에 있는 생존자
 	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* NearSurvivor;
 	// 옮기고 있는 생존자
 	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* CarriedSurvivor;
-
+	// 생존자가 부착될 소켓
 	FName CarrySocketName = "CarrySocket";
-
-public:
+	// 킬러가 스턴 상태인가요?
 	bool bStunned = false;
+
+private:
+	// attack montage
+	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
+	UAnimMontage* KillerMontage;
+	// InteractionUI 추가
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class UInteractionUI> InteractionUIClass; // 이후 플레이 UI가 추가된다면 InteractionUI 클래스로 변경
+	UPROPERTY()
+	class UInteractionUI* InteractionUI;
 };
