@@ -54,10 +54,12 @@ void ADBD_Player::Tick(float DeltaTime)
 	Interaction();
 	GetNearPallet();
 
-	if (IsParkour)
-	{
-		MoveAlongQuadraticBezier(DeltaTime);
-	}
+	// 살인자에서 추가해줘야하는 부분
+	//if (bIsParkour)
+	//{
+	//	FMoveAlongQuadraticBezier(DeltaTime);
+	//	//MoveAlongQuadraticBezier(DeltaTime);
+	//}
 	
 	if (Gimmick)
 	{
@@ -137,9 +139,6 @@ void ADBD_Player::Interaction()
 				{
 					gimmick->Interaction(); // 게이지 UI 생성 함수
 					IsSkillCheckZone = true;
-					if (IsSkillCheckZone)
-					{
-					}
 				}
 				else
 				{
@@ -151,15 +150,26 @@ void ADBD_Player::Interaction()
 			else if (gimmick->GetGimmickName() == TEXT("Windows"))
 			{
 				UE_LOG(LogTemp, Warning, TEXT(" Windows"));
-				IsReachWindows =  true;
-				AWindows* window = Cast<AWindows>(gimmick);
-				float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+				
+				// 이부분은 추후에 Character클래스에서 호출해주는 방식으로 변경 가능성 있음
+				// 살인자에 추가할 부분
+				bIsSearchWindows = true;
+				SetBezierPoint(gimmick);
 
-				// 3차 베지에 곡선 계산
-				P0 = GetActorLocation();
-				P1 = P0 + GetActorUpVector() * 120.0f;
-				P2 = P1 + GetActorForwardVector() * dist * 2;
-				P3 = P0 + GetActorForwardVector() * dist * 2;
+				//IsReachWindows =  true;
+				//
+				//AWindows* window = Cast<AWindows>(gimmick);
+				//float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+				//
+				//if (IsParkour)
+				//{
+				//	// 3차 베지에 곡선 계산
+				//	P0 = GetActorLocation();
+				//	P1 = P0 + GetActorUpVector() * 120.0f;
+				//	P2 = P1 + GetActorForwardVector() * dist * 2;
+				//	P3 = P0 + GetActorForwardVector() * dist * 2;
+				//}
+
 
 				
 				Gimmick = gimmick;
@@ -343,6 +353,7 @@ void ADBD_Player::ParkourFinish()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
 	StopAnimMontage(StateMontage);
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
 
 void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)

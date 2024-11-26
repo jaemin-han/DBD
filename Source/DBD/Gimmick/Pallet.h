@@ -45,8 +45,8 @@ public:
 
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
-	virtual FString GetGimmickName() override;
-	virtual FString GetInteractKey() override;
+	FORCEINLINE virtual FString GetGimmickName() override;
+	FORCEINLINE virtual FString GetInteractKey() override;
 	
 
 	// board 가 이미 넘어진 상태인가

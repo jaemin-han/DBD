@@ -12,6 +12,10 @@
 #include "InputActionValue.h"
 #include "GameMode/DBDGameMode.h"
 
+#include "Gimmick/DBD_Interface_Gimmick.h"
+#include "Animation/AnimInstance.h"
+#include "Gimmick/Windows.h"
+
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
@@ -62,6 +66,65 @@ void ADBDCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ADBDCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (bIsParkour)
+	{
+		FMoveAlongQuadraticBezier(DeltaTime);
+	}
+}
+
+void ADBDCharacter::SetBezierPoint(class IDBD_Interface_Gimmick* gimmick)
+{
+	if (AWindows* window = Cast<AWindows>(gimmick))
+	{
+		float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
+		vP0 = GetActorLocation();
+		vP1 = vP0 + GetActorUpVector() * 120.0f;
+		vP2 = vP1 + GetActorForwardVector() * dist * 2;
+		vP3 = vP0 + GetActorForwardVector() * dist * 2;
+	}
+
+}
+
+FVector ADBDCharacter::FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3)
+{
+	float oneMinusT = 1.0f - t;
+	FVector result = oneMinusT * oneMinusT * oneMinusT * p0 +
+		3 * oneMinusT * oneMinusT * t * p1 +
+		3 * oneMinusT * t * t * p2 +
+		t * t * t * p3;
+
+	return result;
+}
+
+void ADBDCharacter::FMoveAlongQuadraticBezier(float DeltaTime)
+{
+	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
+	static float time = 0.0f;
+	time += DeltaTime;
+
+
+	// 2차 베지에 곡선 계산
+	// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
+	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
+
+	// 3차 베지에 곡선 계산
+	float t = FMath::Clamp(time, 0.0f, 1.0f);
+	FVector newPos = FCalculateBezierPoint(t, vP0, vP1, vP2, vP3);
+
+	SetActorLocation(newPos);
+	if (t >= 1.0f)
+	{
+		time = 0.0f;
+		bIsParkour = false;
+		return;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -88,6 +151,8 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 		// Change Character
 		EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this, &ADBDCharacter::ChangeCharacter);
+
+		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &ADBDCharacter::ParkourFunc);
 	}
 	else
 	{
@@ -132,6 +197,26 @@ void ADBDCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ADBDCharacter::ParkourFunc()
+{
+	if (not bIsSearchWindows) return;
+	if (bIsPushKey) return;
+
+	//UE_LOG(LogTemp, Warning, TEXT("Parkour"));
+	PlayAnimMontage(ParkourMontage, 1.f, TEXT("Parkour"));
+	bIsSearchWindows = false;
+	bIsParkour = true;
+	GetCharacterMovement()->DisableMovement();
+	bIsPushKey = true;
+}
+
+void ADBDCharacter::FinishParkourFunc()
+{
+	StopAnimMontage(ParkourMontage);
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	bIsPushKey = false;
 }
 
 void ADBDCharacter::ChangeCharacter()

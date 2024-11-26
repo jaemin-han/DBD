@@ -42,8 +42,40 @@ class ADBDCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ChangeCharacterAction;
 
+
+protected:
+	/** Parkour Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ParkourInputAction;
+
+	// 파쿠르 몽타주
+	UPROPERTY(EditAnywhere)
+	class UAnimMontage* ParkourMontage;
+
+	// 파쿠르 제어 변수 (각 생존자와 살인마 클래스 내에서 사용)
+	bool bIsSearchWindows = false;			// 창문을 찾았니? -> 창문을 찾았으면 : 베지에 곡선 좌표 설정 
+	bool bIsInteractWindows = false;		// 창문과 상호작용 했니? -> 했으면 : 파쿠르 애니메이션 실행
+	bool bIsPushKey = false;				// 키를 눌렀니? -> 했으면 : 파쿠르 애니메이션 실행
+	bool bIsParkour = false;				// 파쿠르 가능하니?
+
+	// 베지에 곡선 좌표 변수 P0 : 시작점, P1 : 제어점1, P2 : 제어점2, P3 : 끝점
+	FVector vP0;
+	FVector vP1;
+	FVector vP2;
+	FVector vP3;
+
+	void ParkourFunc();
+
+	// 베지에 곡선을 활용한 파쿠르 애니메이션 만들기
+
+	void SetBezierPoint(class IDBD_Interface_Gimmick* gimmick);
+	FVector FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3);
+	void FMoveAlongQuadraticBezier(float DeltaTime);
+
 public:
 	ADBDCharacter();
+
+	void FinishParkourFunc();
 
 protected:
 	/** Follow camera */
@@ -55,6 +87,7 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
 
 	
 	// todo: proto type 에서만 사용할 함수s
@@ -68,9 +101,16 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	virtual void Tick(float DeltaTime) override;
+
+
+
+
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
 };
