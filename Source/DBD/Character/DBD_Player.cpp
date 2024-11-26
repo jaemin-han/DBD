@@ -61,11 +61,11 @@ void ADBD_Player::Tick(float DeltaTime)
 	
 	if (Gimmick)
 	{
-		VisibleMainUI(true, Gimmick->GetGimmickName());
+		VisibleMainUI(true, Gimmick->GetGimmickName(), Gimmick->GetInteractKey());
 	}
 	else
 	{
-		VisibleMainUI(false, TEXT(""));
+		VisibleMainUI(false, TEXT(""), TEXT(""));
 	}
 }
 
@@ -351,12 +351,13 @@ void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
 	ChangePlayerAnimation();
 }
 
-void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name)
+void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
 {
 	if (MainUI)
 	{
 		MainUI->SetVisibility(IsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 		MainUI->SetGimmickName(Name);
+		MainUI->SetInteractKey(Key);
 	}
 }
 

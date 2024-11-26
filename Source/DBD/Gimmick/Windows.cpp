@@ -50,3 +50,8 @@ FString AWindows::GetGimmickName()
 	return Name;
 }
 
+FString AWindows::GetInteractKey()
+{
+	return InteractKey;
+}
+

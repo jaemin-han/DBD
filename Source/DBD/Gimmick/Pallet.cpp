@@ -103,6 +103,11 @@ FString APallet::GetGimmickName()
 	return Name;
 }
 
+FString APallet::GetInteractKey()
+{
+	return InteractKey;
+}
+
 void APallet::PalletFall()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Pallet Interaction"));

@@ -31,6 +31,7 @@ public:
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
 	virtual FString GetGimmickName() override;
+	virtual FString GetInteractKey() override;
 
 	void UpdateRoundGauge();
 
@@ -56,4 +57,5 @@ private:
 	bool IsActivatedSkillCheckZone = false;
 
 	FString Name = TEXT("Generator");
+	FString InteractKey = TEXT("LBM");
 };

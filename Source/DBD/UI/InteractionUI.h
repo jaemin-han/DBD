@@ -15,12 +15,12 @@ class DBD_API UInteractionUI : public UUserWidget
 	GENERATED_BODY()
 public:
 	void SetGimmickName(FString string);
-
+	void SetInteractKey(FString string);
 
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* GimmickName;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* InteractionKey;
+	class UTextBlock* InteractKey;
 };

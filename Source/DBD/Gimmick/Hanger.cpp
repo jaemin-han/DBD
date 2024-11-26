@@ -49,3 +49,8 @@ FString AHanger::GetGimmickName()
 {
 	return Name;
 }
+
+FString AHanger::GetInteractKey()
+{
+	return InteractKey;
+}

@@ -28,6 +28,7 @@ public:
 	virtual void Interaction(AActor* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
 	virtual FString GetGimmickName() override;
+	virtual FString GetInteractKey() override;
 
 	void OpenExitDoor();
 
@@ -55,6 +56,7 @@ private:
 	class UExitGaugeUI* ExitGaugeUI;
 	
 	FString Name = TEXT("Door");
+	FString InteractKey = TEXT("Space");
 
 	// 문 활성화 상태판단 여부
 	UPROPERTY(EditAnywhere, Category = "Door")

@@ -95,6 +95,11 @@ FString ADoor::GetGimmickName()
 	return Name;
 }
 
+FString ADoor::GetInteractKey()
+{
+	return InteractKey;
+}
+
 void ADoor::OpenExitDoor()
 {
 	if (not IsDoorActivated) return;

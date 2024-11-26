@@ -94,7 +94,7 @@ public:
 	// 다른 클래스에서도 사용할 수 있도록
 	void ChangeSurvivorState(ESurvivorState survivorState);
 
-	void VisibleMainUI(bool IsVisible, FString Name);
+	void VisibleMainUI(bool IsVisible, FString Name, FString Key);
 
 
 	// PlayerStatr Get함수

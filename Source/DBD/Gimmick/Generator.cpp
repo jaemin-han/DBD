@@ -93,6 +93,11 @@ FString AGenerator::GetGimmickName()
 	return Name;
 }
 
+FString AGenerator::GetInteractKey()
+{
+	return InteractKey;
+}
+
 void AGenerator::UpdateRoundGauge()
 {
 	if (IsRoundGauge)
