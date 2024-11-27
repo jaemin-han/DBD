@@ -12,6 +12,7 @@
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Gimmick/Hanger.h"
 #include "Gimmick/Pallet.h"
+#include "Net/UnrealNetwork.h"
 #include "UI/InteractionUI.h"
 
 
@@ -83,6 +84,14 @@ void AKiller::BeginPlay()
 	{
 		AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
 	}
+	// SetActorTickEnabled(false);
+}
+
+void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AKiller, NearSurvivor);
 }
 
 void AKiller::Attack()
@@ -111,6 +120,9 @@ void AKiller::MulticastRPC_Attack_Implementation()
 // Called every frame
 void AKiller::Tick(float DeltaTime)
 {
+	if (!IsLocallyControlled())
+		return;
+	
 	Super::Tick(DeltaTime);
 
 	GetNearSurvivor();
@@ -135,9 +147,10 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	// InteractionAction 에 대한 바인딩 추가
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);
-	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::CarrySurvivor);
+	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this,
+	                                   &AKiller::ServerRPC_CarrySurvivor);
 	EnhancedInputComponent->BindAction(DropDownSurvivorAction, ETriggerEvent::Started, this,
-	                                   &AKiller::DropDownSurvivor);
+	                                   &AKiller::ServerRPC_DropDownSurvivor);
 }
 
 void AKiller::GetNearSurvivor()
@@ -278,30 +291,40 @@ void AKiller::CarrySurvivor()
 	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
 	if (NearSurvivor && NearSurvivor->GetHealth() == 1 && CarriedSurvivor == nullptr)
 	{
-		/*
-		*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
-		*	예를 들어 생존자의 상태를 enum으로 관리하고, 해당 상태에 따라 애니메이션을 변경하도록 하는 방식
-		*	이 함수를 진행하면 생존자의 상태를 업힘? 으로 변경하고 
-		*/
-
-		// todo: 생존자 상태 변경
-		NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
-
-		CarriedSurvivor = NearSurvivor;
-		CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
-		                                   CarrySocketName);
-
-		// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 끔
-		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
-		if (PrimitiveComponent && SkeletalMeshComponent)
-		{
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-		// 생존자의 CharacterMovementComponent 의 MovementMode 를 None 으로 변경
-		CarriedSurvivor->GetCharacterMovement()->DisableMovement();
+		MulticastRPC_CarrySurvivor();
 	}
+}
+
+void AKiller::ServerRPC_CarrySurvivor_Implementation()
+{
+	CarrySurvivor();
+}
+
+void AKiller::MulticastRPC_CarrySurvivor_Implementation()
+{
+/*
+*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
+*	예를 들어 생존자의 상태를 enum으로 관리하고, 해당 상태에 따라 애니메이션을 변경하도록 하는 방식
+*	이 함수를 진행하면 생존자의 상태를 업힘? 으로 변경하고 
+*/
+
+	// todo: 생존자 상태 변경
+	NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
+
+	CarriedSurvivor = NearSurvivor;
+	CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
+	                                   CarrySocketName);
+
+	// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 끔
+	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+	USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
+	if (PrimitiveComponent && SkeletalMeshComponent)
+	{
+		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	// 생존자의 CharacterMovementComponent 의 MovementMode 를 None 으로 변경
+	CarriedSurvivor->GetCharacterMovement()->DisableMovement();
 }
 
 void AKiller::DropDownSurvivor()
@@ -310,20 +333,30 @@ void AKiller::DropDownSurvivor()
 	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
 	if (CarriedSurvivor)
 	{
-		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
-		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
-		if (PrimitiveComponent && SkeletalMeshComponent)
-		{
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		}
-		// 생존자의 CharacterMovementComponent 의 MovementMode 를 Walking 으로 변경
-		CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hp1);
-		CarriedSurvivor = nullptr;
+		MulticastRPC_DropDownSurvivor();
 	}
+}
+
+void AKiller::ServerRPC_DropDownSurvivor_Implementation()
+{
+	DropDownSurvivor();
+}
+
+void AKiller::MulticastRPC_DropDownSurvivor_Implementation()
+{
+	CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
+	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+	USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
+	if (PrimitiveComponent && SkeletalMeshComponent)
+	{
+		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	// 생존자의 CharacterMovementComponent 의 MovementMode 를 Walking 으로 변경
+	CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hp1);
+	CarriedSurvivor = nullptr;
 }
 
 void AKiller::HangSurvivorOnHook()
@@ -335,7 +368,7 @@ void AKiller::HangSurvivorOnHook()
 
 	if (CarriedSurvivor && Hanger)
 	{
-		PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
+		ServerRPC_HangSurvivorOnHook();
 
 		// AN_HangOnHook.cpp 에서 처리하도록 수정
 		// CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
@@ -343,4 +376,14 @@ void AKiller::HangSurvivorOnHook()
 		// CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
 		// CarriedSurvivor = nullptr;
 	}
+}
+
+void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()
+{
+	MulticastRPC_HangSurvivorOnHook();
+}
+
+void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()
+{
+	PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
 }

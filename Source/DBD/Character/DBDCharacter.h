@@ -82,6 +82,7 @@ public:
 	UFUNCTION()
 	void OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UPROPERTY(Replicated)
 	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 
 protected:
@@ -103,6 +104,8 @@ protected:
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// To add mapping context
 	virtual void BeginPlay();

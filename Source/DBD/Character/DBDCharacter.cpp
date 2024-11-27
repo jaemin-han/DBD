@@ -15,6 +15,7 @@
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Animation/AnimInstance.h"
 #include "Gimmick/Windows.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -164,6 +165,13 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 			       "'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."
 		       ), *GetNameSafe(this));
 	}
+}
+
+void ADBDCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ADBDCharacter, NearGimmick);
 }
 
 void ADBDCharacter::Move(const FInputActionValue& Value)

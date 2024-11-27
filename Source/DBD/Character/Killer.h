@@ -41,6 +41,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	// attack function
 	void Attack();
 	// server attack function
@@ -75,17 +77,38 @@ public:
 
 	// 체력이 0인 생존자를 들처매는 함수
 	void CarrySurvivor();
+	// server RPC for carry survivor
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_CarrySurvivor();
+	// multicast RPC for carry survivor
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_CarrySurvivor();
+	
 	void DropDownSurvivor();
+	// server RPC for drop down survivor
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_DropDownSurvivor();
+	// multicast RPC for drop down survivor
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_DropDownSurvivor();
+
 
 	// 옮기고 있는 생존자를 갈고리에 거는 함수
 	UFUNCTION()
 	void HangSurvivorOnHook();
+	// server RPC for hang survivor on hook
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HangSurvivorOnHook();
+	// multicast RPC for hang survivor on hook
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_HangSurvivorOnHook();
+	
 
 public:
 	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
 	// TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 	// 가까이에 있는 생존자
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	class ADBD_Player* NearSurvivor;
 	// 옮기고 있는 생존자
 	UPROPERTY(VisibleAnywhere)
