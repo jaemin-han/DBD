@@ -149,9 +149,10 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADBDCharacter::Look);
 
-		// Change Character
-		EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this,
-		                                   &ADBDCharacter::ChangeCharacter);
+		// todo: proto type 에서만 사용할 함수
+		// // Change Character
+		// EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this,
+		//                                    &ADBDCharacter::ChangeCharacter);
 
 		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this,
 		                                   &ADBDCharacter::ParkourFunc);
@@ -233,11 +234,11 @@ void ADBDCharacter::OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	}
 }
 
-void ADBDCharacter::ChangeCharacter()
-{
-	// 본인이 Survivor일 경우 Killer로, Killer일 경우 Survivor로 변경
-	if (ADBDGameMode* GameMode = Cast<ADBDGameMode>(GetWorld()->GetAuthGameMode()))
-	{
-		GameMode->ChangeCharacter();
-	}
-}
+// void ADBDCharacter::ChangeCharacter()
+// {
+// 	// 본인이 Survivor일 경우 Killer로, Killer일 경우 Survivor로 변경
+// 	if (ADBDGameMode* GameMode = Cast<ADBDGameMode>(GetWorld()->GetAuthGameMode()))
+// 	{
+// 		GameMode->ChangeCharacter();
+// 	}
+// }

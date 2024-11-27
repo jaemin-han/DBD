@@ -23,6 +23,11 @@ ADBD_Player::ADBD_Player()
 	SearchGimmickSphere->SetupAttachment(RootComponent);
 }
 
+void ADBD_Player::ServerRPC_UpdateHP_Implementation(int32 Damage)
+{
+	UpdateHP(Damage);
+}
+
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
@@ -450,6 +455,11 @@ void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 }
 
 void ADBD_Player::UpdateHP(int32 Value)
+{
+	MulticastRPC_UpdateHP(Value);
+}
+
+void ADBD_Player::MulticastRPC_UpdateHP_Implementation(int32 Value)
 {
 	// Value : Damage or Heal
 	Health -= Value;

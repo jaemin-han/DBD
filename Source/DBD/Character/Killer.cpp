@@ -93,9 +93,19 @@ void AKiller::Attack()
 	// 파쿠르 중이 아닐 때 && 공격 중이 아닐 때에만 공격 가능
 	if (!bIsParkour && !bIsAttacking)
 	{
-		bIsAttacking = true;
-		PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
+		MulticastRPC_Attack();
 	}
+}
+
+void AKiller::ServerRPC_Attack_Implementation()
+{
+	Attack();
+}
+
+void AKiller::MulticastRPC_Attack_Implementation()
+{
+	bIsAttacking = true;
+	PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
 }
 
 // Called every frame
@@ -121,7 +131,7 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	// bind attack action
-	EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKiller::Attack);
+	EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKiller::ServerRPC_Attack);
 
 	// InteractionAction 에 대한 바인딩 추가
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);

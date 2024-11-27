@@ -77,6 +77,10 @@ protected:
 public:
 	ADBD_Player();
 	// 생존자의 HP 업데이트 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_UpdateHP(int32 Damage);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateHP(int32 Damage);
 	void UpdateHP(int32 Damage);
 	void UpdateSpeed();
 	void ParkourFinish();

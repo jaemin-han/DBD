@@ -43,6 +43,12 @@ protected:
 
 	// attack function
 	void Attack();
+	// server attack function
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Attack();
+	// multicast attack function
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Attack();
 
 	virtual bool IsAttacking() const override { return bIsAttacking; };
 

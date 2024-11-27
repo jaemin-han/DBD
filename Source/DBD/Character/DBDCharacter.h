@@ -98,7 +98,7 @@ protected:
 
 	// todo: proto type 에서만 사용할 함수
 	/** Called for changing character input */
-	void ChangeCharacter();
+	// void ChangeCharacter();
 
 protected:
 	// APawn interface

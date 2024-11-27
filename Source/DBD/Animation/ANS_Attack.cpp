@@ -8,6 +8,10 @@
 void UANS_Attack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime,
                              const FAnimNotifyEventReference& EventReference)
 {
+	// server 에서만 실행되도록 설정
+	if (!MeshComp->GetOwner()->HasAuthority())
+		return;
+
 	// 이미 공격이 발생했었으면 더 이상 공격을 처리하지 않음
 	if (bHasValidHitOccurred)
 		return;
@@ -28,6 +32,8 @@ void UANS_Attack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase*
 
 FHitResult UANS_Attack::PerformSphereTrace(USkeletalMeshComponent* MeshComp)
 {
+
+	
 	if (!MeshComp || !MeshComp->GetOwner())
 		return FHitResult();
 
