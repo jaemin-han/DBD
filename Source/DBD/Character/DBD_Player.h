@@ -84,6 +84,13 @@ protected:
 /** 상호작용 함수 */
 protected:
 	void Interaction();														// 플레이어와 기믹이 충돌할때 발생하는 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Interaction();											// 플레이어와 기믹이 충돌할때 발생하는 서버 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Interaction();										// 플레이어와 기믹이 충돌할때 발생하는 멀티캐스트 함수
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_Interaction();											// 플레이어와 기믹이 충돌할때 발생하는 클라이언트 함수
+
 	void GetNearPallet();													// 플레이어와 판자가 충돌할때 발생하는 함수
 	
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;		// 플레이어와 액터가 충돌할때 발생하는 함수들

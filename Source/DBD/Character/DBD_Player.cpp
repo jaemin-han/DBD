@@ -409,6 +409,9 @@ void ADBD_Player::ReleasedGeneratorSkillCheck()
 // 라인트레이스를 활용한 상호작용 함수
 void ADBD_Player::Interaction()
 {
+	// 서버에서만 실행되게 설정
+	ServerRPC_Interaction();
+	/*
 	FVector startPos = GetActorLocation();
 	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
 
@@ -452,6 +455,140 @@ void ADBD_Player::Interaction()
 				// 살인자에 추가할 부분
 				bIsSearchWindows = true;
 				SetBezierPoint(gimmick);
+				//ClientRPC_SetBezierPoint(gimmick);
+
+
+				Gimmick = gimmick;
+			}
+			// HitActor가 Board라면
+			// HitActor가 출구라면
+		}
+	}
+	else
+	{
+		IsFindGenerator = false;
+		bIsSearchWindows = true;
+		IsInteractGenerator = false;
+		if (not IsOverlapDoor) Gimmick = nullptr;
+	}
+
+	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);*/
+}
+void ADBD_Player::ServerRPC_Interaction_Implementation()
+{
+	//MulticastRPC_Interaction();
+	ClientRPC_Interaction();
+}
+void ADBD_Player::MulticastRPC_Interaction_Implementation()
+{
+	FVector startPos = GetActorLocation();
+	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
+
+	FHitResult hitResult;
+	FCollisionQueryParams collisionParams;
+	collisionParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
+	if (bHit)
+	{
+		if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
+		{
+			// HitActor가 Generator라면
+			// 이후 변경 (각각 NameOrLabel로 찾는 거를 어떻게 더 효율적으로 변경할수있을지 생각)
+			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator")
+				or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator2")
+				or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator3")
+				or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator4"))
+			{
+				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
+				IsFindGenerator = true;
+				Gimmick = gimmick;
+
+				if (IsInteractGenerator)
+				{
+					gimmick->Interaction(); // 게이지 UI 생성 함수
+					IsSkillCheckZone = true;
+				}
+				else
+				{
+					gimmick->FailedInteraction(); // 게이지 UI 제거 함수
+					IsSpaceBar = false;
+				}
+			}
+			// HitActor가 Windows라면
+			else if (gimmick->GetGimmickName() == TEXT("Windows"))
+			{
+				UE_LOG(LogTemp, Warning, TEXT(" Windows"));
+
+				// 이부분은 추후에 Character클래스에서 호출해주는 방식으로 변경 가능성 있음
+				// 살인자에 추가할 부분
+				bIsSearchWindows = true;
+				SetBezierPoint(gimmick);
+				//ClientRPC_SetBezierPoint(gimmick);
+
+
+				Gimmick = gimmick;
+			}
+			// HitActor가 Board라면
+			// HitActor가 출구라면
+		}
+	}
+	else
+	{
+		IsFindGenerator = false;
+		bIsSearchWindows = true;
+		IsInteractGenerator = false;
+		if (not IsOverlapDoor) Gimmick = nullptr;
+	}
+
+	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
+}
+void ADBD_Player::ClientRPC_Interaction_Implementation()
+{
+	FVector startPos = GetActorLocation();
+	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
+
+	FHitResult hitResult;
+	FCollisionQueryParams collisionParams;
+	collisionParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
+	if (bHit)
+	{
+		if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
+		{
+			// HitActor가 Generator라면
+			// 이후 변경 (각각 NameOrLabel로 찾는 거를 어떻게 더 효율적으로 변경할수있을지 생각)
+			if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator")
+				or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator2")
+				or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator3")
+				or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator4"))
+			{
+				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
+				IsFindGenerator = true;
+				Gimmick = gimmick;
+
+				if (IsInteractGenerator)
+				{
+					gimmick->Interaction(); // 게이지 UI 생성 함수
+					IsSkillCheckZone = true;
+				}
+				else
+				{
+					gimmick->FailedInteraction(); // 게이지 UI 제거 함수
+					IsSpaceBar = false;
+				}
+			}
+			// HitActor가 Windows라면
+			else if (gimmick->GetGimmickName() == TEXT("Windows"))
+			{
+				UE_LOG(LogTemp, Warning, TEXT(" Windows"));
+
+				// 이부분은 추후에 Character클래스에서 호출해주는 방식으로 변경 가능성 있음
+				// 살인자에 추가할 부분
+				bIsSearchWindows = true;
+				SetBezierPoint(gimmick);
+				//ClientRPC_SetBezierPoint(gimmick);
 
 
 				Gimmick = gimmick;
@@ -501,7 +638,7 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
 	{
-		UE_LOG(LogTemp, Log, TEXT("Gimmick BeginOverlap"));
+		//UE_LOG(LogTemp, Log, TEXT("Gimmick BeginOverlap"));
 		// 만약 OtherActor가 Door라면
 		if (OtherActor->GetActorNameOrLabel() == TEXT("BP_Door2") or OtherActor->GetActorNameOrLabel() == TEXT("BP_Door"))
 		{
@@ -518,7 +655,7 @@ void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 
 	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
 	{
-		UE_LOG(LogTemp, Log, TEXT("Gimmick EndOverlap"));
+		//UE_LOG(LogTemp, Log, TEXT("Gimmick EndOverlap"));
 		// 만약 OtherActor가 Door라면
 		if (OtherActor->GetActorNameOrLabel() == TEXT("BP_Door2") or OtherActor->GetActorNameOrLabel() == TEXT("BP_Door"))
 		{
