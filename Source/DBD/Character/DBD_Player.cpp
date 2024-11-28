@@ -18,6 +18,7 @@
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
 #include "Gimmick/Windows.h"
+#include "Net/UnrealNetwork.h"
 
 /** 기본 상속 함수*/
 // 기본 생성자 함수
@@ -83,6 +84,8 @@ void ADBD_Player::Tick(float DeltaTime)
 void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ADBD_Player, NearPallet);
 
 }
 
@@ -627,7 +630,22 @@ void ADBD_Player::GetNearPallet()
 		if (NewNearPallet)
 			break;
 	}
+	// NewNearPallet 이 유효하면 owner를 나로 설정
+	// NewNearPallet 이 null 이면 기존 NearPallet의 owner를 null로 설정
+	if (NewNearPallet)
+	{
+		NewNearPallet->SetOwner(this);
+	}
+	else
+	{
+		if (NearPallet)
+		{
+			NearPallet->SetOwner(nullptr);
+		}
+	}
+	
 	NearPallet = NewNearPallet;
+		
 
 	// debug NearPallet
 	FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
@@ -731,6 +749,17 @@ void ADBD_Player::UpdateSpeed()
 // 체력에 따른 상태 변경 함수
 void ADBD_Player::UpdateHP(int32 Value)
 {
+	MulticastRPC_UpdateHP(Value);
+
+}
+
+void ADBD_Player::ServerRPC_UpdateHP_Implementation(int32 Damage)
+{
+	UpdateHP(Damage);
+}
+
+void ADBD_Player::MulticastRPC_UpdateHP_Implementation(int32 Value)
+{
 	// Value : Damage or Heal
 	Health -= Value;
 	
@@ -759,6 +788,7 @@ void ADBD_Player::UpdateHP(int32 Value)
 	//FString string = GetDisplayNameTextByIndex(SurvivorState).toString();
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("State : %d"), (int)SurvivorState));
 }
+
 // 상태에 따른 설정 변경 함수
 void ADBD_Player::ChangePlayerAnimation()
 {

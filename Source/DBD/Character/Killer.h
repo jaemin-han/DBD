@@ -70,9 +70,13 @@ public:
 	void SetInteractionUI(bool IsVisible, FString Name, FString Key);
 	void Debug();
 	// 판자에 맞았을 때 발동되는 함수
+	UFUNCTION(NetMulticast, Reliable)
 	void Stun();
 	// 내려진 판자를 부수는 함수
+	UFUNCTION(Server, Reliable)
 	void DestroyPallet();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_DestroyPallet();
 	void Interact();
 
 	// 체력이 0인 생존자를 들처매는 함수

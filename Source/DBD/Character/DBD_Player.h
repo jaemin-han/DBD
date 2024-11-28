@@ -103,7 +103,14 @@ protected:
 protected:
 	void ChangePlayerAnimation();											// 플레이어 애니메이션 변경 함수
 public:
-	void UpdateHP(int32 Damage);											// 플레이어 체력 업데이트 함수	
+	void UpdateHP(int32 Damage);											// 플레이어 체력 업데이트 함수
+	// Server RPC for UpdateHP
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_UpdateHP(int32 Damage);
+	// Multicast RPC for UpdateHP
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateHP(int32 Value);
+	
 	void UpdateSpeed();														// 플레이어 속도 업데이트 함수
 	void ChangeSurvivorState(ESurvivorState survivorState);					// 플레이어 상태 변경 함수
 	void VisibleMainUI(bool IsVisible, FString Name, FString Key);			// 플레이어 상호작용 UI를 보이게 하는 함수(현재는 상호작용UI로)
@@ -205,7 +212,7 @@ private:
 
 
 	// 싱호작용 중인 기믹 저장 변수 - GetNearGimmick 함수에서 할당됨
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	class APallet* NearPallet;								// 가까이 있는 판자 저장 변수
 	class ADoor* Door;										// 출입구 액터 저장 변수
 	class AWindows* Window;									// 창문 액터 저장 변수

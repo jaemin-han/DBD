@@ -39,6 +39,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -50,8 +52,10 @@ public:
 	
 
 	// board 가 이미 넘어진 상태인가
+	UPROPERTY(VisibleAnywhere)
 	bool bIsFallen = false;
 	// 상호작용이 실행되었는가
+	UPROPERTY(Replicated, VisibleAnywhere)
 	bool bIsInteracted = false;
 	// 목표 roll 각도
 	float TargetRoll;
@@ -60,6 +64,15 @@ public:
 
 	UFUNCTION()
 	void PalletFall();
+	// server rpc for pallet fall
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PalletFall();
+	// multicast rpc for pallet fall
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PalletFall(AActor* Actor, FVector Position);
+	// DrawdebugString
+	void DebugOwner();
+	
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void DestroyPallet();
