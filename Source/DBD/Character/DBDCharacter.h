@@ -68,17 +68,45 @@ protected:
 	float ParkourSpeed = 1.0f;
 
 	void ParkourFunc();
+	UFUNCTION(Server, Reliable)
+	void Server_ParkourFunc();
+	// 서버가 베지에 곡선 좌표를 모든 클라이언트에게 전달하는 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ParkourFunc();
+
 
 	// 베지에 곡선을 활용한 파쿠르 애니메이션 만들기
 
-	void SetBezierPoint(class IDBD_Interface_Gimmick* gimmick);
+	void SetBezierPoint();
+	// 서버에게 베지에 곡선 좌표 설정 요청하는 함수
+	UFUNCTION(Server, Reliable)
+	void Server_ReportBezierPoints();
+	// 서버가 베지에 곡선 좌표를 모든 클라이언트에게 전달하는 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_BroadcastBezierPoints();
+
+public:
+	// 파쿠르 애니메이션 종료 함수
+	void FinishParkourFunc();
+
+	UFUNCTION(Server, Reliable)
+	void Server_FinishParkourFunc();
+	// 서버가 베지에 곡선 좌표를 모든 클라이언트에게 전달하는 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_FinishParkourFunc();
+
+
+protected:
 	FVector FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3);
 	void FMoveAlongQuadraticBezier(float DeltaTime);
 
 public:
 	ADBDCharacter();
 
-	void FinishParkourFunc();
+	
+
+
+
 	UFUNCTION()
 	void OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 

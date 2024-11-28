@@ -77,9 +77,23 @@ void ADBDCharacter::Tick(float DeltaTime)
 	}
 }
 
-void ADBDCharacter::SetBezierPoint(class IDBD_Interface_Gimmick* gimmick)
+void ADBDCharacter::SetBezierPoint()
 {
-	if (AWindows* window = Cast<AWindows>(gimmick))
+	if (bIsSearchWindows)
+	{
+		// 서버에게 요청을 보낸 캐릭터가 NearGimmick이 window인지 체크해서 맞다면 모든 클라이언트한테 요청
+		Multicast_BroadcastBezierPoints();
+	}
+}
+
+void ADBDCharacter::Server_ReportBezierPoints_Implementation()
+{
+	SetBezierPoint();
+}
+
+void ADBDCharacter::Multicast_BroadcastBezierPoints_Implementation()
+{
+	if (AWindows* window = Cast<AWindows>(NearGimmick.GetObject()))
 	{
 		float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
 		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
@@ -154,9 +168,7 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		// // Change Character
 		// EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this,
 		//                                    &ADBDCharacter::ChangeCharacter);
-
-		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this,
-		                                   &ADBDCharacter::ParkourFunc);
+		 EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &ADBDCharacter::Server_ParkourFunc);
 	}
 	else
 	{
@@ -214,21 +226,43 @@ void ADBDCharacter::ParkourFunc()
 {
 	if (not bIsSearchWindows) return;
 	if (bIsPushKey) return;
+	if (IsAttacking()) return;
 
-	if (IsAttacking())
-		return;
+	Multicast_ParkourFunc();
+}
 
-	SetBezierPoint(NearGimmick.GetInterface());
+void ADBDCharacter::Server_ParkourFunc_Implementation()
+{
+	ParkourFunc();
+}
 
+void ADBDCharacter::Multicast_ParkourFunc_Implementation()
+{
 	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
-	bIsSearchWindows = false;
+	//bIsSearchWindows = false;
 	bIsParkour = true;
-	GetCharacterMovement()->DisableMovement();
 	bIsPushKey = true;
+	GetCharacterMovement()->DisableMovement();
 }
 
 void ADBDCharacter::FinishParkourFunc()
 {
+	//UE_LOG(LogTemp, Error, TEXT("FinishParkourFunc"));
+	//StopAnimMontage(ParkourMontage);
+	//GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	//bIsPushKey = false;
+
+	Multicast_FinishParkourFunc();
+}
+
+void ADBDCharacter::Server_FinishParkourFunc_Implementation()
+{
+	FinishParkourFunc();
+}
+
+void ADBDCharacter::Multicast_FinishParkourFunc_Implementation()
+{
+	UE_LOG(LogTemp, Error, TEXT("FinishParkourFunc"));
 	StopAnimMontage(ParkourMontage);
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bIsPushKey = false;
