@@ -24,11 +24,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* DropDownSurvivorAction;
-	
-private:
-	// attack montage
-	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
-	UAnimMontage* KillerMontage;
 
 	// weapon static mesh component
 	UPROPERTY(EditAnywhere, Category = Weapon, meta = (AllowPrivate))
@@ -46,8 +41,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	// attack function
 	void Attack();
+	// server attack function
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Attack();
+	// multicast attack function
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Attack();
+
+	virtual bool IsAttacking() const override { return bIsAttacking; };
 
 public:
 	// Called every frame
@@ -57,10 +62,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
+	// 근처에 있는 생존자를 가져오는 함수
+	void GetNearSurvivor();
+	// 전방에 있는 기믹을 가져오는 함수
 	void GetNearGimmick();
-	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
-
+	void ShowInteractionUI();
+	void SetInteractionUI(bool IsVisible, FString Name, FString Key);
 	void Debug();
 	// 판자에 맞았을 때 발동되는 함수
 	void Stun();
@@ -70,21 +77,56 @@ public:
 
 	// 체력이 0인 생존자를 들처매는 함수
 	void CarrySurvivor();
+	// server RPC for carry survivor
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_CarrySurvivor();
+	// multicast RPC for carry survivor
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_CarrySurvivor();
+	
 	void DropDownSurvivor();
+	// server RPC for drop down survivor
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_DropDownSurvivor();
+	// multicast RPC for drop down survivor
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_DropDownSurvivor();
+
 
 	// 옮기고 있는 생존자를 갈고리에 거는 함수
 	UFUNCTION()
 	void HangSurvivorOnHook();
+	// server RPC for hang survivor on hook
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_HangSurvivorOnHook();
+	// multicast RPC for hang survivor on hook
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_HangSurvivorOnHook();
+	
 
+public:
+	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
+	// TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 	// 가까이에 있는 생존자
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	class ADBD_Player* NearSurvivor;
 	// 옮기고 있는 생존자
 	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* CarriedSurvivor;
-
+	// 생존자가 부착될 소켓
 	FName CarrySocketName = "CarrySocket";
-
-public:
+	// 킬러가 스턴 상태인가요?
 	bool bStunned = false;
+	// 킬러가 공격 중인가요?
+	bool bIsAttacking = false;
+
+private:
+	// attack montage
+	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
+	UAnimMontage* KillerMontage;
+	// InteractionUI 추가
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<class UInteractionUI> InteractionUIClass; // 이후 플레이 UI가 추가된다면 InteractionUI 클래스로 변경
+	UPROPERTY()
+	class UInteractionUI* InteractionUI;
 };

@@ -2,16 +2,18 @@
 
 
 #include "Killer.h"
-#include "Killer.h"
 
 #include "DBD_Player.h"
 #include "EnhancedInputComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
-#include "Components/ArrowComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Gimmick/Hanger.h"
+#include "Gimmick/Pallet.h"
+#include "Net/UnrealNetwork.h"
+#include "UI/InteractionUI.h"
 
 
 // Sets default values
@@ -52,6 +54,44 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
+	ParkourSpeed = 0.5f;
+
+	// Interaction UI 생성
+	if (InteractionUIClass)
+	{
+		InteractionUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), InteractionUIClass));
+		if (InteractionUI)
+		{
+			InteractionUI->AddToViewport();
+			UE_LOG(LogTemp, Log, TEXT("InteractionUI Create Success"));
+
+			InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("InteractionUI Create Failed"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("InteractionUIClass is nullptr"));
+	}
+
+	// 파쿠르라 완료되지 않아도 애니메이션이 끝나면 FinishParkourFunc 함수를 호출
+	// 이렇게 하면 넘는 중에 공격 해도 괜찮음
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
+	}
+	// SetActorTickEnabled(false);
+}
+
+void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AKiller, NearSurvivor);
 }
 
 void AKiller::Attack()
@@ -59,17 +99,41 @@ void AKiller::Attack()
 	if (bStunned)
 		return;
 
-	UE_LOG(LogTemp, Display, TEXT("Attack"));
-	// play montage
+	// 파쿠르 중이 아닐 때 && 공격 중이 아닐 때에만 공격 가능
+	if (!bIsParkour && !bIsAttacking)
+	{
+		MulticastRPC_Attack();
+	}
+}
+
+void AKiller::ServerRPC_Attack_Implementation()
+{
+	Attack();
+}
+
+void AKiller::MulticastRPC_Attack_Implementation()
+{
+	bIsAttacking = true;
 	PlayAnimMontage(KillerMontage, 1.0f, FName("Attack"));
 }
 
 // Called every frame
 void AKiller::Tick(float DeltaTime)
 {
+	if (!IsLocallyControlled())
+		return;
+	
 	Super::Tick(DeltaTime);
+
+	GetNearSurvivor();
 	GetNearGimmick();
-	// Debug();
+	Debug();
+
+	// InteractionUI 표시
+	if (InteractionUI)
+	{
+		ShowInteractionUI();
+	}
 }
 
 // Called to bind functionality to input
@@ -79,33 +143,115 @@ void AKiller::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	// bind attack action
-	EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKiller::Attack);
+	EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AKiller::ServerRPC_Attack);
 
 	// InteractionAction 에 대한 바인딩 추가
 	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::Interact);
-	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &AKiller::CarrySurvivor);
+	EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this,
+	                                   &AKiller::ServerRPC_CarrySurvivor);
 	EnhancedInputComponent->BindAction(DropDownSurvivorAction, ETriggerEvent::Started, this,
-	                                   &AKiller::DropDownSurvivor);
+	                                   &AKiller::ServerRPC_DropDownSurvivor);
 }
 
-void AKiller::GetNearGimmick()
+void AKiller::GetNearSurvivor()
 {
 	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
 	TArray<AActor*> OverlappingActors;
 	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
-	AActor* NewNearGimmick = nullptr;
 	ADBD_Player* NewNearSurvivor = nullptr;
+
 	for (AActor* OverlappingActor : OverlappingActors)
 	{
-		if (OverlappingActor->GetClass()->ImplementsInterface(UDBD_Interface_Gimmick::StaticClass()))
-		{
-			NewNearGimmick = OverlappingActor;
-		}
-
 		NewNearSurvivor = Cast<ADBD_Player>(OverlappingActor);
 	}
-	NearGimmick = NewNearGimmick;
 	NearSurvivor = NewNearSurvivor;
+}
+
+void AKiller::GetNearGimmick()
+{
+	// line trace 를 통해 킬러의 전방에 있는 기믹을 찾아 NearGimmick 에 할당
+	FVector Start = GetActorLocation();
+	Start.Z -= 90.0f;
+	FVector End = Start + GetActorForwardVector() * 100.0f;
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionQueryParams;
+	CollisionQueryParams.AddIgnoredActor(this);
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionQueryParams);
+	// debug line trace
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.1f, 0, 1.0f);
+	if (HitResult.GetActor() && HitResult.GetActor()->GetClass()->ImplementsInterface(
+		UDBD_Interface_Gimmick::StaticClass()))
+	{
+		NearGimmick = HitResult.GetActor();
+
+		// todo: 부모에서 bIsSearchWindows 변수를 사용하기 위해 할당, 이후에 부모 클래스로 모두 옮기자
+		if (NearGimmick->GetGimmickName() == "Windows")
+		{
+			bIsSearchWindows = true;
+		}
+	}
+	else
+	{
+		NearGimmick = nullptr;
+
+		bIsSearchWindows = false;
+	}
+}
+
+void AKiller::ShowInteractionUI()
+{
+	// 기믹이 유효한 경우
+	if (NearGimmick)
+	{
+		// 기믹의 이름이 Pallet 인 경우
+		if (NearGimmick->GetGimmickName() == "Pallet")
+		{
+			// 판자가 쓰러져 있는 경우
+			auto* Pallet = Cast<APallet>(NearGimmick.GetObject());
+			if (Pallet->bIsFallen)
+			{
+				SetInteractionUI(true, Pallet->GetGimmickName(), Pallet->GetInteractKey());
+			}
+		}
+		// 기믹의 이름이 Hanger 인 경우
+		else if (NearGimmick->GetGimmickName() == "Hanger")
+		{
+			// 지금 들고 있는 생존자가 있는 경우
+			if (CarriedSurvivor)
+			{
+				SetInteractionUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+			}
+		}
+		// 기믹의 이름이 Window 인 경우
+		else if (NearGimmick->GetGimmickName() == "Window")
+		{
+			SetInteractionUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+		}
+	}
+	// 기믹이 유요하지 않고, 근처에 빈사 상태 생존자가 있는 경우
+	else if (NearSurvivor)
+	{
+		// 빈사 상태인가요?
+		if (NearSurvivor->GetSurvivorState() == ESurvivorState::Hp1)
+		{
+			SetInteractionUI(true, TEXT("Carry Survivor"), TEXT("Space"));
+		}
+	}
+	else
+	{
+		SetInteractionUI(false, TEXT(""), TEXT(""));
+	}
+}
+
+void AKiller::SetInteractionUI(bool IsVisible, FString Name, FString Key)
+{
+	if (InteractionUI)
+	{
+		InteractionUI->SetVisibility(IsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+		InteractionUI->SetGimmickName(Name);
+		InteractionUI->SetInteractKey(Key);
+	}
 }
 
 void AKiller::Debug()
@@ -145,30 +291,40 @@ void AKiller::CarrySurvivor()
 	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
 	if (NearSurvivor && NearSurvivor->GetHealth() == 1 && CarriedSurvivor == nullptr)
 	{
-		/*
-		*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
-		*	예를 들어 생존자의 상태를 enum으로 관리하고, 해당 상태에 따라 애니메이션을 변경하도록 하는 방식
-		*	이 함수를 진행하면 생존자의 상태를 업힘? 으로 변경하고 
-		*/
-
-		// todo: 생존자 상태 변경
-		NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
-
-		CarriedSurvivor = NearSurvivor;
-		CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
-		                                   CarrySocketName);
-
-		// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 끔
-		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
-		if (PrimitiveComponent && SkeletalMeshComponent)
-		{
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-		// 생존자의 CharacterMovementComponent 의 MovementMode 를 None 으로 변경
-		CarriedSurvivor->GetCharacterMovement()->DisableMovement();
+		MulticastRPC_CarrySurvivor();
 	}
+}
+
+void AKiller::ServerRPC_CarrySurvivor_Implementation()
+{
+	CarrySurvivor();
+}
+
+void AKiller::MulticastRPC_CarrySurvivor_Implementation()
+{
+/*
+*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
+*	예를 들어 생존자의 상태를 enum으로 관리하고, 해당 상태에 따라 애니메이션을 변경하도록 하는 방식
+*	이 함수를 진행하면 생존자의 상태를 업힘? 으로 변경하고 
+*/
+
+	// todo: 생존자 상태 변경
+	NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
+
+	CarriedSurvivor = NearSurvivor;
+	CarriedSurvivor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale,
+	                                   CarrySocketName);
+
+	// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 끔
+	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+	USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
+	if (PrimitiveComponent && SkeletalMeshComponent)
+	{
+		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	// 생존자의 CharacterMovementComponent 의 MovementMode 를 None 으로 변경
+	CarriedSurvivor->GetCharacterMovement()->DisableMovement();
 }
 
 void AKiller::DropDownSurvivor()
@@ -177,20 +333,30 @@ void AKiller::DropDownSurvivor()
 	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
 	if (CarriedSurvivor)
 	{
-		CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
-		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
-		USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
-		if (PrimitiveComponent && SkeletalMeshComponent)
-		{
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		}
-		// 생존자의 CharacterMovementComponent 의 MovementMode 를 Walking 으로 변경
-		CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hp1);
-		CarriedSurvivor = nullptr;
+		MulticastRPC_DropDownSurvivor();
 	}
+}
+
+void AKiller::ServerRPC_DropDownSurvivor_Implementation()
+{
+	DropDownSurvivor();
+}
+
+void AKiller::MulticastRPC_DropDownSurvivor_Implementation()
+{
+	CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
+	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
+	USkeletalMeshComponent* SkeletalMeshComponent = CarriedSurvivor->GetMesh();
+	if (PrimitiveComponent && SkeletalMeshComponent)
+	{
+		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	// 생존자의 CharacterMovementComponent 의 MovementMode 를 Walking 으로 변경
+	CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hp1);
+	CarriedSurvivor = nullptr;
 }
 
 void AKiller::HangSurvivorOnHook()
@@ -199,10 +365,10 @@ void AKiller::HangSurvivorOnHook()
 	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
 	if (!Hanger)
 		return;
-	
+
 	if (CarriedSurvivor && Hanger)
 	{
-		PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
+		ServerRPC_HangSurvivorOnHook();
 
 		// AN_HangOnHook.cpp 에서 처리하도록 수정
 		// CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
@@ -210,4 +376,14 @@ void AKiller::HangSurvivorOnHook()
 		// CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
 		// CarriedSurvivor = nullptr;
 	}
+}
+
+void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()
+{
+	MulticastRPC_HangSurvivorOnHook();
+}
+
+void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()
+{
+	PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
 }

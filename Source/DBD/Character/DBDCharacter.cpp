@@ -15,7 +15,7 @@
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Animation/AnimInstance.h"
 #include "Gimmick/Windows.h"
-#include <Net/UnrealNetwork.h>
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -66,6 +66,7 @@ void ADBDCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 }
+
 void ADBDCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -75,6 +76,59 @@ void ADBDCharacter::Tick(float DeltaTime)
 		FMoveAlongQuadraticBezier(DeltaTime);
 	}
 }
+
+void ADBDCharacter::SetBezierPoint(class IDBD_Interface_Gimmick* gimmick)
+{
+	if (AWindows* window = Cast<AWindows>(gimmick))
+	{
+		float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
+		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
+		vP0 = GetActorLocation();
+		vP1 = vP0 + GetActorUpVector() * 120.0f;
+		vP2 = vP1 + GetActorForwardVector() * dist * 2;
+		vP3 = vP0 + GetActorForwardVector() * dist * 2;
+	}
+}
+
+FVector ADBDCharacter::FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2,
+                                             const FVector& p3)
+{
+	float oneMinusT = 1.0f - t;
+	FVector result = oneMinusT * oneMinusT * oneMinusT * p0 +
+		3 * oneMinusT * oneMinusT * t * p1 +
+		3 * oneMinusT * t * t * p2 +
+		t * t * t * p3;
+
+	return result;
+}
+
+void ADBDCharacter::FMoveAlongQuadraticBezier(float DeltaTime)
+{
+	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
+	static float time = 0.0f;
+	time += DeltaTime * ParkourSpeed;
+
+
+	// 2차 베지에 곡선 계산
+	// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
+	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
+
+	// 3차 베지에 곡선 계산
+	float t = FMath::Clamp(time, 0.0f, 1.0f);
+	FVector newPos = FCalculateBezierPoint(t, vP0, vP1, vP2, vP3);
+
+	SetActorLocation(newPos);
+	if (t >= 1.0f)
+	{
+		time = 0.0f;
+		bIsParkour = false;
+		return;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Input
+
 void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Add Input Mapping Context
@@ -96,10 +150,13 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADBDCharacter::Look);
 
-		// Change Character
-		EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this, &ADBDCharacter::ChangeCharacter);
+		// todo: proto type 에서만 사용할 함수
+		// // Change Character
+		// EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this,
+		//                                    &ADBDCharacter::ChangeCharacter);
 
-		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &ADBDCharacter::ParkourFunc);
+		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this,
+		                                   &ADBDCharacter::ParkourFunc);
 	}
 	else
 	{
@@ -110,18 +167,12 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	}
 }
 
-void ADBDCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ADBDCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// Replicate variables
-	//DOREPLIFETIME(ADBDCharacter, vP0);
-	//DOREPLIFETIME(ADBDCharacter, vP1);
-	//DOREPLIFETIME(ADBDCharacter, vP2);
-	//DOREPLIFETIME(ADBDCharacter, vP3);
+	DOREPLIFETIME(ADBDCharacter, NearGimmick);
 }
-
-
 
 void ADBDCharacter::Move(const FInputActionValue& Value)
 {
@@ -145,6 +196,7 @@ void ADBDCharacter::Move(const FInputActionValue& Value)
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
+
 void ADBDCharacter::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -157,215 +209,44 @@ void ADBDCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
+
 void ADBDCharacter::ParkourFunc()
 {
-	ServerRPC_ParkourFunc();
-	UE_LOG(LogTemp, Error, TEXT("ParkourFunc"));
-}
-void ADBDCharacter::ServerRPC_ParkourFunc_Implementation()
-{
-	MulticastRPC_ParkourFunc();
-	//ClientRPC_ParkourFunc();
-}
-
-void ADBDCharacter::MulticastRPC_ParkourFunc_Implementation()
-{
 	if (not bIsSearchWindows) return;
 	if (bIsPushKey) return;
 
-	//UE_LOG(LogTemp, Warning, TEXT("Parkour"));
-	PlayAnimMontage(ParkourMontage, 1.f, TEXT("Parkour"));
+	if (IsAttacking())
+		return;
+
+	SetBezierPoint(NearGimmick.GetInterface());
+
+	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
 	bIsSearchWindows = false;
 	bIsParkour = true;
 	GetCharacterMovement()->DisableMovement();
 	bIsPushKey = true;
-
-	UE_LOG(LogTemp, Error, TEXT("ParkourFunc_Multi"));
 }
 
-void ADBDCharacter::ClientRPC_ParkourFunc_Implementation()
-{
-	if (not bIsSearchWindows) return;
-	if (bIsPushKey) return;
-
-	//UE_LOG(LogTemp, Warning, TEXT("Parkour"));
-	PlayAnimMontage(ParkourMontage, 1.f, TEXT("Parkour"));
-	bIsSearchWindows = false;
-	bIsParkour = true;
-	GetCharacterMovement()->DisableMovement();
-	bIsPushKey = true;
-
-	UE_LOG(LogTemp, Error, TEXT("ParkourFunc_Client"));
-
-}
 void ADBDCharacter::FinishParkourFunc()
-{
-	//StopAnimMontage(ParkourMontage);
-	//GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-	//bIsPushKey = false;
-	ServerRPC_FinishParkourFunc();
-}
-void ADBDCharacter::ServerRPC_FinishParkourFunc_Implementation()
-{
-	MulticastRPC_FinishParkourFunc();
-}
-void ADBDCharacter::MulticastRPC_FinishParkourFunc_Implementation()
 {
 	StopAnimMontage(ParkourMontage);
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bIsPushKey = false;
 }
-void ADBDCharacter::ChangeCharacter()
+
+void ADBDCharacter::OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	// 본인이 Survivor일 경우 Killer로, Killer일 경우 Survivor로 변경
-	if (ADBDGameMode* GameMode = Cast<ADBDGameMode>(GetWorld()->GetAuthGameMode()))
+	if (Montage == ParkourMontage)
 	{
-		GameMode->ChangeCharacter();
+		FinishParkourFunc();
 	}
 }
 
-
-
-
-
-void ADBDCharacter::SetBezierPoint(class IDBD_Interface_Gimmick* gimmick)
-{
-	// 서버에서만 좌표점을 설정
-	//if (not HasAuthority()) return;
-
-
-	if (AWindows* window = Cast<AWindows>(gimmick))
-	{
-		float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
-		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
-		vP0 = GetActorLocation();
-		vP1 = vP0 + GetActorUpVector() * 120.0f;
-		vP2 = vP1 + GetActorForwardVector() * dist * 2;
-		vP3 = vP0 + GetActorForwardVector() * dist * 2;
-	}
-}
-//void ADBDCharacter::ClientRPC_SetBezierPoint_Implementation(IDBD_Interface_Gimmick* gimmick)
-//{
-//	if (AWindows* window = Cast<AWindows>(gimmick))
-//	{
-//		float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
-//		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
-//		vP0 = GetActorLocation();
-//		vP1 = vP0 + GetActorUpVector() * 120.0f;
-//		vP2 = vP1 + GetActorForwardVector() * dist * 2;
-//		vP3 = vP0 + GetActorForwardVector() * dist * 2;
-//	}
-//}
-
-
-FVector ADBDCharacter::FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2, const FVector& p3)
-{
-	float oneMinusT = 1.0f - t;
-	FVector result = oneMinusT * oneMinusT * oneMinusT * p0 +
-		3 * oneMinusT * oneMinusT * t * p1 +
-		3 * oneMinusT * t * t * p2 +
-		t * t * t * p3;
-
-	return result;
-}
-void ADBDCharacter::FMoveAlongQuadraticBezier(float DeltaTime)
-{
-	//// 한번 선언하면 다시 초기화 되지 않는 변수 선언
-	//static float time = 0.0f;
-	//time += DeltaTime;
-	//
-	//
-	//// 2차 베지에 곡선 계산
-	//// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
-	//// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
-	//
-	//// 3차 베지에 곡선 계산
-	//float t = FMath::Clamp(time, 0.0f, 1.0f);
-	//FVector newPos = FCalculateBezierPoint(t, vP0, vP1, vP2, vP3);
-	//
-	//SetActorLocation(newPos);
-	//if (t >= 1.0f)
-	//{
-	//	time = 0.0f;
-	//	bIsParkour = false;
-	//	return;
-	//}
-	
-
-	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
-	static float time = 0.0f;
-	time += DeltaTime;
-
-
-	// 2차 베지에 곡선 계산
-	// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
-	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
-
-	// 3차 베지에 곡선 계산
-	float t = FMath::Clamp(time, 0.0f, 1.0f);
-	FVector newPos = FCalculateBezierPoint(t, vP0, vP1, vP2, vP3);
-
-	SetActorLocation(newPos);
-	if (t >= 1.0f)
-	{
-		time = 0.0f;
-		bIsParkour = false;
-		return;
-	}
-	//ServerRPC_FMoveAlongQuadraticBezier();
-}
-
-void ADBDCharacter::ServerRPC_FMoveAlongQuadraticBezier_Implementation()
-{
-	//float time = GetWorld()->DeltaTimeSeconds;
-	//MulticastRPC_FMoveAlongQuadraticBezier(time);
-	//ClientRPC_FMoveAlongQuadraticBezier(time);
-}
-
-void ADBDCharacter::MulticastRPC_FMoveAlongQuadraticBezier_Implementation(float DeltaTime)
-{
-	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
-	static float time = 0.0f;
-	time += DeltaTime;
-
-
-	// 2차 베지에 곡선 계산
-	// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
-	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
-
-	// 3차 베지에 곡선 계산
-	float t = FMath::Clamp(time, 0.0f, 1.0f);
-	FVector newPos = FCalculateBezierPoint(t, vP0, vP1, vP2, vP3);
-
-	SetActorLocation(newPos);
-	if (t >= 1.0f)
-	{
-		time = 0.0f;
-		bIsParkour = false;
-		return;
-	}
-}
-
-void ADBDCharacter::ClientRPC_FMoveAlongQuadraticBezier_Implementation(float DeltaTime)
-{
-	// 한번 선언하면 다시 초기화 되지 않는 변수 선언
-	static float time = 0.0f;
-	time += DeltaTime;
-
-
-	// 2차 베지에 곡선 계산
-	// float t = FMath::Clamp(time / 0.5f, 0.0f, 1.0f);
-	// FVector newPos = CalculateQuadraticBezierPoint(t, P0, P1, P2);
-
-	// 3차 베지에 곡선 계산
-	float t = FMath::Clamp(time, 0.0f, 1.0f);
-	FVector newPos = FCalculateBezierPoint(t, vP0, vP1, vP2, vP3);
-
-	SetActorLocation(newPos);
-	if (t >= 1.0f)
-	{
-		time = 0.0f;
-		bIsParkour = false;
-		return;
-	}
-}
+// void ADBDCharacter::ChangeCharacter()
+// {
+// 	// 본인이 Survivor일 경우 Killer로, Killer일 경우 Survivor로 변경
+// 	if (ADBDGameMode* GameMode = Cast<ADBDGameMode>(GetWorld()->GetAuthGameMode()))
+// 	{
+// 		GameMode->ChangeCharacter();
+// 	}
+// }
