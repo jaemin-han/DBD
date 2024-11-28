@@ -257,30 +257,46 @@ void AKiller::SetInteractionUI(bool IsVisible, FString Name, FString Key)
 void AKiller::Debug()
 {
 	// NearGimmick 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
-	FString DebugString = NearGimmick.GetObject() ? NearGimmick.GetObject()->GetName() : TEXT("None");
-	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
+	FString GimmickName = FString::Printf(TEXT("Gimmick: %s"), NearGimmick.GetObject() ? *NearGimmick.GetObject()->GetName() : TEXT("None"));
+	GEngine->AddOnScreenDebugMessage(123213, 0.0f, FColor::Red, GimmickName);
 	// NearSurvivor 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
-	DebugString = NearSurvivor ? NearSurvivor->GetName() : TEXT("None");
-	GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Red, DebugString);
+	FString SurvivorName = FString::Printf(TEXT("Survivor: %s"), NearSurvivor ? *NearSurvivor->GetName() : TEXT("None"));
+	GEngine->AddOnScreenDebugMessage(123214, 0.0f, FColor::Red, SurvivorName);
 }
 
-void AKiller::Stun()
+void AKiller::DestroyPallet_Implementation()
+{
+	MulticastRPC_DestroyPallet();
+}
+
+void AKiller::MulticastRPC_DestroyPallet_Implementation()
+{
+	PlayAnimMontage(KillerMontage, 0.5f, FName("DestroyPallet"));
+}
+
+void AKiller::Stun_Implementation()
 {
 	// Stun 몽타주 실행
 	bStunned = true;
 	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
 }
 
-void AKiller::DestroyPallet()
-{
-	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Red, TEXT("DestroyPallet"));
-	PlayAnimMontage(KillerMontage, 0.5f, FName("DestroyPallet"));
-}
+// void AKiller::Stun()
+// {
+// 	// Stun 몽타주 실행
+// 	bStunned = true;
+// 	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
+// }
+
+// void AKiller::DestroyPallet()
+// {
+//
+// }
 
 void AKiller::Interact()
 {
 	// NearGimmick 이 유효한 경우 Interaction 함수 호출
-	if (NearGimmick.GetObject() && !bStunned)
+	if (NearGimmick.GetObject() && !bStunned && !bIsAttacking)
 	{
 		NearGimmick->Interaction(this);
 	}
@@ -368,7 +384,7 @@ void AKiller::HangSurvivorOnHook()
 
 	if (CarriedSurvivor && Hanger)
 	{
-		ServerRPC_HangSurvivorOnHook();
+		MulticastRPC_HangSurvivorOnHook();
 
 		// AN_HangOnHook.cpp 에서 처리하도록 수정
 		// CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
@@ -380,7 +396,7 @@ void AKiller::HangSurvivorOnHook()
 
 void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()
 {
-	MulticastRPC_HangSurvivorOnHook();
+	HangSurvivorOnHook();
 }
 
 void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()

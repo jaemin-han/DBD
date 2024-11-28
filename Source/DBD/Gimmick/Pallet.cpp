@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
 // Sets default values
@@ -42,10 +43,20 @@ void APallet::BeginPlay()
 	TargetRoll = CurrentRoll + 60.0f;
 }
 
+void APallet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APallet, bIsInteracted);
+}
+
 // Called every frame
 void APallet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// todo: debug
+	DebugOwner();
 
 	if (bIsFallen)
 		return;
@@ -69,7 +80,7 @@ void APallet::Interaction(AActor* Caller)
 	// 상호작용 중이 아니고, 판자가 서 있으면 판자 내리기 수행
 	if (bIsInteracted == false && bIsFallen == false && not Cast<AKiller>(Caller))
 	{
-		PalletFall();
+		ServerRPC_PalletFall();
 		return;
 	}
 	// 상호작용 중이 아니고, 판자가 넘어져 있고, 상호작용하는 엑터가 킬러라면 판자를 부셔요
@@ -115,15 +126,40 @@ void APallet::PalletFall()
 		float FrontDistance = FVector::Dist(FrontIndicator->GetComponentLocation(), Actor->GetActorLocation());
 		float BackDistance = FVector::Dist(BackIndicator->GetComponentLocation(), Actor->GetActorLocation());
 
-		if (FrontDistance < BackDistance)
-			Actor->SetActorLocation(FrontIndicator->GetComponentLocation());
-		else
-			Actor->SetActorLocation(BackIndicator->GetComponentLocation());
 
+		if (FrontDistance < BackDistance)
+		{
+			// Actor->SetActorLocation(FrontIndicator->GetComponentLocation());
+			MulticastRPC_PalletFall(Actor, FrontIndicator->GetComponentLocation());
+		}
+		else
+		{
+			// Actor->SetActorLocation(BackIndicator->GetComponentLocation());
+			MulticastRPC_PalletFall(Actor, BackIndicator->GetComponentLocation());
+		}
 		// 킬러가 판자에 맞으면, 기절 상태로 만든다.
 		AKiller* Killer = Cast<AKiller>(Actor);
 		if (Killer)
+		{
+			// Stun 은 multicast
 			Killer->Stun();
+		}
 	}
+}
+
+void APallet::DebugOwner()
+{
+	// debug owner
+	DrawDebugString(GetWorld(), GetActorLocation(), GetOwner() ? GetOwner()->GetName() : TEXT("None"), nullptr, FColor::Red, 0.0f, true);
+}
+
+void APallet::MulticastRPC_PalletFall_Implementation(AActor* Actor, FVector Position)
+{
+	Actor->SetActorLocation(Position);
 	WallComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+}
+
+void APallet::ServerRPC_PalletFall_Implementation()
+{
+	PalletFall();
 }

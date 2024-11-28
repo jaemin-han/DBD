@@ -37,7 +37,7 @@ void AHanger::Interaction(AActor* Caller)
 	AKiller* Killer = Cast<AKiller>(Caller);
 	if (Killer && Killer->CarriedSurvivor)
 	{
-		Killer->HangSurvivorOnHook();
+		Killer->ServerRPC_HangSurvivorOnHook();
 	}
 }
 
