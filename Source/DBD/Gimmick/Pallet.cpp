@@ -72,6 +72,10 @@ void APallet::Tick(float DeltaTime)
 		bIsFallen = true;
 		bIsInteracted = false;
 		PalletMeshComp->SetRelativeRotation(FRotator(0.0f, 0.0f, TargetRoll));
+
+		// WallComp 의 Visibility 와의 충돌 판정을 block 으로 설정
+		// 이걸 해야 판자가 내려간 다음 킬러가 line trace 를 활용해 판자를 부술 수 있음
+		WallComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	}
 }
 
