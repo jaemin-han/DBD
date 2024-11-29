@@ -90,8 +90,6 @@ void AKiller::BeginPlay()
 void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AKiller, NearSurvivor);
 }
 
 void AKiller::Attack()
@@ -164,6 +162,16 @@ void AKiller::GetNearSurvivor()
 	{
 		NewNearSurvivor = Cast<ADBD_Player>(OverlappingActor);
 	}
+
+	if (NearSurvivor != NewNearSurvivor)
+	{
+		MulticastRPC_SetNearSurvivor(NewNearSurvivor);
+	}
+	
+}
+
+void AKiller::MulticastRPC_SetNearSurvivor_Implementation(ADBD_Player* NewNearSurvivor)
+{
 	NearSurvivor = NewNearSurvivor;
 }
 
@@ -305,6 +313,10 @@ void AKiller::Interact()
 
 void AKiller::CarrySurvivor()
 {
+	if (IsAttacking() || bStunned)
+	{
+		return;
+	}
 	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
 	if (NearSurvivor && NearSurvivor->GetHealth() == 1 && CarriedSurvivor == nullptr)
 	{
@@ -346,6 +358,10 @@ void AKiller::MulticastRPC_CarrySurvivor_Implementation()
 
 void AKiller::DropDownSurvivor()
 {
+	if (IsAttacking() || bStunned)
+	{
+		return;
+	}
 	UE_LOG(LogTemp, Display, TEXT("DropDownSurvivor"));
 	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
 	if (CarriedSurvivor)
@@ -378,6 +394,11 @@ void AKiller::MulticastRPC_DropDownSurvivor_Implementation()
 
 void AKiller::HangSurvivorOnHook()
 {
+	// 공격 중이나 스턴 상태일 때는 실행하지 않음
+	if (IsAttacking() || bStunned)
+	{
+		return;
+	}
 	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
 	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
 	if (!Hanger)
