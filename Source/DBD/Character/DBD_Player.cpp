@@ -56,6 +56,12 @@ void ADBD_Player::BeginPlay()
 // 기본 Tick 함수
 void ADBD_Player::Tick(float DeltaTime)
 {
+	// todo: do not commit
+	// SacrifceTime 을 DrawDebugString으로 출력
+	FString SacrificeTimeStr = FString::Printf(TEXT("SacrificeTime: %f"), SacrificeTime);
+	DrawDebugString(GetWorld(), GetActorLocation(), SacrificeTimeStr, nullptr, FColor::Red, 0.0f);
+	
+	// todo: do not commit end
 	if (!HasAuthority()) return;
 
 	Super::Tick(DeltaTime);
@@ -86,7 +92,7 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ADBD_Player, NearPallet);
-
+	DOREPLIFETIME(ADBD_Player, SacrificeTime);
 }
 
 // Input 설정 함수
