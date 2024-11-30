@@ -48,6 +48,7 @@ void APallet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APallet, bIsInteracted);
+	DOREPLIFETIME(APallet, bIsFallen);
 }
 
 // Called every frame
@@ -55,8 +56,8 @@ void APallet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// todo: debug
-	DebugOwner();
+	// debug
+	// DebugOwner();
 
 	if (bIsFallen)
 		return;

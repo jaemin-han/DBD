@@ -57,9 +57,29 @@ void ADBD_Player::BeginPlay()
 // 기본 Tick 함수
 void ADBD_Player::Tick(float DeltaTime)
 {
-	if (!HasAuthority()) return;
 
 	Super::Tick(DeltaTime);
+
+	if (IsLocallyControlled())
+	{
+		if (NearGimmick && NearGimmick->GetGimmickName() != "Pallet")
+		{
+			VisibleMainUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+		}
+		// 판자가 있고, 내려가있지 않다면
+		else if (NearPallet && !NearPallet->bIsFallen)
+		{
+			VisibleMainUI(true, NearPallet->GetGimmickName(), NearPallet->GetInteractKey());
+		}
+		else
+		{
+			VisibleMainUI(false, TEXT(""), TEXT(""));
+		}
+	}
+	
+
+	
+	if (!HasAuthority()) return;
 
 	Interaction();
 	GetNearPallet();
@@ -71,14 +91,6 @@ void ADBD_Player::Tick(float DeltaTime)
 	//	//MoveAlongQuadraticBezier(DeltaTime);
 	//}
 	
-	if (Gimmick)
-	{
-		VisibleMainUI(true, Gimmick->GetGimmickName(), Gimmick->GetInteractKey());
-	}
-	else
-	{
-		VisibleMainUI(false, TEXT(""), TEXT(""));
-	}
 }
 
 // 변수를 서버 연동해주는 함수
@@ -672,8 +684,8 @@ void ADBD_Player::GetNearPallet()
 		
 
 	// debug NearPallet
-	FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
-	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
+	// FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
+	// GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
 
 	if (NearPallet)
 	{

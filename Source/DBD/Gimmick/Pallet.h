@@ -31,6 +31,7 @@ class DBD_API APallet : public AActor, public IDBD_Interface_Gimmick
 
 	FString Name = TEXT("Pallet");
 	FString InteractKey = TEXT("Space");
+
 public:
 	// Sets default values for this actor's properties
 	APallet();
@@ -49,10 +50,10 @@ public:
 	virtual void FailedInteraction() override;
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
-	
+
 
 	// board 가 이미 넘어진 상태인가
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Replicated, VisibleAnywhere)
 	bool bIsFallen = false;
 	// 상호작용이 실행되었는가
 	UPROPERTY(Replicated, VisibleAnywhere)
@@ -72,7 +73,7 @@ public:
 	void MulticastRPC_PalletFall(AActor* Actor, FVector Position);
 	// DrawdebugString
 	void DebugOwner();
-	
+
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void DestroyPallet();
