@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Hanger.generated.h"
 
+class ADBD_Player;
 UCLASS()
 class DBD_API AHanger : public AActor, public IDBD_Interface_Gimmick
 {
@@ -55,4 +56,7 @@ private:
 	TSubclassOf<class UHangerUI> HangerUIClass;
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	class UHangerUI* HangerUI;
+
+private:
+	void Rescue();
 };

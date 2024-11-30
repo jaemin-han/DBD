@@ -17,6 +17,7 @@
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
+#include "Gimmick/Hanger.h"
 #include "Gimmick/Windows.h"
 #include "Net/UnrealNetwork.h"
 
@@ -115,6 +116,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ADBD_Player::Crouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADBD_Player::CrouchStop);
+
+		EnhancedInputComponent->BindAction(RescueAction, ETriggerEvent::Started, this, &ADBD_Player::ServerRPC_Rescue);
 	}
 }
 /** 기본 상속 함수*/
@@ -405,9 +408,26 @@ void ADBD_Player::ReleasedGeneratorSkillCheck()
 	IsSkillCheckZone = false;
 	IsSpaceBar = false;
 }
+
+void ADBD_Player::ServerRPC_Rescue_Implementation()
+{
+	if (NearGimmick && NearGimmick->GetGimmickName() == TEXT("Hanger"))
+	{
+		// 지금 Rescue 가능한지 판단하려면 Hanger의 상태를 확인해야함
+		auto* Hanger = Cast<AHanger>(NearGimmick.GetObject());
+		if (Hanger->GetHangSurvivor())
+		{
+			MulticastRPC_Rescue();
+		}
+	}
+}
+
+void ADBD_Player::MulticastRPC_Rescue_Implementation()
+{
+	PlayAnimMontage(RescueMontage);
+}
+
 /** Input 함수 */
-
-
 
 
 /** 상호작용 함수 - 각각의 클라이언트에서만 할수있게 대신에 변수값은 모든 클라이언트에 연동이 되야하는?*/
@@ -476,6 +496,10 @@ void ADBD_Player::Interaction()
 	}
 	else
 	{
+		// todo: 재민 추가
+		NearGimmick = nullptr;
+		//
+		
 		IsFindGenerator = false;
 		bIsSearchWindows = false;
 		IsInteractGenerator = false;
@@ -833,5 +857,12 @@ void ADBD_Player::ChangePlayerAnimation()
 void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
 {
 	SurvivorState = survivorState;
+	
+	// Health 와 SurvivorState를 연동
+	Health = static_cast<int>(survivorState);
+	
+	// ChangeSurvivorState 를 호출했을 때도 Speed 변경
+	UpdateSpeed();
+
 	ChangePlayerAnimation();
 }

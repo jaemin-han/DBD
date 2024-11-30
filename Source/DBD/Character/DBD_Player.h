@@ -78,6 +78,10 @@ protected:
 	void ExitDoor();
 	void GeneratorSkillCheck();
 	void ReleasedGeneratorSkillCheck();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Rescue();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Rescue();
 /** Input 함수 */
 
 
@@ -163,6 +167,8 @@ private:
 	UInputAction* ParkourAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ExitAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RescueAction;
 /** Input 변수 */
 
 /** 생존자 설정 변수*/
@@ -226,4 +232,8 @@ private:
 	// todo: 재민추가 // 생존자 남은 희생 시간, 기본 2분 (120초)
 	UPROPERTY(EditDefaultsOnly, Replicated, Category = "Hanger")
 	float SacrificeTime = TotalSacrificeTime;
+
+	// todo: 재민추가 // Rescue Montage
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* RescueMontage;
 };

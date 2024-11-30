@@ -7,6 +7,7 @@
 #include "Character/DBD_Player.h"
 #include "Character/Killer.h"
 #include "Components/ArrowComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "UI/HangerUI.h"
 
 // Sets default values
@@ -54,6 +55,12 @@ void AHanger::Tick(float DeltaTime)
 
 	float NewSacrifaceTime = HangSurvivor->GetSacrificeTime() - DeltaTime;
 
+	if (NewSacrifaceTime <= 0.f)
+	{
+		// todo: 생존자 사망 처리
+		// delegate 사용할까??
+	}
+
 	HangSurvivor->SetSacrificeTime(NewSacrifaceTime);
 
 	// HangerUI 가 유효하고
@@ -71,6 +78,14 @@ void AHanger::Interaction(AActor* Caller)
 	{
 		Killer->ServerRPC_HangSurvivorOnHook();
 	}
+
+	ADBD_Player* Survivor = Cast<ADBD_Player>(Caller);
+	// 상호작용한 액터가 생존자이고, 갈고리에 다른 생존자가 걸려있을 경우
+	if (Survivor && HangSurvivor)
+	{
+		// todo:
+		Rescue();
+	}
 }
 
 void AHanger::FailedInteraction()
@@ -85,4 +100,30 @@ FString AHanger::GetGimmickName()
 FString AHanger::GetInteractKey()
 {
 	return InteractKey;
+}
+
+void AHanger::Rescue()
+{
+	// 체력 2로 변경
+	HangSurvivor->ChangeSurvivorState(ESurvivorState::Hp2);
+	// 갈고리에서 해방
+	HangSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	// HangSurvivor의 충돌 판정 복구
+	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(HangSurvivor->GetRootComponent());
+	USkeletalMeshComponent* SkeletalMeshComponent = HangSurvivor->GetMesh();
+	if (PrimitiveComponent && SkeletalMeshComponent)
+	{
+		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	// HangSurvivor의 CharacterMovement 변경
+	HangSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+	// HangSurvivor 가 local 인 경우 UI 제거
+	if (HangSurvivor->IsLocallyControlled() && HangerUI)
+	{
+		HangerUI->RemoveFromParent();
+	}
+	
+	HangSurvivor = nullptr;
 }
