@@ -64,7 +64,7 @@ protected:
 	void ServerRPC_Crouch();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_Crouch();
-
+	
 	void CrouchStop();
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_CrouchStop();
@@ -84,17 +84,28 @@ protected:
 /** 상호작용 함수 */
 protected:
 	void Interaction();														// 플레이어와 기믹이 충돌할때 발생하는 함수
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_Interaction();											// 플레이어와 기믹이 충돌할때 발생하는 서버 함수
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_Interaction();										// 플레이어와 기믹이 충돌할때 발생하는 멀티캐스트 함수
-	UFUNCTION(Client, Reliable)
-	void ClientRPC_Interaction();											// 플레이어와 기믹이 충돌할때 발생하는 클라이언트 함수
-
-	void GetNearPallet();													// 플레이어와 판자가 충돌할때 발생하는 함수
-	
+	void GetNearPallet();													// 플레이어와 판자가 주변에 있는지 탐색하는 함수
+	void GetNearSurvivor();													// 플레이어와 다른생존자가 주변에 있는지 탐색하는 함수
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;		// 플레이어와 액터가 충돌할때 발생하는 함수들
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;		// -> 액터와만 오버랩 반응을 하게됨.
+
+	void RaiseFallenSurvivor(ADBD_Player* otherSuvivor);												// 플레이어가 넘어진 생존자를 일으켜세우는 함수
+	UFUNCTION(Server, Reliable)
+	void Server_RaiseFallenSurvivor();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_RaiseFallenSurvivor(ADBD_Player* otherSuvivor);
+
+	void NonRaiseFallenSurvivor();
+
+
+
+	// GaugeUI 활성화작용 함수
+	void ActivatedGaugeUI(float time);
+	UFUNCTION(Server, Reliable)
+	void Server_ActivatedGaugeUI();
+	UFUNCTION(Client, Reliable)
+	void Client_ActivatedGaugeUI();
+
 /** 상호작용 함수 */
 
 
@@ -114,8 +125,24 @@ public:
 	void UpdateSpeed();														// 플레이어 속도 업데이트 함수
 	void ChangeSurvivorState(ESurvivorState survivorState);					// 플레이어 상태 변경 함수
 	void VisibleMainUI(bool IsVisible, FString Name, FString Key);			// 플레이어 상호작용 UI를 보이게 하는 함수(현재는 상호작용UI로)
+
+	void VisibleInteractUI();
+	UFUNCTION(Server, Reliable)
+	void Server_VisibleInteractUI();
+	UFUNCTION(Client, Reliable)
+	void Client_VisibleInteractUI();
+
+	void HiddenInteractUI();
+	UFUNCTION(Server, Reliable)
+	void Server_HiddenInteractUI();
+	UFUNCTION(Client, Reliable)
+	void Client_HiddenInteractUI();
+	
 	void SpawnDecal();														// 플레이어가 뛰었을때 발생하는 데칼 생성 함수
 /** 생존자 설정 함수*/
+
+
+	void PrintDebug();
 
 
 
@@ -157,6 +184,8 @@ private:
 	UInputAction* ParkourAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ExitAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RaiseUpAction;
 /** Input 변수 */
 
 /** 생존자 설정 변수*/
@@ -203,6 +232,10 @@ private:
 	bool IsInteractPallet = false;							// 판자와 상호작용 했니? -> 했으면 : 판자 애니메이션 실행
 	bool IsSpaceBar = false;								// 스페이스바 눌렀니?	(발전기 Round게이지와 관련)
 
+	// 살리는 게이지 타이머
+	bool IsClickedRaiseSurvivorButton = false;				// 생존자를 일으키는 버튼을 눌렀니?
+	bool IsFinishRaiseSurvivor = false;						// 생존자를 일으키는 게이지가 다 찼니?
+	float RaiseSurvivorTimer = 0.0f;						// 생존자를 일으키는 게이지 타이머
 
 	// LineTrace와 Actor들과 닿았는지 체크하는 변수
 	bool IsFindGenerator = false;							// 발전기와 라인트레이스가 닿았니?
@@ -214,6 +247,9 @@ private:
 	// 싱호작용 중인 기믹 저장 변수 - GetNearGimmick 함수에서 할당됨
 	UPROPERTY(VisibleAnywhere, Replicated)
 	class APallet* NearPallet;								// 가까이 있는 판자 저장 변수
+	class APallet* TracePallet;								// 라인트레이스로 찾은 판자 저장 변수
+	UPROPERTY(Replicated)
+	ADBD_Player* OtherSurvivor;								// 가까이 있는 다른 생존자 저장 변수
 	class ADoor* Door;										// 출입구 액터 저장 변수
 	class AWindows* Window;									// 창문 액터 저장 변수
 };

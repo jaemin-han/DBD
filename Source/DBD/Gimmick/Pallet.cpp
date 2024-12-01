@@ -84,7 +84,7 @@ void APallet::Interaction(AActor* Caller)
 		return;
 	}
 	// 상호작용 중이 아니고, 판자가 넘어져 있고, 상호작용하는 엑터가 킬러라면 판자를 부셔요
-	if (bIsInteracted == false && bIsFallen == true)
+	if (bIsInteracted == false && bIsFallen == true && Cast<AKiller>(Caller))
 	{
 		if (AKiller* Killer = Cast<AKiller>(Caller))
 		{

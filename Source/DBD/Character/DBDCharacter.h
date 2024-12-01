@@ -53,8 +53,10 @@ protected:
 
 
 	// 파쿠르 제어 변수 (각 생존자와 살인마 클래스 내에서 사용)
-	bool bIsSearchWindows = false; // 창문을 찾았니? -> 창문을 찾았으면 : 베지에 곡선 좌표 설정 
+	bool bIsFindWindows = false; // 창문을 찾았니? -> 창문을 찾았으면 : 베지에 곡선 좌표 설정 
 	bool bIsInteractWindows = false; // 창문과 상호작용 했니? -> 했으면 : 파쿠르 애니메이션 실행
+	bool bIsFindPallet = false; // 창문을 찾았니? -> 창문을 찾았으면 : 베지에 곡선 좌표 설정 
+	bool bIsInteractPallet = false; // 창문과 상호작용 했니? -> 했으면 : 파쿠르 애니메이션 실행
 	bool bIsPushKey = false; // 키를 눌렀니? -> 했으면 : 파쿠르 애니메이션 실행
 	bool bIsParkour = false; // 파쿠르 가능하니?
 
@@ -73,6 +75,8 @@ protected:
 	// 서버가 베지에 곡선 좌표를 모든 클라이언트에게 전달하는 함수
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_ParkourFunc();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Parkour2Func();
 
 
 	// 베지에 곡선을 활용한 파쿠르 애니메이션 만들기

@@ -44,4 +44,7 @@ public:
 	// Reload 애니메이션 끝나는 부분에 실행되는 함수
 	UFUNCTION()
 	void AnimNotify_OnParkourFinish();
+
+	UFUNCTION()
+	void AnimNotify_OnParkour2Finish();
 };

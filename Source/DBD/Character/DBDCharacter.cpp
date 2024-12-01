@@ -15,6 +15,7 @@
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Animation/AnimInstance.h"
 #include "Gimmick/Windows.h"
+#include "Gimmick/Pallet.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -79,7 +80,7 @@ void ADBDCharacter::Tick(float DeltaTime)
 
 void ADBDCharacter::SetBezierPoint()
 {
-	if (bIsSearchWindows)
+	if (bIsFindWindows or bIsFindPallet)
 	{
 		// 서버에게 요청을 보낸 캐릭터가 NearGimmick이 window인지 체크해서 맞다면 모든 클라이언트한테 요청
 		Multicast_BroadcastBezierPoints();
@@ -101,6 +102,18 @@ void ADBDCharacter::Multicast_BroadcastBezierPoints_Implementation()
 		vP1 = vP0 + GetActorUpVector() * 120.0f;
 		vP2 = vP1 + GetActorForwardVector() * dist * 2;
 		vP3 = vP0 + GetActorForwardVector() * dist * 2;
+		return;
+	}
+
+	if (APallet* pallet = Cast<APallet>(NearGimmick.GetObject()))
+	{
+		float dist = FVector::Distance(GetActorLocation(), pallet->GetActorLocation());
+		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
+		vP0 = GetActorLocation();
+		vP1 = vP0 + GetActorUpVector() * 120.0f;
+		vP2 = vP1 + GetActorForwardVector() * dist * 2;
+		vP3 = vP0 + GetActorForwardVector() * dist * 2;
+		return;
 	}
 }
 
@@ -168,7 +181,7 @@ void ADBDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		// // Change Character
 		// EnhancedInputComponent->BindAction(ChangeCharacterAction, ETriggerEvent::Started, this,
 		//                                    &ADBDCharacter::ChangeCharacter);
-		 EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &ADBDCharacter::Server_ParkourFunc);
+		EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &ADBDCharacter::Server_ParkourFunc);
 	}
 	else
 	{
@@ -224,11 +237,44 @@ void ADBDCharacter::Look(const FInputActionValue& Value)
 
 void ADBDCharacter::ParkourFunc()
 {
-	if (not bIsSearchWindows) return;
+	//if (not bIsFindWindows) return;
 	if (bIsPushKey) return;
 	if (IsAttacking()) return;
 
-	Multicast_ParkourFunc();
+
+	if (bIsFindWindows)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] ParkourFunc Gimmick[%s]"), *GetName(), *NearGimmick->GetGimmickName());
+		UE_LOG(LogTemp, Log, TEXT("[%s] bIsFindPallet : %d"), *GetName(), bIsFindPallet);
+
+		Server_ReportBezierPoints();
+		
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP0 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP0.X, vP0.Y, vP0.Z);
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP1 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP1.X, vP1.Y, vP1.Z);
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP2 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP2.X, vP2.Y, vP2.Z);
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP3 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP3.X, vP3.Y, vP3.Z);
+		
+		Multicast_ParkourFunc();
+
+		return;
+	}
+
+	if (bIsFindPallet)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] ParkourFunc Gimmick[%s]"), *GetName(), *NearGimmick->GetGimmickName());
+		UE_LOG(LogTemp, Log, TEXT("[%s] bIsFindPallet : %d"), *GetName(), bIsFindPallet);
+
+		Server_ReportBezierPoints();
+
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP0 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP0.X, vP0.Y, vP0.Z);
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP1 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP1.X, vP1.Y, vP1.Z);
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP2 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP2.X, vP2.Y, vP2.Z);
+		//UE_LOG(LogTemp, Error, TEXT("[%s] vP3 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP3.X, vP3.Y, vP3.Z);
+
+		Multicast_Parkour2Func();
+		return;
+	}
+
 }
 
 void ADBDCharacter::Server_ParkourFunc_Implementation()
@@ -238,8 +284,30 @@ void ADBDCharacter::Server_ParkourFunc_Implementation()
 
 void ADBDCharacter::Multicast_ParkourFunc_Implementation()
 {
-	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
+	UE_LOG(LogTemp, Error, TEXT("ParkourFunc"));
+	//if (bIsFindWindows)
+	{
+		PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
+	}
+	//else if (bIsFindPallet)
+	//{
+	//	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour2"));
+	//	UE_LOG(LogTemp, Warning, TEXT("[%s] Parkour2"), *GetName());
+	//}
 	//bIsSearchWindows = false;
+	bIsParkour = true;
+	bIsPushKey = true;
+	GetCharacterMovement()->DisableMovement();
+}
+
+void ADBDCharacter::Multicast_Parkour2Func_Implementation()
+{
+	UE_LOG(LogTemp, Error, TEXT("ParkourFunc"));
+
+	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour2"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] Parkour2"), *GetName());
+
+
 	bIsParkour = true;
 	bIsPushKey = true;
 	GetCharacterMovement()->DisableMovement();
@@ -262,7 +330,16 @@ void ADBDCharacter::Server_FinishParkourFunc_Implementation()
 
 void ADBDCharacter::Multicast_FinishParkourFunc_Implementation()
 {
-	UE_LOG(LogTemp, Error, TEXT("FinishParkourFunc"));
+	if (bIsFindPallet)
+	{
+		UE_LOG(LogTemp, Error, TEXT("FinishParkourFunc Pallet"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("FinishParkourFunc Window"));
+	}
+
+
 	StopAnimMontage(ParkourMontage);
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bIsPushKey = false;

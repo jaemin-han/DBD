@@ -62,6 +62,8 @@ void ADBD_Player::Tick(float DeltaTime)
 
 	Interaction();
 	GetNearPallet();
+	//GetNearSurvivor();
+	PrintDebug();
 
 	// 살인자에서 추가해줘야하는 부분
 	//if (bIsParkour)
@@ -70,13 +72,20 @@ void ADBD_Player::Tick(float DeltaTime)
 	//	//MoveAlongQuadraticBezier(DeltaTime);
 	//}
 	
-	if (Gimmick)
+	if (IsClickedRaiseSurvivorButton)
 	{
-		VisibleMainUI(true, Gimmick->GetGimmickName(), Gimmick->GetInteractKey());
+		Server_RaiseFallenSurvivor();
+		Server_ActivatedGaugeUI();
+	}
+
+
+	if (NearGimmick)
+	{
+		Client_VisibleInteractUI();
 	}
 	else
 	{
-		VisibleMainUI(false, TEXT(""), TEXT(""));
+		Client_HiddenInteractUI();
 	}
 }
 
@@ -86,7 +95,7 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ADBD_Player, NearPallet);
-
+	DOREPLIFETIME(ADBD_Player, OtherSurvivor);
 }
 
 // Input 설정 함수
@@ -108,6 +117,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
 		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
+		EnhancedInputComponent->BindAction(RaiseUpAction, ETriggerEvent::Started, this, &ADBD_Player::Server_RaiseFallenSurvivor);
+		EnhancedInputComponent->BindAction(RaiseUpAction, ETriggerEvent::Completed, this, &ADBD_Player::NonRaiseFallenSurvivor);
 
 
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ADBD_Player::Run);
@@ -124,11 +135,11 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 /** 임시 변수*/
 void ADBD_Player::PlusHp()
 {
-	UpdateHP(-1);
+	ServerRPC_UpdateHP(-1);
 }
 void ADBD_Player::MinusHp()
 {
-	UpdateHP(1);
+	ServerRPC_UpdateHP(1);
 }
 /** 임시 변수*/
 
@@ -414,208 +425,83 @@ void ADBD_Player::ReleasedGeneratorSkillCheck()
 // 라인트레이스를 활용한 상호작용 함수
 void ADBD_Player::Interaction()
 {
-	//ServerRPC_Interaction();
-	
-	FVector startPos = GetActorLocation();
+	FVector startPos = GetActorLocation() + FVector(0,0,-80);
 	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
 
 	FHitResult hitResult;
-	FCollisionQueryParams collisionParams;
-	collisionParams.AddIgnoredActor(this);
+	//FCollisionQueryParams collisionParams;
+	//collisionParams.AddIgnoredActor(this);
 
-	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility);
 	if (bHit)
 	{
-		//if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
 		if (hitResult.GetActor() and hitResult.GetActor()->GetClass()->ImplementsInterface(UDBD_Interface_Gimmick::StaticClass()))
 		{
+			if (ADBD_Player* otherPlayer = Cast<ADBD_Player>(hitResult.GetActor()))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("OtherPlayer"));
+				return;
+			}
+
+
 			NearGimmick = hitResult.GetActor();
-			// HitActor가 Generator라면
-			// 이후 변경 (각각 NameOrLabel로 찾는 거를 어떻게 더 효율적으로 변경할수있을지 생각)
-			//if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator")
-			//	or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator2")
-			//	or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator3")
-			//	or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator4"))
+			//UE_LOG(LogTemp, Warning, TEXT("NearGimmick : %s"), *NearGimmick->GetGimmickName());
+
+
 			if (NearGimmick->GetGimmickName() == TEXT("Generator"))
 			{
-				//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
 				IsFindGenerator = true;
-				//Gimmick = gimmick;
 
-				if (IsInteractGenerator)
-				{
-					NearGimmick->Interaction(); // 게이지 UI 생성 함수
-					IsSkillCheckZone = true;
-				}
-				else
-				{
-					NearGimmick->FailedInteraction(); // 게이지 UI 제거 함수
-					IsSpaceBar = false;
-				}
+				//if (IsInteractGenerator)
+				//{
+				//	NearGimmick->Interaction(); // 게이지 UI 생성 함수
+				//	IsSkillCheckZone = true;
+				//}
+				//else
+				//{
+				//	NearGimmick->FailedInteraction(); // 게이지 UI 제거 함수
+				//	IsSpaceBar = false;
+				//}
 			}
 			// HitActor가 Windows라면
 			else if (NearGimmick->GetGimmickName() == TEXT("Windows"))
 			{
-				UE_LOG(LogTemp, Warning, TEXT(" Windows"));
 
 				// 이부분은 추후에 Character클래스에서 호출해주는 방식으로 변경 가능성 있음
 				// 살인자에 추가할 부분
-				bIsSearchWindows = true;
-				//SetBezierPoint();
+				bIsFindWindows = true;
+			}
 
-				// 서버에게 Point값을 전달
-				//ServerRPC_SetBezierPoint();
-				Server_ReportBezierPoints();
+			else if (NearGimmick->GetGimmickName() == TEXT("Pallet"))
+			{
+				TracePallet = Cast<APallet>(NearGimmick.GetObject());
+				if (TracePallet)
+				{
+					//NearGimmick = TracePallet;
 
-				//ClientRPC_SetBezierPoint(gimmick);
 
+					if (TracePallet->bIsFallen) // 넘어진 상태라면?
+					{
+						bIsFindPallet = true;
+					}
 
-				//Gimmick = gimmick;
+					//UE_LOG(LogTemp, Warning, TEXT("bIsFindPallet : %d"), bIsFindPallet);
+				}
+
 			}
 		}
 	}
 	else
 	{
 		IsFindGenerator = false;
-		bIsSearchWindows = false;
 		IsInteractGenerator = false;
-		if (not IsOverlapDoor) Gimmick = nullptr;
+
+		bIsFindWindows = false;
+		bIsFindPallet = false;
+		if (not IsOverlapDoor) NearGimmick = nullptr;
 	}
 
 	DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
-}
-void ADBD_Player::ServerRPC_Interaction_Implementation()
-{
-	//MulticastRPC_Interaction();
-	ClientRPC_Interaction();
-}
-void ADBD_Player::MulticastRPC_Interaction_Implementation()
-{
-	//FVector startPos = GetActorLocation();
-	//FVector endPos = startPos + GetActorForwardVector() * 100.0f;
-	//
-	//FHitResult hitResult;
-	//FCollisionQueryParams collisionParams;
-	//collisionParams.AddIgnoredActor(this);
-	//
-	//bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
-	//if (bHit)
-	//{
-	//	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
-	//	{
-	//		// HitActor가 Generator라면
-			// 이후 변경 (각각 NameOrLabel로 찾는 거를 어떻게 더 효율적으로 변경할수있을지 생각)
-	//		if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator")
-	//			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator2")
-	//			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator3")
-	//			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator4"))
-	//		{
-	//			//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
-	//			IsFindGenerator = true;
-	//			Gimmick = gimmick;
-	//
-	//			if (IsInteractGenerator)
-	//			{
-	//				gimmick->Interaction(); // 게이지 UI 생성 함수
-	//				IsSkillCheckZone = true;
-	//			}
-	//			else
-	//			{
-	//				gimmick->FailedInteraction(); // 게이지 UI 제거 함수
-	//				IsSpaceBar = false;
-	//			}
-	//		}
-	//		// HitActor가 Windows라면
-	//		else if (gimmick->GetGimmickName() == TEXT("Windows"))
-	//		{
-	//			UE_LOG(LogTemp, Warning, TEXT(" Windows"));
-	//
-	//			// 이부분은 추후에 Character클래스에서 호출해주는 방식으로 변경 가능성 있음
-				// 살인자에 추가할 부분
-	//			bIsSearchWindows = true;
-	//			SetBezierPoint(gimmick);
-	//			//ClientRPC_SetBezierPoint(gimmick);
-	//
-	//
-	//			Gimmick = gimmick;
-	//		}
-	//		// HitActor가 Board라면
-			// HitActor가 출구라면
-	//	}
-	//}
-	//else
-	//{
-	//	IsFindGenerator = false;
-	//	bIsSearchWindows = true;
-	//	IsInteractGenerator = false;
-	//	if (not IsOverlapDoor) Gimmick = nullptr;
-	//}
-	//
-	//DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
-}
-void ADBD_Player::ClientRPC_Interaction_Implementation()
-{
-	//FVector startPos = GetActorLocation();
-	//FVector endPos = startPos + GetActorForwardVector() * 100.0f;
-	//
-	//FHitResult hitResult;
-	//FCollisionQueryParams collisionParams;
-	//collisionParams.AddIgnoredActor(this);
-	//
-	//bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, startPos, endPos, ECollisionChannel::ECC_Visibility, collisionParams);
-	//if (bHit)
-	//{
-	//	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(hitResult.GetActor()))
-	//	{
-	//		// HitActor가 Generator라면
-			// 이후 변경 (각각 NameOrLabel로 찾는 거를 어떻게 더 효율적으로 변경할수있을지 생각)
-	//		if (hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator")
-	//			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator2")
-	//			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator3")
-	//			or hitResult.GetActor()->GetActorNameOrLabel() == TEXT("BP_Generator4"))
-	//		{
-	//			//UE_LOG(LogTemp, Warning, TEXT(" Generator"));
-	//			IsFindGenerator = true;
-	//			Gimmick = gimmick;
-	//
-	//			if (IsInteractGenerator)
-	//			{
-	//				gimmick->Interaction(); // 게이지 UI 생성 함수
-	//				IsSkillCheckZone = true;
-	//			}
-	//			else
-	//			{
-	//				gimmick->FailedInteraction(); // 게이지 UI 제거 함수
-	//				IsSpaceBar = false;
-	//			}
-	//		}
-	//		// HitActor가 Windows라면
-	//		else if (gimmick->GetGimmickName() == TEXT("Windows"))
-	//		{
-	//			UE_LOG(LogTemp, Warning, TEXT(" Windows"));
-	//
-	//			// 이부분은 추후에 Character클래스에서 호출해주는 방식으로 변경 가능성 있음
-				// 살인자에 추가할 부분
-	//			bIsSearchWindows = true;
-	//			SetBezierPoint(gimmick);
-	//			//ClientRPC_SetBezierPoint(gimmick);
-	//
-	//
-	//			Gimmick = gimmick;
-	//		}
-	//		// HitActor가 Board라면
-			// HitActor가 출구라면
-	//	}
-	//}
-	//else
-	//{
-	//	IsFindGenerator = false;
-	//	bIsSearchWindows = true;
-	//	IsInteractGenerator = false;
-	//	if (not IsOverlapDoor) Gimmick = nullptr;
-	//}
-	//
-	//DrawDebugLine(GetWorld(), startPos, endPos, FColor::Red, false, 1.0f, 0, 1.0f);
 }
 // 가까운 판자를 가져오기 위한 함수
 void ADBD_Player::GetNearPallet()
@@ -657,15 +543,52 @@ void ADBD_Player::GetNearPallet()
 	}
 }
 
+void ADBD_Player::GetNearSurvivor()
+{
+	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
+	TArray<AActor*> OverlappingActors;
+	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
+	ADBD_Player* NewNearSurvivor = nullptr;
+
+	for (AActor* OverlappingActor : OverlappingActors)
+	{
+		// 오버랩되고있는게 본인이라면
+		if (OverlappingActor == this)
+		{
+			continue;
+		}
+
+		NewNearSurvivor = Cast<ADBD_Player>(OverlappingActor);
+	}
+	if (NewNearSurvivor)
+	{
+		OtherSurvivor = NewNearSurvivor;
+		UE_LOG(LogTemp, Warning, TEXT("[%s] OtherSurvivor : %s"), *GetName(), *OtherSurvivor->GetName());
+	}
+	else
+	{
+		OtherSurvivor = nullptr;
+		//UE_LOG(LogTemp, Warning, TEXT("[%s] OtherSurvivor is nullptr"), *GetName());
+	}
+}
+
 void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 {
+	//if(not HasAuthority()) return;
+
 	Super::NotifyActorBeginOverlap(OtherActor);
+
+	ADBD_Player* otherPlayer = Cast<ADBD_Player>(OtherActor);
+	if (otherPlayer and OtherActor != this)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] OtherPlayer : %s"),*GetName(), *otherPlayer->GetName());
+		OtherSurvivor = otherPlayer;
+	}
 
 	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
 	{
-		//UE_LOG(LogTemp, Log, TEXT("Gimmick BeginOverlap"));
 		// 만약 OtherActor가 Door라면
-		if (OtherActor->GetActorNameOrLabel() == TEXT("BP_Door2") or OtherActor->GetActorNameOrLabel() == TEXT("BP_Door"))
+		if (gimmick->GetGimmickName() == TEXT("Door"))
 		{
 			IsOverlapDoor = true;
 			Door = Cast<ADoor>(gimmick);
@@ -677,6 +600,16 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
+
+	ADBD_Player* otherPlayer = Cast<ADBD_Player>(OtherActor);
+	if (otherPlayer and OtherActor != this)
+	{
+		OtherSurvivor = nullptr;
+		IsClickedRaiseSurvivorButton = false;
+		IsFinishRaiseSurvivor = false;
+		RaiseSurvivorTimer = 0.0f;
+	}
+
 
 	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
 	{
@@ -691,6 +624,76 @@ void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 			//Gimmick = nullptr;
 		}
 	}
+}
+
+void ADBD_Player::RaiseFallenSurvivor(ADBD_Player* otherSurvivor)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Local RaiseFallenSurvivor"));
+	UE_LOG(LogTemp, Warning, TEXT("<Local> [%s] OtehrPlayer : %s"), *GetName(), *otherSurvivor->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("[%s] OtehrPlayer state : %d"), *GetName(), otherSuvivor->GetSurvivorState());
+	//if (otherSuvivor and otherSuvivor->GetSurvivorState() == ESurvivorState::Hp1)
+	{
+		IsClickedRaiseSurvivorButton = true;
+		//Server_ActivatedGaugeUI();
+		
+		//otherSurvivor->PlusHp();
+		if (IsFinishRaiseSurvivor)
+		{
+			IsFinishRaiseSurvivor = false;
+			RaiseSurvivorTimer = 0.0f;
+			IsClickedRaiseSurvivorButton = false;
+			otherSurvivor->PlusHp();
+			//Multi_RaiseFallenSurvivor(otherSurvivor);
+		}
+	}
+}
+void ADBD_Player::Server_RaiseFallenSurvivor_Implementation()
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Server RaiseFallenSurvivor : %s"), *OtherSurvivor->GetName());
+	if (OtherSurvivor and OtherSurvivor->GetSurvivorState() == ESurvivorState::Hp1)
+	{
+		RaiseFallenSurvivor(OtherSurvivor);
+	}
+}
+void ADBD_Player::Multi_RaiseFallenSurvivor_Implementation(ADBD_Player* otherSurvivor)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Multi RaiseFallenSurvivor"));
+	//UE_LOG(LogTemp, Warning, TEXT("[%s] OtehrPlayer : %s"), *GetName(), *otherSuvivor->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("[%s] OtehrPlayer state : %d"), *GetName(), otherSuvivor->GetSurvivorState());
+	//
+	UE_LOG(LogTemp, Warning, TEXT("OtherPlayer healing"));
+	otherSurvivor->PlusHp();
+}
+
+void ADBD_Player::NonRaiseFallenSurvivor()
+{
+	IsClickedRaiseSurvivorButton = false;
+	RaiseSurvivorTimer = 0.0f;
+}
+
+void ADBD_Player::ActivatedGaugeUI(float time)
+{
+	if (not IsClickedRaiseSurvivorButton) return;
+
+
+	RaiseSurvivorTimer += time;
+	UE_LOG(LogTemp, Warning, TEXT("[%s] RaiseSurvivorTimer : %.2f"), *GetName(), RaiseSurvivorTimer);
+
+	if (RaiseSurvivorTimer >= 3.0f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] ActivatedGaugeUI"), *GetName());
+		IsFinishRaiseSurvivor = true;
+		//NonRaiseFallenSurvivor();
+	}
+	
+	//IsSkillCheckZone = true;
+}
+void ADBD_Player::Server_ActivatedGaugeUI_Implementation()
+{
+	ActivatedGaugeUI(GetWorld()->DeltaTimeSeconds);
+}
+void ADBD_Player::Client_ActivatedGaugeUI_Implementation()
+{
 }
 /** 상호작용 함수*/
 
@@ -718,6 +721,14 @@ void ADBD_Player::SpawnDecal()
 	decalLR->SetActorRotation(rotL);
 	decalLR->SetActorScale3D(FVector(0.80f, 0.3f, 0.26f));
 }
+
+void ADBD_Player::PrintDebug()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] Health : %d"), *GetName(), Health));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
+}
+
 void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
 {
 	if (MainUI)
@@ -725,6 +736,85 @@ void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
 		MainUI->SetVisibility(IsVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 		MainUI->SetGimmickName(Name);
 		MainUI->SetInteractKey(Key);
+	}
+}
+
+void ADBD_Player::VisibleInteractUI()
+{
+	if (NearGimmick)
+	{
+		Client_VisibleInteractUI();
+	}
+}
+
+void ADBD_Player::Server_VisibleInteractUI_Implementation()
+{
+	VisibleInteractUI();
+}
+
+void ADBD_Player::Client_VisibleInteractUI_Implementation()
+{
+	if (!IsLocallyControlled()) return;
+
+
+	//UE_LOG(LogTemp, Log, TEXT("[Client] [%s] VisibleInteractUI"), *GetOwner()->GetName());
+
+	if (not NearGimmick)
+	{
+		//UE_LOG(LogTemp, Error, TEXT("[Client] [%s] NearGimmick is nullptr"), *GetOwner()->GetName());
+		return;
+	}
+	else
+	{
+		//UE_LOG(LogTemp, Log, TEXT("[Client] [%s] NearGimmick : %s"), *GetOwner()->GetName(), *NearGimmick->GetGimmickName());
+	}
+	//return;
+	if (MainUI)
+	{
+		MainUI->SetVisibility(ESlateVisibility::Visible);
+		MainUI->SetGimmickName(NearGimmick->GetGimmickName());
+		MainUI->SetInteractKey(NearGimmick->GetInteractKey());
+	}
+}
+
+void ADBD_Player::HiddenInteractUI()
+{
+	if (NearGimmick)
+	{
+		Client_HiddenInteractUI();
+	}
+}
+
+void ADBD_Player::Server_HiddenInteractUI_Implementation()
+{
+	HiddenInteractUI();
+}
+
+void ADBD_Player::Client_HiddenInteractUI_Implementation()
+{
+	// 왜 이렇게 되는지 이해를 못하겠다..
+
+	if (not NearGimmick)
+	{
+		//UE_LOG(LogTemp, Error, TEXT("[Client] [%s] NearGimmick is nullptr"), *GetOwner()->GetName());
+		if (HasAuthority() and MainUI)
+		{
+			MainUI->SetVisibility(ESlateVisibility::Hidden);
+			MainUI->SetGimmickName(TEXT(""));
+			MainUI->SetInteractKey(TEXT(""));
+		}
+
+		return;
+	}
+	else
+	{
+		//UE_LOG(LogTemp, Log, TEXT("[Client] [%s] HiddenInteractUI"), *GetOwner()->GetName());
+		if (MainUI)
+		{
+			MainUI->SetVisibility(ESlateVisibility::Hidden);
+			MainUI->SetGimmickName(TEXT(""));
+			MainUI->SetInteractKey(TEXT(""));
+		}
 	}
 }
 
@@ -750,7 +840,6 @@ void ADBD_Player::UpdateSpeed()
 void ADBD_Player::UpdateHP(int32 Value)
 {
 	MulticastRPC_UpdateHP(Value);
-
 }
 
 void ADBD_Player::ServerRPC_UpdateHP_Implementation(int32 Damage)
@@ -774,19 +863,11 @@ void ADBD_Player::MulticastRPC_UpdateHP_Implementation(int32 Value)
 	}
 
 	SurvivorState = (ESurvivorState)Health;
-	// 3 : WalkSpeed 226, RunSpeed : 400
-	// crouch : WalkSpeed 113
-	// 2 : WalkSpeed 226, RunSpeed : 400
-	// 1 : WalkSpeed 70
-	// 피격시 2초 스피드 : 600
-	UpdateSpeed();
 
+
+	UpdateSpeed();
 	// 임시
 	ChangePlayerAnimation();
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Health : %d"), Health));
-	//FString string = GetDisplayNameTextByIndex(SurvivorState).toString();
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("State : %d"), (int)SurvivorState));
 }
 
 // 상태에 따른 설정 변경 함수

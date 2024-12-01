@@ -188,15 +188,14 @@ void AKiller::GetNearGimmick()
 		// todo: 부모에서 bIsSearchWindows 변수를 사용하기 위해 할당, 이후에 부모 클래스로 모두 옮기자
 		if (NearGimmick->GetGimmickName() == "Windows")
 		{
-			Server_ReportBezierPoints();
-			bIsSearchWindows = true;
+			bIsFindWindows = true;
 		}
 	}
 	else
 	{
 		NearGimmick = nullptr;
 
-		bIsSearchWindows = false;
+		bIsFindWindows = false;
 	}
 }
 

@@ -31,7 +31,14 @@ void UDBD_Surviori_AnimInstance::AnimNotify_OnParkourFinish()
 {
 	if (Player)
 	{
-		//Player->FinishParkourFunc();
+		Player->Server_FinishParkourFunc();
+	}
+}
+
+void UDBD_Surviori_AnimInstance::AnimNotify_OnParkour2Finish()
+{
+	if (Player)
+	{
 		Player->Server_FinishParkourFunc();
 	}
 }
