@@ -32,7 +32,11 @@ public:
 
 
 	UFUNCTION(Server, Reliable)
-	void Server_InteractDoor(AActor* Caller = nullptr);
+	void Server_InteractDoor(AActor* Caller = nullptr);	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetOwner(AActor* Caller);
+	UFUNCTION(Client, Reliable)
+	void Client_InteractDoor(AActor* Caller = nullptr);
 
 	void OpenExitDoor();
 	UFUNCTION(Server, Reliable)

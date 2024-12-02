@@ -46,6 +46,7 @@ void ADoor::BeginPlay()
 
 	// 월드의 발전기 찾아두기
 	TArray<AActor*> FoundActors;
+
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGenerator::StaticClass(), FoundActors);
 	for (AActor* Actor : FoundActors)
 	{
@@ -57,11 +58,22 @@ void ADoor::BeginPlay()
 void ADoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (ExitGaugeUI and ExitGaugeUI->GetIsFullGauge())
+	if (GetOwner())
 	{
-		OpenExitDoor();
+		DrawDebugString(GetWorld(), GetActorLocation(), FString::Printf(TEXT("GetOwner : %s"), *GetOwner()->GetName()), nullptr, FColor::Red, DeltaTime);
 	}
+	else
+	{
+		DrawDebugString(GetWorld(), GetActorLocation(), FString::Printf(TEXT("No")), nullptr, FColor::Red, DeltaTime);
+
+	}
+
+	if (not HasAuthority()) return;
+
+
+	OpenExitDoor();
+
+
 
 	for (AGenerator* generator : Generators)
 	{
@@ -73,12 +85,13 @@ void ADoor::Tick(float DeltaTime)
 
 void ADoor::Interaction(AActor* Caller)
 {
-	//UE_LOG(LogTemp, Log, TEXT(" Door Interaction"));
 	if (not IsDoorActivated) return;
 	if (not ExitGaugeUI) return;
-
+	UE_LOG(LogTemp, Log, TEXT("[local] Door Interaction"));
+	//Client_InteractDoor();
+	
 	ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
-	ExitGaugeUI->UpdateExitGauge(GetWorld()->DeltaTimeSeconds);
+	ExitGaugeUI->Server_UpdateExitGauge();
 }
 
 void ADoor::FailedInteraction()
@@ -89,6 +102,21 @@ void ADoor::FailedInteraction()
 	UE_LOG(LogTemp, Log, TEXT("Door Failed Interaction"));
 	ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
 }
+void ADoor::Server_InteractDoor_Implementation(AActor* Caller)
+{
+	
+	//Multi_SetOwner(Caller);
+
+	Interaction(Caller);
+}
+
+void ADoor::Client_InteractDoor_Implementation(AActor* Caller)
+{
+	UE_LOG(LogTemp, Log, TEXT("[Client] Door Interaction"));
+	//ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
+	//ExitGaugeUI->UpdateExitGauge(GetWorld()->DeltaTimeSeconds);
+}
+
 
 FString ADoor::GetGimmickName()
 {
@@ -100,20 +128,33 @@ FString ADoor::GetInteractKey()
 	return InteractKey;
 }
 
+void ADoor::Multi_SetOwner_Implementation(AActor* Caller)
+{
+	if (Caller) SetOwner(Caller);
+}
+
 void ADoor::OpenExitDoor()
 {
 	if (not IsDoorActivated) return;
 
 	if (DoorMesh->GetRelativeLocation().Z >= 400.0f) return;
-
-	Multi_OpenExitDoor();
-
-	//DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	//ExitCol->SetCollisionProfileName(TEXT("NoCollision"));
+	//if (GetOwner())
+	//{
+	//	if (HasAuthority())
+	//	{
+	//		UE_LOG(LogTemp, Log, TEXT("[%s] MultiServer OpenExitDoor"), *GetOwner()->GetName());
 	//
-	//UE_LOG(LogTemp, Log, TEXT("OpenExitDoor"));
-	//FVector Movloc = DoorMesh->GetRelativeLocation() + GetActorUpVector();
-	//DoorMesh->SetRelativeLocation(Movloc);
+	//	}
+	//	else
+	//	{
+	//		UE_LOG(LogTemp, Log, TEXT("[%s] MultiClient OpenExitDoor"), *GetOwner()->GetName());
+	//	}
+	//}
+	
+	if (ExitGaugeUI and ExitGaugeUI->GetIsFullGauge())
+	{
+		Multi_OpenExitDoor();
+	}
 }
 
 void ADoor::Server_OpenExitDoor_Implementation()
@@ -125,8 +166,12 @@ void ADoor::Multi_OpenExitDoor_Implementation()
 {
 	DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
 	ExitCol->SetCollisionProfileName(TEXT("NoCollision"));
+	
 
-	UE_LOG(LogTemp, Log, TEXT("OpenExitDoor"));
 	FVector Movloc = DoorMesh->GetRelativeLocation() + GetActorUpVector();
+	UE_LOG(LogTemp, Log, TEXT("[%s] Local Movloc X : %.2f, Y : %.2f, Z : %.2f"),
+		*GetOwner()->GetName(), Movloc.X, Movloc.Y, Movloc.Z);
+
+
 	DoorMesh->SetRelativeLocation(Movloc);
 }

@@ -62,22 +62,22 @@ void ADBD_Player::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (!HasAuthority()) return;
 
-	if (IsLocallyControlled())
-	{
-		if (NearGimmick && NearGimmick->GetGimmickName() != "Pallet")
-		{
-			VisibleMainUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
-		}
-		// 판자가 있고, 내려가있지 않다면
-		else if (NearPallet && !NearPallet->bIsFallen)
-		{
-			VisibleMainUI(true, NearPallet->GetGimmickName(), NearPallet->GetInteractKey());
-		}
-		else
-		{
-			VisibleMainUI(false, TEXT(""), TEXT(""));
-		}
-	}
+	//if (IsLocallyControlled())
+	//{
+	//	if (NearGimmick && NearGimmick->GetGimmickName() != "Pallet")
+	//	{
+	//		VisibleMainUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+	//	}
+	//	// 판자가 있고, 내려가있지 않다면
+	//	else if (NearPallet && !NearPallet->bIsFallen)
+	//	{
+	//		VisibleMainUI(true, NearPallet->GetGimmickName(), NearPallet->GetInteractKey());
+	//	}
+	//	else
+	//	{
+	//		VisibleMainUI(false, TEXT(""), TEXT(""));
+	//	}
+	//}
 	
 
 	
@@ -325,11 +325,12 @@ void ADBD_Player::DropdownPallet()
 // 탈출구와 상호작용을 위한 Input 함수 - 탈출구와 상호작용 On (탈출구 게이지 시작)
 void ADBD_Player::ExitDoor()
 {
-	//UE_LOG(LogTemp, Log, TEXT("ExitDoor"));
-	//UE_LOG(LogTemp, Log, TEXT("IsOverlapDoor : %d"), IsOverlapDoor);
+	//UE_LOG(LogTemp, Warning, TEXT("ExitDoor"));
 	if (IsOverlapDoor)
 	{
-		Door->Interaction();
+		UE_LOG(LogTemp, Warning, TEXT("ExitDoor_IsOverlapDoor"));
+		//Door->Interaction();
+		Door->Server_InteractDoor(this);
 	}
 }
 
@@ -397,7 +398,7 @@ void ADBD_Player::Interaction()
 			}
 
 
-			NearGimmick = hitResult.GetActor();
+			 NearGimmick = hitResult.GetActor();
 			//UE_LOG(LogTemp, Warning, TEXT("NearGimmick : %s"), *NearGimmick->GetGimmickName());
 
 
@@ -438,6 +439,10 @@ void ADBD_Player::Interaction()
 					//UE_LOG(LogTemp, Warning, TEXT("bIsFindPallet : %d"), bIsFindPallet);
 				}
 
+			}
+			else
+			{
+				if (not IsOverlapDoor) NearGimmick = nullptr;
 			}
 		}
 	}
@@ -547,7 +552,9 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 			UE_LOG(LogTemp, Warning, TEXT("Door BeginOverlap"));
 			IsOverlapDoor = true;
 			Door = Cast<ADoor>(gimmick);
-			Gimmick = gimmick;
+			Door->SetOwner(this);
+
+			NearGimmick = OtherActor;
 		}
 	}
 }
