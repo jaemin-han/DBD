@@ -30,11 +30,16 @@ public:
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
 
+
+	UFUNCTION(Server, Reliable)
+	void Server_InteractDoor(AActor* Caller = nullptr);
+
 	void OpenExitDoor();
 	UFUNCTION(Server, Reliable)
 	void Server_OpenExitDoor();
 	UFUNCTION(NetMulticast,Reliable)
 	void Multi_OpenExitDoor();
+
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Door")

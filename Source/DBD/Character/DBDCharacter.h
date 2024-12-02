@@ -51,6 +51,8 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* ParkourMontage;
 
+	int32 SurvivorHp;
+
 
 	// 파쿠르 제어 변수 (각 생존자와 살인마 클래스 내에서 사용)
 	bool bIsFindWindows = false; // 창문을 찾았니? -> 창문을 찾았으면 : 베지에 곡선 좌표 설정 

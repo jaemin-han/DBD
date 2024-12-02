@@ -48,6 +48,17 @@ void UDBD_Surviori_AnimInstance::AnimNotify_OnRescueFinish()
 {
 	if (Player)
 	{
-		Player->NearGimmick->Interaction(Player);
+		if (Player->NearGimmick)
+		{
+			Player->NearGimmick->Interaction(Player);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NearGimmick is null"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player is null"));
 	}
 }

@@ -35,6 +35,7 @@ void ADBD_Player::BeginPlay()
 	Super::BeginPlay();
 
 	Health = MaxHealth;
+	SurvivorHp = Health;
 	SurvivorState= ESurvivorState::Hp3;
 
 	if (MainUIClass)
@@ -827,7 +828,7 @@ void ADBD_Player::MulticastRPC_UpdateHP_Implementation(int32 Value)
 	{
 		Health = 1;
 	}
-
+	SurvivorHp = Health;
 	SurvivorState = (ESurvivorState)Health;
 
 
