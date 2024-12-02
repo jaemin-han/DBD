@@ -82,3 +82,6 @@ DerivedDataCache/*
 # 소스 파일
 Content/ParagonGrux
 Content/Scene_Warehouse
+
+# bat 파일 - 각자 실행 파일 위치가 다름
+DBD.bat
