@@ -59,6 +59,7 @@ void ADBD_Player::Tick(float DeltaTime)
 {
 
 	Super::Tick(DeltaTime);
+	if (!HasAuthority()) return;
 
 	if (IsLocallyControlled())
 	{
@@ -79,7 +80,6 @@ void ADBD_Player::Tick(float DeltaTime)
 	
 
 	
-	if (!HasAuthority()) return;
 
 	Interaction();
 	GetNearPallet();
@@ -297,99 +297,6 @@ void ADBD_Player::MulticastRPC_CrouchStop_Implementation()
 	GetCharacterMovement()->MaxWalkSpeed = 226.0f;
 }
 
-
-//// 파쿠르 적용 함수 (적용 X)
-//void ADBD_Player::Parkour()
-//{
-//	//if (not IsReachWindows) return;
-//
-//	//TArray<AActor*> AllActors;
-//	//TArray<AWindows*> Windows;
-//	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWindows::StaticClass(), AllActors);
-//	//for (AActor* actor : AllActors)
-//	//{
-//	//	if (AWindows* win = Cast<AWindows>(actor))
-//	//	{
-//	//		Windows.Add(win);
-//	//	}
-//	//}
-//	////Window = Cast<AWindows>(Windows[0]);
-//	//
-//	//float closestDist = std::numeric_limits<float>::max();
-//	//AWindows* closestWindow = nullptr;
-//	//float dist = 0.0f;
-//	//for (AWindows* window : Windows)
-//	//{
-//	//	dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
-//	//	UE_LOG(LogTemp, Error, TEXT("Distance : %f"), dist);
-//	//	if (dist < closestDist)
-//	//	{
-//	//		// 최단 거리 갱신
-//	//		closestDist = dist;
-//	//		closestWindow = window;
-//	//	}
-//	//}
-//	//
-//	//// 캐릭터와 Window의 길이구하기
-//	//if(closestDist > 100.0f) return; // 너무 멀면 파쿠르 하지 않기
-//	//
-//	//// 2차 베지에 곡선 계산
-//	////P0 = GetActorLocation();
-//	////P1 = P0 + GetActorUpVector() * 100.0f;
-//	////P2 = P1 + GetActorForwardVector() * dist;
-//	//
-//	//// 3차 베지에 곡선 계산
-//	//P0 = GetActorLocation();
-//	//P1 = P0 + GetActorUpVector() * 120.0f;
-//	//P2 = P1 + GetActorForwardVector() * closestDist * 2;
-//	//P3 = P0 + GetActorForwardVector() * closestDist * 2;
-//
-//	//UE_LOG(LogTemp, Warning, TEXT("Parkour"));
-//	//PlayAnimMontage(StateMontage, 1.f, TEXT("Parkour"));
-//	//IsReachWindows = false;
-//	//IsParkour = true;
-//
-//	ServerRPC_Parkour();
-//}
-//// 파쿠르 적용 서버 함수 (적용 X)
-//void ADBD_Player::ServerRPC_Parkour_Implementation()
-//{
-//	MulticastRPC_Parkour();
-//}
-//// 파쿠르 적용 멀티캐스트 함수 (적용 X)
-//void ADBD_Player::MulticastRPC_Parkour_Implementation()
-//{
-//	if (not IsReachWindows) return;
-//
-//	UE_LOG(LogTemp, Warning, TEXT("Parkour"));
-//	PlayAnimMontage(StateMontage, 1.f, TEXT("Parkour"));
-//	IsReachWindows = false;
-//	IsParkour = true;
-//}
-//
-//
-//// 파쿠르 종료 함수 (적용 X)
-//void ADBD_Player::ParkourFinish()
-//{
-//	//UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
-//	//StopAnimMontage(StateMontage);
-//	//GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-//	ServerRPC_ParkourFinish();
-//}
-//// 파쿠르 종료 서버 함수 (적용 X)
-//void ADBD_Player::ServerRPC_ParkourFinish_Implementation()
-//{
-//	MulticastRPC_ParkourFinish();
-//}
-//// 파쿠르 종료 멀티캐스트 함수 (적용 X)
-//void ADBD_Player::MulticastRPC_ParkourFinish_Implementation()
-//{
-//	UE_LOG(LogTemp, Warning, TEXT("ParkourFinish"));
-//	StopAnimMontage(StateMontage);
-//	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-//}
-
-
 // 발전기와 상호작용을 위한 Input 함수 - 발전기와 상호작용 On (발전기 게이지 시작)
 void ADBD_Player::PushInteractGenerator()
 {
@@ -465,7 +372,7 @@ void ADBD_Player::MulticastRPC_Rescue_Implementation()
 // 라인트레이스를 활용한 상호작용 함수
 void ADBD_Player::Interaction()
 {
-	FVector startPos = GetActorLocation() + FVector(0,0,-80);
+	FVector startPos = GetActorLocation();
 	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
 
 	FHitResult hitResult;

@@ -89,6 +89,8 @@ void ADBDCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if(not HasAuthority()) return;
+
 	if (bIsParkour)
 	{
 		FMoveAlongQuadraticBezier(DeltaTime);
@@ -264,13 +266,13 @@ void ADBDCharacter::ParkourFunc()
 		UE_LOG(LogTemp, Log, TEXT("[%s] ParkourFunc Gimmick[%s]"), *GetName(), *NearGimmick->GetGimmickName());
 		UE_LOG(LogTemp, Log, TEXT("[%s] bIsFindPallet : %d"), *GetName(), bIsFindPallet);
 
+		// 베지에 곡선 좌표 설정하라고 서버에서 전달해주기
 		Server_ReportBezierPoints();
-		
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP0 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP0.X, vP0.Y, vP0.Z);
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP1 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP1.X, vP1.Y, vP1.Z);
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP2 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP2.X, vP2.Y, vP2.Z);
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP3 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP3.X, vP3.Y, vP3.Z);
-		
+
+
+		// 모든 
+		bIsParkour = true;
+		bIsPushKey = true;
 		Multicast_ParkourFunc();
 
 		return;
@@ -281,13 +283,11 @@ void ADBDCharacter::ParkourFunc()
 		UE_LOG(LogTemp, Log, TEXT("[%s] ParkourFunc Gimmick[%s]"), *GetName(), *NearGimmick->GetGimmickName());
 		UE_LOG(LogTemp, Log, TEXT("[%s] bIsFindPallet : %d"), *GetName(), bIsFindPallet);
 
+		// 베지에 곡선 좌표 설정하라고 서버에서 전달해주기
 		Server_ReportBezierPoints();
 
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP0 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP0.X, vP0.Y, vP0.Z);
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP1 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP1.X, vP1.Y, vP1.Z);
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP2 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP2.X, vP2.Y, vP2.Z);
-		//UE_LOG(LogTemp, Error, TEXT("[%s] vP3 X : %.2f, Y : %.2f, Z : %.2f"), *GetOwner()->GetName(), vP3.X, vP3.Y, vP3.Z);
-
+		bIsParkour = true;
+		bIsPushKey = true;
 		Multicast_Parkour2Func();
 		return;
 	}
@@ -302,18 +302,10 @@ void ADBDCharacter::Server_ParkourFunc_Implementation()
 void ADBDCharacter::Multicast_ParkourFunc_Implementation()
 {
 	UE_LOG(LogTemp, Error, TEXT("ParkourFunc"));
-	//if (bIsFindWindows)
 	{
 		PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
 	}
-	//else if (bIsFindPallet)
-	//{
-	//	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour2"));
-	//	UE_LOG(LogTemp, Warning, TEXT("[%s] Parkour2"), *GetName());
-	//}
-	//bIsSearchWindows = false;
-	bIsParkour = true;
-	bIsPushKey = true;
+
 	GetCharacterMovement()->DisableMovement();
 }
 
@@ -324,9 +316,6 @@ void ADBDCharacter::Multicast_Parkour2Func_Implementation()
 	PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour2"));
 	UE_LOG(LogTemp, Warning, TEXT("[%s] Parkour2"), *GetName());
 
-
-	bIsParkour = true;
-	bIsPushKey = true;
 	GetCharacterMovement()->DisableMovement();
 }
 
