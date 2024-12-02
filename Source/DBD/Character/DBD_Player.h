@@ -6,6 +6,7 @@
 #include "DBDCharacter.h"
 #include "DBD_Player.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnSetGimmickAtRescueDelegate, TScriptInterface<class IDBD_Interface_Gimmick>);
 
 UENUM(BlueprintType)
 enum class ESurvivorState : uint8
@@ -274,4 +275,8 @@ private:
 	// todo: 재민추가 // Rescue Montage
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* RescueMontage;
+
+public:
+	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate
+	FOnSetGimmickAtRescueDelegate OnSetGimmickAtRescue;
 };

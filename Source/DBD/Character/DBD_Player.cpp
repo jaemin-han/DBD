@@ -60,6 +60,11 @@ void ADBD_Player::Tick(float DeltaTime)
 {
 
 	Super::Tick(DeltaTime);
+
+	// drawdebugstring neargimmick
+	FString NearGimmickName = NearGimmick ? NearGimmick->GetGimmickName() : TEXT("None");
+	DrawDebugString(GetWorld(), GetActorLocation(), NearGimmickName, nullptr, FColor::Red, 0.0f, true);
+	
 	if (!HasAuthority()) return;
 
 	//if (IsLocallyControlled())
@@ -356,7 +361,7 @@ void ADBD_Player::ReleasedGeneratorSkillCheck()
 
 void ADBD_Player::ServerRPC_Rescue_Implementation()
 {
-	if (NearGimmick && NearGimmick->GetGimmickName() == TEXT("Hanger"))
+	if (NearGimmick && NearGimmick->GetGimmickName() == TEXT("Hanger") && (SurvivorState == ESurvivorState::Hp2 || SurvivorState == ESurvivorState::Hp3))
 	{
 		// 지금 Rescue 가능한지 판단하려면 Hanger의 상태를 확인해야함
 		auto* Hanger = Cast<AHanger>(NearGimmick.GetObject());
@@ -369,6 +374,7 @@ void ADBD_Player::ServerRPC_Rescue_Implementation()
 
 void ADBD_Player::MulticastRPC_Rescue_Implementation()
 {
+	OnSetGimmickAtRescue.ExecuteIfBound(NearGimmick);
 	PlayAnimMontage(RescueMontage);
 }
 
@@ -439,10 +445,6 @@ void ADBD_Player::Interaction()
 					//UE_LOG(LogTemp, Warning, TEXT("bIsFindPallet : %d"), bIsFindPallet);
 				}
 
-			}
-			else
-			{
-				if (not IsOverlapDoor) NearGimmick = nullptr;
 			}
 		}
 	}

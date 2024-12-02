@@ -10,6 +10,12 @@ void UDBD_Surviori_AnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 	// 내가 붙어있는 Pawn 가져오기
 	Player = Cast<ADBD_Player>(TryGetPawnOwner());
+
+	// 구출을 실행할 때 이 함수를 실행함
+	Player->OnSetGimmickAtRescue.BindLambda([this](TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick)
+	{
+		Gimmick = NearGimmick;
+	});
 }
 
 void UDBD_Surviori_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -48,9 +54,9 @@ void UDBD_Surviori_AnimInstance::AnimNotify_OnRescueFinish()
 {
 	if (Player)
 	{
-		if (Player->NearGimmick)
+		if (Gimmick)
 		{
-			Player->NearGimmick->Interaction(Player);
+			Gimmick->Interaction(Player);
 		}
 		else
 		{
