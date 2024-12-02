@@ -81,11 +81,11 @@ void ADBD_Player::Tick(float DeltaTime)
 
 	if (NearGimmick)
 	{
-		Client_VisibleInteractUI();
+		Client_VisibleInteractUI(IsInteractGenerator, bIsParkour);
 	}
 	else
 	{
-		Client_HiddenInteractUI();
+		Client_HiddenInteractUI(); 
 	}
 }
 
@@ -452,16 +452,16 @@ void ADBD_Player::Interaction()
 			{
 				IsFindGenerator = true;
 
-				//if (IsInteractGenerator)
-				//{
-				//	NearGimmick->Interaction(); // 게이지 UI 생성 함수
-				//	IsSkillCheckZone = true;
-				//}
-				//else
-				//{
-				//	NearGimmick->FailedInteraction(); // 게이지 UI 제거 함수
-				//	IsSpaceBar = false;
-				//}
+				if (IsInteractGenerator)
+				{
+					NearGimmick->Interaction(); // 게이지 UI 생성 함수
+					IsSkillCheckZone = true;
+				}
+				else
+				{
+					NearGimmick->FailedInteraction(); // 게이지 UI 제거 함수
+					IsSpaceBar = false;
+				}
 			}
 			// HitActor가 Windows라면
 			else if (NearGimmick->GetGimmickName() == TEXT("Windows"))
@@ -477,9 +477,6 @@ void ADBD_Player::Interaction()
 				TracePallet = Cast<APallet>(NearGimmick.GetObject());
 				if (TracePallet)
 				{
-					//NearGimmick = TracePallet;
-
-
 					if (TracePallet->bIsFallen) // 넘어진 상태라면?
 					{
 						bIsFindPallet = true;
@@ -724,9 +721,9 @@ void ADBD_Player::SpawnDecal()
 
 void ADBD_Player::PrintDebug()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] Health : %d"), *GetName(), Health));
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] Health : %d"), *GetName(), Health));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
 }
 
 void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
@@ -739,35 +736,44 @@ void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
 	}
 }
 
+// 안쓰는 함수들?
 void ADBD_Player::VisibleInteractUI()
 {
 	if (NearGimmick)
 	{
-		Client_VisibleInteractUI();
+		if (IsInteractGenerator) return;
+		if (bIsParkour) return;
+
+	
+
+
+		//Client_VisibleInteractUI();
 	}
 }
-
 void ADBD_Player::Server_VisibleInteractUI_Implementation()
 {
 	VisibleInteractUI();
 }
+// 안쓰는 함수들?
 
-void ADBD_Player::Client_VisibleInteractUI_Implementation()
+void ADBD_Player::Client_VisibleInteractUI_Implementation(bool IsGenerator, bool IsParkour)
 {
 	if (!IsLocallyControlled()) return;
 
-
-	//UE_LOG(LogTemp, Log, TEXT("[Client] [%s] VisibleInteractUI"), *GetOwner()->GetName());
-
 	if (not NearGimmick)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("[Client] [%s] NearGimmick is nullptr"), *GetOwner()->GetName());
 		return;
 	}
-	else
+
+	UE_LOG(LogTemp, Warning, TEXT("IsInteractGenerator : %d"), IsGenerator);
+	UE_LOG(LogTemp, Warning, TEXT("bIsParkour : %d"), IsParkour);
+
+	if (IsParkour or IsGenerator)
 	{
-		//UE_LOG(LogTemp, Log, TEXT("[Client] [%s] NearGimmick : %s"), *GetOwner()->GetName(), *NearGimmick->GetGimmickName());
+		Client_HiddenInteractUI();
+		return;
 	}
+
 	//return;
 	if (MainUI)
 	{
@@ -777,6 +783,8 @@ void ADBD_Player::Client_VisibleInteractUI_Implementation()
 	}
 }
 
+
+// 안쓰는 함수들?
 void ADBD_Player::HiddenInteractUI()
 {
 	if (NearGimmick)
@@ -784,11 +792,12 @@ void ADBD_Player::HiddenInteractUI()
 		Client_HiddenInteractUI();
 	}
 }
-
 void ADBD_Player::Server_HiddenInteractUI_Implementation()
 {
 	HiddenInteractUI();
 }
+// 안쓰는 함수들?
+
 
 void ADBD_Player::Client_HiddenInteractUI_Implementation()
 {

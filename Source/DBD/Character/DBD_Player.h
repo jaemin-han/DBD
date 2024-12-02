@@ -130,7 +130,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_VisibleInteractUI();
 	UFUNCTION(Client, Reliable)
-	void Client_VisibleInteractUI();
+	void Client_VisibleInteractUI(bool IsGenerator, bool IsParkour);
 
 	void HiddenInteractUI();
 	UFUNCTION(Server, Reliable)
