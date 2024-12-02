@@ -76,6 +76,8 @@ protected:
 	void NonPushInteractGenerator();
 	void DropdownPallet();
 	void ExitDoor();
+	UFUNCTION(Server, Reliable)
+	void Server_ExitDoor();
 	void GeneratorSkillCheck();
 	void ReleasedGeneratorSkillCheck();
 	UFUNCTION(Server, Reliable)

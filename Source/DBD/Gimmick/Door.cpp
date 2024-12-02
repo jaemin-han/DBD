@@ -106,11 +106,23 @@ void ADoor::OpenExitDoor()
 
 	if (DoorMesh->GetRelativeLocation().Z >= 400.0f) return;
 
-	//DoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Multi_OpenExitDoor();
 
-	// DorrMesh의 콜리전을 NonCollision으로 변경
-	//DoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//ExitCol->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	//ExitCol->SetCollisionProfileName(TEXT("NoCollision"));
+	//
+	//UE_LOG(LogTemp, Log, TEXT("OpenExitDoor"));
+	//FVector Movloc = DoorMesh->GetRelativeLocation() + GetActorUpVector();
+	//DoorMesh->SetRelativeLocation(Movloc);
+}
+
+void ADoor::Server_OpenExitDoor_Implementation()
+{
+	OpenExitDoor();
+}
+
+void ADoor::Multi_OpenExitDoor_Implementation()
+{
 	DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
 	ExitCol->SetCollisionProfileName(TEXT("NoCollision"));
 
@@ -118,4 +130,3 @@ void ADoor::OpenExitDoor()
 	FVector Movloc = DoorMesh->GetRelativeLocation() + GetActorUpVector();
 	DoorMesh->SetRelativeLocation(Movloc);
 }
-

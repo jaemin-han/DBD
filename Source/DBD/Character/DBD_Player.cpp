@@ -129,7 +129,7 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(PlusHpAction, ETriggerEvent::Started, this, &ADBD_Player::PlusHp);
 		EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
 
-		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Triggered, this, &ADBD_Player::ExitDoor);
+		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Triggered, this, &ADBD_Player::Server_ExitDoor);
 
 		// 추후 하나의 함수내에서 구분하여 처리할 예정
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::DropdownPallet);
@@ -330,6 +330,11 @@ void ADBD_Player::ExitDoor()
 	{
 		Door->Interaction();
 	}
+}
+
+void ADBD_Player::Server_ExitDoor_Implementation()
+{
+	ExitDoor();
 }
 
 void ADBD_Player::GeneratorSkillCheck()
@@ -538,6 +543,7 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 		// 만약 OtherActor가 Door라면
 		if (gimmick->GetGimmickName() == TEXT("Door"))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Door BeginOverlap"));
 			IsOverlapDoor = true;
 			Door = Cast<ADoor>(gimmick);
 			Gimmick = gimmick;
@@ -716,8 +722,8 @@ void ADBD_Player::Client_VisibleInteractUI_Implementation(bool IsGenerator, bool
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("IsInteractGenerator : %d"), IsGenerator);
-	UE_LOG(LogTemp, Warning, TEXT("bIsParkour : %d"), IsParkour);
+	//UE_LOG(LogTemp, Warning, TEXT("IsInteractGenerator : %d"), IsGenerator);
+	//UE_LOG(LogTemp, Warning, TEXT("bIsParkour : %d"), IsParkour);
 
 	if (IsParkour or IsGenerator)
 	{

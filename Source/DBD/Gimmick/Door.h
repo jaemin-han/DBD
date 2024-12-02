@@ -31,6 +31,10 @@ public:
 	FORCEINLINE virtual FString GetInteractKey() override;
 
 	void OpenExitDoor();
+	UFUNCTION(Server, Reliable)
+	void Server_OpenExitDoor();
+	UFUNCTION(NetMulticast,Reliable)
+	void Multi_OpenExitDoor();
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Door")
