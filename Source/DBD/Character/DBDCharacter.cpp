@@ -66,6 +66,23 @@ void ADBDCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	// 내 캐릭터인 경우에만 InputMode 설정
+	if (IsLocallyControlled())
+	{
+		APlayerController* PlayerController = Cast<APlayerController>(GetController());
+		if (PlayerController)
+		{
+			PlayerController->SetInputMode(FInputModeGameOnly());
+			PlayerController->bShowMouseCursor = false;
+			UE_LOG(LogTemp, Log, TEXT("Client Input Mode Set: gameonly"));
+			UE_LOG(LogTemp, Log, TEXT("Mouse Cursor: false"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to get PlayerController on Client!"));
+		}
+	}
 }
 
 void ADBDCharacter::Tick(float DeltaTime)

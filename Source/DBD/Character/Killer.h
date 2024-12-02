@@ -64,6 +64,9 @@ public:
 public:
 	// 근처에 있는 생존자를 가져오는 함수
 	void GetNearSurvivor();
+	// NearSurvivor 를 multicast 로 설정하는 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SetNearSurvivor(class ADBD_Player* NewNearSurvivor);
 	// 전방에 있는 기믹을 가져오는 함수
 	void GetNearGimmick();
 	void ShowInteractionUI();
@@ -112,7 +115,7 @@ public:
 	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
 	// TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
 	// 가까이에 있는 생존자
-	UPROPERTY(VisibleAnywhere, Replicated)
+	UPROPERTY(VisibleAnywhere)
 	class ADBD_Player* NearSurvivor;
 	// 옮기고 있는 생존자
 	UPROPERTY(VisibleAnywhere)

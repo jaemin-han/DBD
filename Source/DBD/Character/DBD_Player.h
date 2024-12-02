@@ -78,6 +78,10 @@ protected:
 	void ExitDoor();
 	void GeneratorSkillCheck();
 	void ReleasedGeneratorSkillCheck();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Rescue();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Rescue();
 /** Input 함수 */
 
 
@@ -156,6 +160,12 @@ public:
 	inline bool GetIsPiggyBack() const {return IsPiggyback;}
 	inline bool GetIsHang() const {return IsHang;}
 	inline bool GetIsSpaceBar() const {return IsSpaceBar;}
+	// todo: 재민추가 // 희생 시간 Get함수
+	float GetSacrificeTime() const {return SacrificeTime;}
+	// todo: 재민추가 // 희생 시간 Set함수
+	void SetSacrificeTime(const float Time) {SacrificeTime = Time;}
+	UPROPERTY(EditDefaultsOnly, Category = "Hanger")
+	float TotalSacrificeTime = 120.0f;										// 희생 시간 최대값
 
 	// PlayerStatr Get함수
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -186,6 +196,8 @@ private:
 	UInputAction* ExitAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* RaiseUpAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RescueAction;
 /** Input 변수 */
 
 /** 생존자 설정 변수*/
@@ -252,4 +264,12 @@ private:
 	ADBD_Player* OtherSurvivor;								// 가까이 있는 다른 생존자 저장 변수
 	class ADoor* Door;										// 출입구 액터 저장 변수
 	class AWindows* Window;									// 창문 액터 저장 변수
+
+	// todo: 재민추가 // 생존자 남은 희생 시간, 기본 2분 (120초)
+	UPROPERTY(EditDefaultsOnly, Replicated, Category = "Hanger")
+	float SacrificeTime = TotalSacrificeTime;
+
+	// todo: 재민추가 // Rescue Montage
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* RescueMontage;
 };

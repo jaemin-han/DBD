@@ -90,8 +90,6 @@ void AKiller::BeginPlay()
 void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AKiller, NearSurvivor);
 }
 
 void AKiller::Attack()
@@ -120,20 +118,21 @@ void AKiller::MulticastRPC_Attack_Implementation()
 // Called every frame
 void AKiller::Tick(float DeltaTime)
 {
+
+	Super::Tick(DeltaTime);
+	
+	// InteractionUI 표시
+	if (IsLocallyControlled() && InteractionUI)
+	{
+		ShowInteractionUI();
+	}
+
 	if (!HasAuthority())
 		return;
-	
-	Super::Tick(DeltaTime);
-
 	GetNearSurvivor();
 	GetNearGimmick();
 	Debug();
 
-	// InteractionUI 표시
-	if (InteractionUI)
-	{
-		ShowInteractionUI();
-	}
 }
 
 // Called to bind functionality to input
@@ -158,12 +157,32 @@ void AKiller::GetNearSurvivor()
 	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
 	TArray<AActor*> OverlappingActors;
 	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
+	
 	ADBD_Player* NewNearSurvivor = nullptr;
+	float MinDistance = std::numeric_limits<float>::max();
 
 	for (AActor* OverlappingActor : OverlappingActors)
 	{
-		NewNearSurvivor = Cast<ADBD_Player>(OverlappingActor);
+		auto* Survivor = Cast<ADBD_Player>(OverlappingActor);
+		if (Survivor)
+		{
+			float Distance = FVector::DistSquared(GetActorLocation(), Survivor->GetActorLocation());
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				NewNearSurvivor = Survivor;
+			}
+		}
 	}
+
+	if (NearSurvivor != NewNearSurvivor)
+	{
+		MulticastRPC_SetNearSurvivor(NewNearSurvivor);
+	}
+}
+
+void AKiller::MulticastRPC_SetNearSurvivor_Implementation(ADBD_Player* NewNearSurvivor)
+{
 	NearSurvivor = NewNearSurvivor;
 }
 
@@ -237,6 +256,10 @@ void AKiller::ShowInteractionUI()
 		{
 			SetInteractionUI(true, TEXT("Carry Survivor"), TEXT("Space"));
 		}
+		else
+		{
+			SetInteractionUI(false, TEXT(""), TEXT(""));
+		}
 	}
 	else
 	{
@@ -257,10 +280,12 @@ void AKiller::SetInteractionUI(bool IsVisible, FString Name, FString Key)
 void AKiller::Debug()
 {
 	// NearGimmick 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
-	FString GimmickName = FString::Printf(TEXT("Gimmick: %s"), NearGimmick.GetObject() ? *NearGimmick.GetObject()->GetName() : TEXT("None"));
+	FString GimmickName = FString::Printf(
+		TEXT("Gimmick: %s"), NearGimmick.GetObject() ? *NearGimmick.GetObject()->GetName() : TEXT("None"));
 	GEngine->AddOnScreenDebugMessage(123213, 0.0f, FColor::Red, GimmickName);
 	// NearSurvivor 에 무엇이 할당되어 있는지 확인 후 스크린에 출력
-	FString SurvivorName = FString::Printf(TEXT("Survivor: %s"), NearSurvivor ? *NearSurvivor->GetName() : TEXT("None"));
+	FString SurvivorName =
+		FString::Printf(TEXT("Survivor: %s"), NearSurvivor ? *NearSurvivor->GetName() : TEXT("None"));
 	GEngine->AddOnScreenDebugMessage(123214, 0.0f, FColor::Red, SurvivorName);
 }
 
@@ -281,18 +306,6 @@ void AKiller::Stun_Implementation()
 	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
 }
 
-// void AKiller::Stun()
-// {
-// 	// Stun 몽타주 실행
-// 	bStunned = true;
-// 	PlayAnimMontage(KillerMontage, 2.0f, FName("Stun"));
-// }
-
-// void AKiller::DestroyPallet()
-// {
-//
-// }
-
 void AKiller::Interact()
 {
 	// NearGimmick 이 유효한 경우 Interaction 함수 호출
@@ -304,6 +317,10 @@ void AKiller::Interact()
 
 void AKiller::CarrySurvivor()
 {
+	if (IsAttacking() || bStunned)
+	{
+		return;
+	}
 	// 근처에 생존자가 있고, 해당 생존자의 체력이 1인 경우 생존자를 옮길 수 있음
 	if (NearSurvivor && NearSurvivor->GetHealth() == 1 && CarriedSurvivor == nullptr)
 	{
@@ -318,13 +335,6 @@ void AKiller::ServerRPC_CarrySurvivor_Implementation()
 
 void AKiller::MulticastRPC_CarrySurvivor_Implementation()
 {
-/*
-*	TODO: 생존자의 상태를 바꿔서, 생존자에서 애니메이션 관리를 자동으로 하게 하는게 나을듯?
-*	예를 들어 생존자의 상태를 enum으로 관리하고, 해당 상태에 따라 애니메이션을 변경하도록 하는 방식
-*	이 함수를 진행하면 생존자의 상태를 업힘? 으로 변경하고 
-*/
-
-	// todo: 생존자 상태 변경
 	NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
 
 	CarriedSurvivor = NearSurvivor;
@@ -340,11 +350,15 @@ void AKiller::MulticastRPC_CarrySurvivor_Implementation()
 		SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	// 생존자의 CharacterMovementComponent 의 MovementMode 를 None 으로 변경
-	CarriedSurvivor->GetCharacterMovement()->DisableMovement();
+	CarriedSurvivor->GetCharacterMovement()->SetMovementMode(MOVE_None);
 }
 
 void AKiller::DropDownSurvivor()
 {
+	if (IsAttacking() || bStunned)
+	{
+		return;
+	}
 	UE_LOG(LogTemp, Display, TEXT("DropDownSurvivor"));
 	// 옮기고 있는 생존자가 있을 경우 해당 생존자를 놓음
 	if (CarriedSurvivor)
@@ -377,6 +391,11 @@ void AKiller::MulticastRPC_DropDownSurvivor_Implementation()
 
 void AKiller::HangSurvivorOnHook()
 {
+	// 공격 중이나 스턴 상태일 때는 실행하지 않음
+	if (IsAttacking() || bStunned)
+	{
+		return;
+	}
 	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
 	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
 	if (!Hanger)
@@ -385,12 +404,6 @@ void AKiller::HangSurvivorOnHook()
 	if (CarriedSurvivor && Hanger)
 	{
 		MulticastRPC_HangSurvivorOnHook();
-
-		// AN_HangOnHook.cpp 에서 처리하도록 수정
-		// CarriedSurvivor->ChangeSurvivorState(ESurvivorState::Hang);
-		// CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		// CarriedSurvivor->AttachToComponent(Hanger->HangPosition, FAttachmentTransformRules::SnapToTargetIncludingScale);
-		// CarriedSurvivor = nullptr;
 	}
 }
 

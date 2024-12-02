@@ -47,4 +47,7 @@ public:
 
 	UFUNCTION()
 	void AnimNotify_OnParkour2Finish();
+	// Rescue 애니메이션 끝나는 부분에 실행되는 함수
+	UFUNCTION()
+	void AnimNotify_OnRescueFinish();
 };

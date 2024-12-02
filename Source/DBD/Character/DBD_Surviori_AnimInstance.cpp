@@ -3,6 +3,7 @@
 
 #include "Character/DBD_Surviori_AnimInstance.h"
 #include "DBD_Player.h"
+#include "Gimmick/DBD_Interface_Gimmick.h"
 
 void UDBD_Surviori_AnimInstance::NativeInitializeAnimation()
 {
@@ -40,5 +41,13 @@ void UDBD_Surviori_AnimInstance::AnimNotify_OnParkour2Finish()
 	if (Player)
 	{
 		Player->Server_FinishParkourFunc();
+	}
+}
+
+void UDBD_Surviori_AnimInstance::AnimNotify_OnRescueFinish()
+{
+	if (Player)
+	{
+		Player->NearGimmick->Interaction(Player);
 	}
 }

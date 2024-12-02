@@ -17,8 +17,4 @@ public:
 	// main widget class
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class UUserWidget> MainUIClass;
-
-	// todo: proto type 에서만 사용할 함수
-	// UFUNCTION()
-	// void ChangeCharacter();
 };

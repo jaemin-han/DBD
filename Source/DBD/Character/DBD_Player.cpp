@@ -17,6 +17,7 @@
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
+#include "Gimmick/Hanger.h"
 #include "Gimmick/Windows.h"
 #include "Net/UnrealNetwork.h"
 
@@ -56,9 +57,29 @@ void ADBD_Player::BeginPlay()
 // 기본 Tick 함수
 void ADBD_Player::Tick(float DeltaTime)
 {
-	if (!HasAuthority()) return;
 
 	Super::Tick(DeltaTime);
+
+	if (IsLocallyControlled())
+	{
+		if (NearGimmick && NearGimmick->GetGimmickName() != "Pallet")
+		{
+			VisibleMainUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
+		}
+		// 판자가 있고, 내려가있지 않다면
+		else if (NearPallet && !NearPallet->bIsFallen)
+		{
+			VisibleMainUI(true, NearPallet->GetGimmickName(), NearPallet->GetInteractKey());
+		}
+		else
+		{
+			VisibleMainUI(false, TEXT(""), TEXT(""));
+		}
+	}
+	
+
+	
+	if (!HasAuthority()) return;
 
 	Interaction();
 	GetNearPallet();
@@ -126,6 +147,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ADBD_Player::Crouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADBD_Player::CrouchStop);
+
+		EnhancedInputComponent->BindAction(RescueAction, ETriggerEvent::Started, this, &ADBD_Player::ServerRPC_Rescue);
 	}
 }
 /** 기본 상속 함수*/
@@ -416,9 +439,26 @@ void ADBD_Player::ReleasedGeneratorSkillCheck()
 	IsSkillCheckZone = false;
 	IsSpaceBar = false;
 }
+
+void ADBD_Player::ServerRPC_Rescue_Implementation()
+{
+	if (NearGimmick && NearGimmick->GetGimmickName() == TEXT("Hanger"))
+	{
+		// 지금 Rescue 가능한지 판단하려면 Hanger의 상태를 확인해야함
+		auto* Hanger = Cast<AHanger>(NearGimmick.GetObject());
+		if (Hanger->GetHangSurvivor())
+		{
+			MulticastRPC_Rescue();
+		}
+	}
+}
+
+void ADBD_Player::MulticastRPC_Rescue_Implementation()
+{
+	PlayAnimMontage(RescueMontage);
+}
+
 /** Input 함수 */
-
-
 
 
 /** 상호작용 함수 - 각각의 클라이언트에서만 할수있게 대신에 변수값은 모든 클라이언트에 연동이 되야하는?*/
@@ -490,6 +530,10 @@ void ADBD_Player::Interaction()
 	}
 	else
 	{
+		// todo: 재민 추가
+		NearGimmick = nullptr;
+		//
+		
 		IsFindGenerator = false;
 		IsInteractGenerator = false;
 
@@ -531,8 +575,8 @@ void ADBD_Player::GetNearPallet()
 		
 
 	// debug NearPallet
-	FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
-	GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
+	// FString DebugString = NearPallet ? NearPallet->GetName() : TEXT("None");
+	// GEngine->AddOnScreenDebugMessage(0, 0.0f, FColor::Red, DebugString);
 
 	if (NearPallet)
 	{
@@ -923,5 +967,12 @@ void ADBD_Player::ChangePlayerAnimation()
 void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
 {
 	SurvivorState = survivorState;
+	
+	// Health 와 SurvivorState를 연동
+	Health = static_cast<int>(survivorState);
+	
+	// ChangeSurvivorState 를 호출했을 때도 Speed 변경
+	UpdateSpeed();
+
 	ChangePlayerAnimation();
 }
