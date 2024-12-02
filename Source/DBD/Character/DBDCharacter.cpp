@@ -259,7 +259,10 @@ void ADBDCharacter::ParkourFunc()
 	//if (not bIsFindWindows) return;
 	if (bIsPushKey) return;
 	if (IsAttacking()) return;
+	if (SurvivorHp == 1 or SurvivorHp > 3) return;
 
+
+	UE_LOG(LogTemp, Log, TEXT("[%s] SurvivorHp : %d"), *GetName(), SurvivorHp);
 
 	if (bIsFindWindows)
 	{
