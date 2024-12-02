@@ -30,8 +30,8 @@ void AHanger::SetHangSurvivor(ADBD_Player* InHangSurvivor)
 	{
 		HangerUI->AddToViewport();
 	}
-	
-	
+
+
 	HangSurvivor = InHangSurvivor;
 }
 
@@ -77,6 +77,7 @@ void AHanger::Interaction(AActor* Caller)
 	if (Killer && Killer->CarriedSurvivor)
 	{
 		Killer->ServerRPC_HangSurvivorOnHook();
+		return;
 	}
 
 	ADBD_Player* Survivor = Cast<ADBD_Player>(Caller);
@@ -85,6 +86,12 @@ void AHanger::Interaction(AActor* Caller)
 	{
 		// todo:
 		Rescue();
+	}
+	else
+	{
+		// server 인지 client 인지 log
+		FString NetRole = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		UE_LOG(LogTemp, Error, TEXT("Rescue Interaction Failed at %s"), *NetRole);
 	}
 }
 
@@ -104,6 +111,8 @@ FString AHanger::GetInteractKey()
 
 void AHanger::Rescue()
 {
+	FString NetRole = HasAuthority() ? TEXT("Server") : TEXT("Client");
+	UE_LOG(LogTemp, Error, TEXT("Rescue called at %s"), *NetRole);
 	// 체력 2로 변경
 	HangSurvivor->ChangeSurvivorState(ESurvivorState::Hp2);
 	// 갈고리에서 해방
@@ -124,6 +133,6 @@ void AHanger::Rescue()
 	{
 		HangerUI->RemoveFromParent();
 	}
-	
+
 	HangSurvivor = nullptr;
 }
