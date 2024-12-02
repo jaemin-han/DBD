@@ -5,16 +5,45 @@
 
 #include "Character/DBD_Player.h"
 #include "Character/Killer.h"
+#include "Components/PostProcessComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMaterialLibrary.h"
 
 APawn* APlayGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
 {
-	UE_LOG(LogTemp , Warning, TEXT("SpawnDefaultPawnFor_Implementation"));
+	UE_LOG(LogTemp, Warning, TEXT("SpawnDefaultPawnFor_Implementation"));
 	if (NewPlayer->IsLocalController())
 	{
-		return GetWorld()->SpawnActor<AKiller>(KillerClass, StartSpot->GetActorLocation(), StartSpot->GetActorRotation());
+		return GetWorld()->SpawnActor<AKiller>(KillerClass, StartSpot->GetActorLocation(),
+		                                       StartSpot->GetActorRotation());
 	}
 	else
 	{
-		return GetWorld()->SpawnActor<ADBD_Player>(SurvivorClass, StartSpot->GetActorLocation(), StartSpot->GetActorRotation());
+		return GetWorld()->SpawnActor<ADBD_Player>(SurvivorClass, StartSpot->GetActorLocation(),
+		                                           StartSpot->GetActorRotation());
 	}
+}
+
+void APlayGameMode::AddDynamicMaterialToPostProcess()
+{
+	if (PostProcessVolume && MaterialInstance)
+	{
+		UMaterialInstanceDynamic* DynaMaterial = UKismetMaterialLibrary::CreateDynamicMaterialInstance(
+			this, MaterialInstance);
+
+		FWeightedBlendable WeightedBlendable;
+		WeightedBlendable.Object = DynaMaterial;
+		WeightedBlendable.Weight = 1.0f;
+
+		PostProcessVolume->Settings.WeightedBlendables.Array.Add(WeightedBlendable);
+	}
+}
+
+void APlayGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	PostProcessVolume = GetWorld()->SpawnActor<APostProcessVolume>();
+	PostProcessVolume->bUnbound = true;
+	AddDynamicMaterialToPostProcess();
 }

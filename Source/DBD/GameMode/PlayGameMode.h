@@ -14,10 +14,18 @@ class DBD_API APlayGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+	UPROPERTY(VisibleAnywhere)
+	class APostProcessVolume* PostProcessVolume;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UMaterialInstance* MaterialInstance;
+
 	UPROPERTY(EditAnywhere, Category = "PlayerClass")
 	TSubclassOf<class ADBDCharacter> KillerClass;
 	UPROPERTY(EditAnywhere, Category = "PlayerClass")
 	TSubclassOf<class ADBD_Player> SurvivorClass;
 
 	virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
+	void AddDynamicMaterialToPostProcess();
+	virtual void BeginPlay() override;
 };
