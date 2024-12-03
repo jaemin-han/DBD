@@ -35,7 +35,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetOwner(AActor* Caller);
 	UFUNCTION(Client, Reliable)
-	void Client_InteractDoor(AActor* Caller = nullptr);
+	void Client_InteractDoor(APawn* Caller = nullptr);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_InteractDoor(AActor* Caller = nullptr);
 
