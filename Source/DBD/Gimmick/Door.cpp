@@ -5,9 +5,14 @@
 
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/ProgressBar.h"
 #include "UI/ExitGaugeUI.h"
 #include "Gimmick/Generator.h"
 #include <Kismet/GameplayStatics.h>
+#include "Net/UnrealNetwork.h"
+#include "Character/DBD_Player.h"
+
+
 
 // Sets default values
 ADoor::ADoor()
@@ -90,8 +95,25 @@ void ADoor::Interaction(APawn* Caller)
 	UE_LOG(LogTemp, Log, TEXT("[local] Door Interaction"));
 	//Client_InteractDoor();
 	
-	ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
-	ExitGaugeUI->Server_UpdateExitGauge();
+	//ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
+	//ExitGaugeUI->UpdateExitGauge(GetWorld()->GetDeltaSeconds());
+	if (ExitGaugeUI->GetIsFullGauge())
+	{
+		ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
+		return;
+	}
+	Client_InteractDoor(Caller);
+
+	//Cast<APlayerController>(Caller->GetController());
+
+	//ExitGaugeUI->SetOwningPlayer(Cast<APlayerController>(Caller->GetOwner()));
+
+	//ExitGaugeUI->SetOwningPlayer(pc);
+
+
+	UpdateExitGauge();
+
+	//ExitGaugeUI->UpdateExitGauge(GetWorld()->GetDeltaSeconds());
 }
 
 void ADoor::FailedInteraction()
@@ -99,8 +121,7 @@ void ADoor::FailedInteraction()
 	if (not IsDoorActivated) return;
 	if (not ExitGaugeUI) return;
 	
-	UE_LOG(LogTemp, Log, TEXT("Door Failed Interaction"));
-	ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
+	Client_FailedInterat();
 }
 void ADoor::Server_InteractDoor_Implementation(APawn* Caller)
 {
@@ -113,10 +134,14 @@ void ADoor::Server_InteractDoor_Implementation(APawn* Caller)
 void ADoor::Client_InteractDoor_Implementation(APawn* Caller)
 {
 	UE_LOG(LogTemp, Log, TEXT("[Client] Door Interaction"));
-	//ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
+	ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
 	//ExitGaugeUI->UpdateExitGauge(GetWorld()->DeltaTimeSeconds);
 }
-
+void ADoor::Multi_InteractDoor_Implementation(AActor* Caller)
+{
+	UE_LOG(LogTemp, Log, TEXT("[Multi] Door Interaction"));
+	ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);
+}
 
 FString ADoor::GetGimmickName()
 {
@@ -128,40 +153,62 @@ FString ADoor::GetInteractKey()
 	return InteractKey;
 }
 
+
 void ADoor::Multi_SetOwner_Implementation(AActor* Caller)
 {
 	if (Caller) SetOwner(Caller);
 }
 
+
+
+// Gauge UI 업데이트 함수들
+void ADoor::UpdateExitGauge()
+{
+	if (ExitGaugeUI->GetGaugePercent() > 1.0f)
+	{
+		ExitGaugeUI->SetIsFullGauge(true);
+		ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
+		UE_LOG(LogTemp, Warning, TEXT("Server_ IsFullGauge : %d"), ExitGaugeUI->GetIsFullGauge());
+		return;
+	}
+	ExitGaugeUI->SetGaugePerent(GetWorld()->GetDeltaSeconds() * 0.625);
+	UE_LOG(LogTemp, Warning, TEXT("Server_ Percent : %.2f"), ExitGaugeUI->GetGaugePercent());
+	//ExitGauge->SetPercent(Percent);
+
+	Client_UpdateExitGauge(ExitGaugeUI->GetGaugePercent());
+}
+
+void ADoor::Client_UpdateExitGauge_Implementation(float persent)
+{
+	ExitGaugeUI->GetExitGauge()->SetPercent(persent);
+}
+
+
+
+
+void ADoor::Client_FailedInterat_Implementation()
+{
+	UE_LOG(LogTemp, Log, TEXT("Door Failed Interaction"));
+	ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
+}
+
+// 문 오픈 함수들
 void ADoor::OpenExitDoor()
 {
 	if (not IsDoorActivated) return;
 
 	if (DoorMesh->GetRelativeLocation().Z >= 400.0f) return;
-	//if (GetOwner())
-	//{
-	//	if (HasAuthority())
-	//	{
-	//		UE_LOG(LogTemp, Log, TEXT("[%s] MultiServer OpenExitDoor"), *GetOwner()->GetName());
-	//
-	//	}
-	//	else
-	//	{
-	//		UE_LOG(LogTemp, Log, TEXT("[%s] MultiClient OpenExitDoor"), *GetOwner()->GetName());
-	//	}
-	//}
 	
 	if (ExitGaugeUI and ExitGaugeUI->GetIsFullGauge())
 	{
+		UE_LOG(LogTemp, Log, TEXT("OpenExitDoor"));
 		Multi_OpenExitDoor();
 	}
 }
-
 void ADoor::Server_OpenExitDoor_Implementation()
 {
 	OpenExitDoor();
 }
-
 void ADoor::Multi_OpenExitDoor_Implementation()
 {
 	DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));

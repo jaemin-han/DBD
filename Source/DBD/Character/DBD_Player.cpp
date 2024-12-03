@@ -13,6 +13,7 @@
 #include "Engine/DecalActor.h"
 #include "Gimmick/Decal.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/ExitGaugeUI.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
@@ -106,7 +107,7 @@ void ADBD_Player::Tick(float DeltaTime)
 
 	if (NearGimmick)
 	{
-		Client_VisibleInteractUI(IsInteractGenerator, bIsParkour);
+		Client_VisibleInteractUI(IsInteractGenerator, bIsParkour, IsPressExitDoor);
 	}
 	else
 	{
@@ -122,6 +123,7 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(ADBD_Player, NearPallet);
 	DOREPLIFETIME(ADBD_Player, OtherSurvivor);
 	DOREPLIFETIME(ADBD_Player, IsFindGenerator);
+	DOREPLIFETIME(ADBD_Player, Door);
 }
 
 // Input 설정 함수
@@ -135,6 +137,7 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
 
 		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Triggered, this, &ADBD_Player::Server_ExitDoor);
+		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Completed, this, &ADBD_Player::Server_NonExitDoor);
 
 		// 추후 하나의 함수내에서 구분하여 처리할 예정
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::DropdownPallet);
@@ -338,6 +341,7 @@ void ADBD_Player::MulticastRPC_NonPushInteractGenerator_Implementation()
 	IsInteractGenerator = false;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
+
 // 판자와 상호작용을 위한 Input 함수 - 판자와 상호작용 On (판자 내리기)
 void ADBD_Player::DropdownPallet()
 {
@@ -346,21 +350,40 @@ void ADBD_Player::DropdownPallet()
 		NearPallet->Interaction(this);
 	}
 }
+
 // 탈출구와 상호작용을 위한 Input 함수 - 탈출구와 상호작용 On (탈출구 게이지 시작)
-void ADBD_Player::ExitDoor()
+void ADBD_Player::Server_ExitDoor_Implementation()
 {
+	//ExitDoor();
+	
 	//UE_LOG(LogTemp, Warning, TEXT("ExitDoor"));
 	if (IsOverlapDoor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ExitDoor_IsOverlapDoor"));
+		if (Door->GetExitGaugeUI()->GetIsFullGauge())
+		{
+			Server_NonExitDoor();
+			return;
+		}
+
+
+		IsPressExitDoor = true;
+		UE_LOG(LogTemp, Warning, TEXT("ExitDoor"));
 		//Door->Interaction();
-		Door->Server_InteractDoor(this);
+		GetCharacterMovement()->DisableMovement();
+		Door->Interaction(this);
 	}
 }
 
-void ADBD_Player::Server_ExitDoor_Implementation()
+void ADBD_Player::Server_NonExitDoor_Implementation()
 {
-	ExitDoor();
+	if (IsOverlapDoor)
+	{
+		IsPressExitDoor = false;
+		UE_LOG(LogTemp, Warning, TEXT("NonExitDoor"));
+		//Door->Interaction();
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		Door->FailedInteraction();
+	}
 }
 
 void ADBD_Player::GeneratorSkillCheck()
@@ -423,7 +446,7 @@ void ADBD_Player::Interaction()
 			}
 
 
-			 NearGimmick = hitResult.GetActor();
+			NearGimmick = hitResult.GetActor();
 			//UE_LOG(LogTemp, Warning, TEXT("NearGimmick : %s"), *NearGimmick->GetGimmickName());
 
 
@@ -573,10 +596,9 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Door BeginOverlap"));
 			IsOverlapDoor = true;
+			NearGimmick = OtherActor;			// UI를 띄워주기 위한 친구
 			Door = Cast<ADoor>(gimmick);
 			Door->SetOwner(this);
-
-			NearGimmick = OtherActor;
 		}
 	}
 }
@@ -597,15 +619,16 @@ void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 
 	if (IDBD_Interface_Gimmick* gimmick = Cast<IDBD_Interface_Gimmick>(OtherActor))
 	{
-		//UE_LOG(LogTemp, Log, TEXT("Gimmick EndOverlap"));
 		// 만약 OtherActor가 Door라면
-		if (OtherActor->GetActorNameOrLabel() == TEXT("BP_Door2") or OtherActor->GetActorNameOrLabel() == TEXT("BP_Door"))
+		if (gimmick->GetGimmickName() == TEXT("Door"))
 		{
 			IsOverlapDoor = false;
 			IsInteractDoor = false;
-			gimmick->FailedInteraction();
-			Door = nullptr;
-			//Gimmick = nullptr;
+			NearGimmick = nullptr;
+			IsPressExitDoor = false;
+			Door->FailedInteraction();
+			//Door->SetOwner(nullptr);
+			//Door = nullptr;
 		}
 	}
 }
@@ -752,7 +775,7 @@ void ADBD_Player::Server_VisibleInteractUI_Implementation()
 }
 // 안쓰는 함수들?
 
-void ADBD_Player::Client_VisibleInteractUI_Implementation(bool IsGenerator, bool IsParkour)
+void ADBD_Player::Client_VisibleInteractUI_Implementation(bool IsGenerator, bool IsParkour, bool isDoorOverlap)
 {
 	if (!IsLocallyControlled()) return;
 
@@ -764,8 +787,9 @@ void ADBD_Player::Client_VisibleInteractUI_Implementation(bool IsGenerator, bool
 	//UE_LOG(LogTemp, Warning, TEXT("IsInteractGenerator : %d"), IsGenerator);
 	//UE_LOG(LogTemp, Warning, TEXT("bIsParkour : %d"), IsParkour);
 
-	if (IsParkour or IsGenerator)
+	if (IsParkour or IsGenerator or isDoorOverlap)
 	{
+		UE_LOG(LogTemp, Error, TEXT("InteractUI turn Hidden"));
 		Client_HiddenInteractUI();
 		return;
 	}

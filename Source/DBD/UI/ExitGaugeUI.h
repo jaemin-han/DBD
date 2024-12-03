@@ -26,15 +26,22 @@ public:
 	void Client_UpdateExitGauge(float time);
 
 
+	void SetGaugePerent(float per) {Percent += per;}
+	void SetIsFullGauge(bool isFull) {IsFullGauge = isFull;}
+
+
+	class UProgressBar* GetExitGauge() const {return ExitGauge;}
 	inline bool GetIsFullGauge() const {return IsFullGauge;}
+	float GetGaugePercent() const	{return Percent;}
+
 
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* ExitGauge;
 
-	UPROPERTY(Replicated)
 	float Percent = 0;
 
-	UPROPERTY(Replicated)
 	bool IsFullGauge = false;
+
+	
 };

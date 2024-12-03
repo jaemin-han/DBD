@@ -86,9 +86,14 @@ protected:
 	void MulticastRPC_NonPushInteractGenerator();
 	
 	void DropdownPallet();
-	void ExitDoor();
+
+
 	UFUNCTION(Server, Reliable)
 	void Server_ExitDoor();
+	UFUNCTION(Server, Reliable)
+	void Server_NonExitDoor();
+
+
 	void GeneratorSkillCheck();
 	void ReleasedGeneratorSkillCheck();
 	UFUNCTION(Server, Reliable)
@@ -147,7 +152,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_VisibleInteractUI();
 	UFUNCTION(Client, Reliable)
-	void Client_VisibleInteractUI(bool IsGenerator, bool IsParkour);
+	void Client_VisibleInteractUI(bool IsGenerator, bool IsParkour, bool isDoorOverlap);
 
 	void HiddenInteractUI();
 	UFUNCTION(Server, Reliable)
@@ -268,7 +273,7 @@ private:
 
 	// 출입구와 오버랩됬는지 확인 bool 변수
 	bool IsOverlapDoor = false;								// 문과 오버랩 됬니?
-
+	bool IsPressExitDoor = false;							// 탈출문을 눌렀니?
 
 	// 싱호작용 중인 기믹 저장 변수 - GetNearGimmick 함수에서 할당됨
 	UPROPERTY(VisibleAnywhere, Replicated)
@@ -276,6 +281,7 @@ private:
 	class APallet* TracePallet;								// 라인트레이스로 찾은 판자 저장 변수
 	UPROPERTY(Replicated)
 	ADBD_Player* OtherSurvivor;								// 가까이 있는 다른 생존자 저장 변수
+	UPROPERTY(Replicated)
 	class ADoor* Door;										// 출입구 액터 저장 변수
 	class AWindows* Window;									// 창문 액터 저장 변수
 
