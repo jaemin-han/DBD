@@ -30,13 +30,18 @@ public:
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
 
-
 	UFUNCTION(Server, Reliable)
 	void Server_InteractDoor(AActor* Caller = nullptr);	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetOwner(AActor* Caller);
 	UFUNCTION(Client, Reliable)
 	void Client_InteractDoor(AActor* Caller = nullptr);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_InteractDoor(AActor* Caller = nullptr);
+
+	UFUNCTION(Client, Reliable)
+	void Client_FailedInterat();
+
 
 	void OpenExitDoor();
 	UFUNCTION(Server, Reliable)
@@ -44,6 +49,19 @@ public:
 	UFUNCTION(NetMulticast,Reliable)
 	void Multi_OpenExitDoor();
 
+
+	// UI 게이지 업데이트
+	void UpdateExitGauge();
+
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateExitGauge(float persent);
+
+
+
+
+
+
+	class UExitGaugeUI* GetExitGaugeUI() { return ExitGaugeUI; } 
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Door")
@@ -65,7 +83,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Door")
 	TSubclassOf<class UExitGaugeUI> ExitGaugeUIClass;
 
-	UPROPERTY()
+	//UPROPERTY(Replicated)
 	class UExitGaugeUI* ExitGaugeUI;
 	
 	FString Name = TEXT("Door");
