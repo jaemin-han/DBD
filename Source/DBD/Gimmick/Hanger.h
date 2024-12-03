@@ -33,6 +33,8 @@ public:
 	// set HangSurvivor
 	void SetHangSurvivor(class ADBD_Player* InHangSurvivor);
 
+	UMeshComponent* GetMeshComp() const { return MeshComp; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

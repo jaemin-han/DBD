@@ -28,4 +28,16 @@ protected:
 
 private:
 	void AddDynamicMaterialToPostProcessVolume();
+
+public:
+	UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<class AGenerator*> Generators;
+	void SetGeneratorCustomDepth(bool bIsVisible);
+
+	UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<class AHanger*> Hangers;
+	void SetHangerCustomDepth(bool bIsVisible);
+
+public:
+	void InitArrays();
 };

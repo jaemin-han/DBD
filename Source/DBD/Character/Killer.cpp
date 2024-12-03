@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameMode/DBDGameState.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Gimmick/Hanger.h"
 #include "Gimmick/Pallet.h"
@@ -77,14 +78,23 @@ void AKiller::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("InteractionUIClass is nullptr"));
 	}
 
-	// 파쿠르라 완료되지 않아도 애니메이션이 끝나면 FinishParkourFunc 함수를 호출
+	// 파쿠르라 완료되지 않아도 애니메이션이 끝나면 FinishParkourFunc 함수를 호출s
 	// 이렇게 하면 넘는 중에 공격 해도 괜찮음
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
 	}
-	// SetActorTickEnabled(false);
+
+	if (IsLocallyControlled())
+	{
+		DBDGameState = Cast<ADBDGameState>(GetWorld()->GetGameState());
+		if (DBDGameState)
+		{
+			DBDGameState->InitArrays();
+			DBDGameState->SetGeneratorCustomDepth(true);
+		}
+	}
 }
 
 void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -335,6 +345,14 @@ void AKiller::ServerRPC_CarrySurvivor_Implementation()
 
 void AKiller::MulticastRPC_CarrySurvivor_Implementation()
 {
+	// post process
+	if (IsLocallyControlled())
+	{
+		DBDGameState->SetGeneratorCustomDepth(false);
+		DBDGameState->SetHangerCustomDepth(true);
+	}
+	
+	
 	NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
 
 	CarriedSurvivor = NearSurvivor;
@@ -374,6 +392,13 @@ void AKiller::ServerRPC_DropDownSurvivor_Implementation()
 
 void AKiller::MulticastRPC_DropDownSurvivor_Implementation()
 {
+	// post process
+	if (IsLocallyControlled())
+	{
+		DBDGameState->SetGeneratorCustomDepth(true);
+		DBDGameState->SetHangerCustomDepth(false);
+	}
+	
 	CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
 	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
@@ -414,5 +439,13 @@ void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()
 
 void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()
 {
+	// post process
+	if (IsLocallyControlled())
+	{
+		DBDGameState->SetHangerCustomDepth(false);
+		DBDGameState->SetGeneratorCustomDepth(true);
+	}
+	
+	
 	PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
 }

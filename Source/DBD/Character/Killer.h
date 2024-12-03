@@ -127,6 +127,9 @@ public:
 	// 킬러가 공격 중인가요?
 	bool bIsAttacking = false;
 
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	class ADBDGameState* DBDGameState;
+
 private:
 	// attack montage
 	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))
