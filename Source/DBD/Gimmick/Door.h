@@ -25,18 +25,18 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 
-	virtual void Interaction(AActor* Caller = nullptr) override;
+	virtual void Interaction(APawn* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
 
 
 	UFUNCTION(Server, Reliable)
-	void Server_InteractDoor(AActor* Caller = nullptr);	
+	void Server_InteractDoor(APawn* Caller = nullptr);	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetOwner(AActor* Caller);
 	UFUNCTION(Client, Reliable)
-	void Client_InteractDoor(AActor* Caller = nullptr);
+	void Client_InteractDoor(APawn* Caller = nullptr);
 
 	void OpenExitDoor();
 	UFUNCTION(Server, Reliable)

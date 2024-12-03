@@ -23,12 +23,13 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interaction(AActor* Caller = nullptr) override;
+	virtual void Interaction(APawn* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
@@ -36,6 +37,9 @@ public:
 	void UpdateRoundGauge();
 
 	inline bool SetIsActivatedSkillCheckZone(bool value) { return IsActivatedSkillCheckZone = value; }
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_SetGaugeUIVisibility(ESlateVisibility visibility);
 
 public:
 	// 발전기 게이지 UI
@@ -58,4 +62,14 @@ private:
 
 	FString Name = TEXT("Generator");
 	FString InteractKey = TEXT("LBM");
+
+	float Percent = 0.0f;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool IsFullGauge = false;
+	
+	bool GetIsFullGauge() const { return IsFullGauge; }
+	void UpdateGauge(float time);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_SetGaugeUIPercent(float value);
 };

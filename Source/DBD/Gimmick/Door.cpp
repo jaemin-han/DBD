@@ -83,7 +83,7 @@ void ADoor::Tick(float DeltaTime)
 	IsDoorActivated = true;
 }
 
-void ADoor::Interaction(AActor* Caller)
+void ADoor::Interaction(APawn* Caller)
 {
 	if (not IsDoorActivated) return;
 	if (not ExitGaugeUI) return;
@@ -102,7 +102,7 @@ void ADoor::FailedInteraction()
 	UE_LOG(LogTemp, Log, TEXT("Door Failed Interaction"));
 	ExitGaugeUI->SetVisibility(ESlateVisibility::Hidden);
 }
-void ADoor::Server_InteractDoor_Implementation(AActor* Caller)
+void ADoor::Server_InteractDoor_Implementation(APawn* Caller)
 {
 	
 	//Multi_SetOwner(Caller);
@@ -110,7 +110,7 @@ void ADoor::Server_InteractDoor_Implementation(AActor* Caller)
 	Interaction(Caller);
 }
 
-void ADoor::Client_InteractDoor_Implementation(AActor* Caller)
+void ADoor::Client_InteractDoor_Implementation(APawn* Caller)
 {
 	UE_LOG(LogTemp, Log, TEXT("[Client] Door Interaction"));
 	//ExitGaugeUI->SetVisibility(ESlateVisibility::Visible);

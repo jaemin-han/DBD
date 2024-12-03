@@ -74,7 +74,17 @@ protected:
 
 	// 상호작용 Input 함수
 	void PushInteractGenerator();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PushInteractGenerator();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PushInteractGenerator();
+	
 	void NonPushInteractGenerator();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_NonPushInteractGenerator();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_NonPushInteractGenerator();
+	
 	void DropdownPallet();
 	void ExitDoor();
 	UFUNCTION(Server, Reliable)
@@ -253,6 +263,7 @@ private:
 	float RaiseSurvivorTimer = 0.0f;						// 생존자를 일으키는 게이지 타이머
 
 	// LineTrace와 Actor들과 닿았는지 체크하는 변수
+	UPROPERTY(Replicated)
 	bool IsFindGenerator = false;							// 발전기와 라인트레이스가 닿았니?
 
 	// 출입구와 오버랩됬는지 확인 bool 변수

@@ -60,10 +60,9 @@ void ADBD_Player::Tick(float DeltaTime)
 {
 
 	Super::Tick(DeltaTime);
+	
+	PrintDebug();
 
-	// drawdebugstring neargimmick
-	FString NearGimmickName = NearGimmick ? NearGimmick->GetGimmickName() : TEXT("None");
-	DrawDebugString(GetWorld(), GetActorLocation(), NearGimmickName, nullptr, FColor::Red, 0.0f, true);
 	
 	if (!HasAuthority()) return;
 
@@ -90,7 +89,6 @@ void ADBD_Player::Tick(float DeltaTime)
 	Interaction();
 	GetNearPallet();
 	//GetNearSurvivor();
-	PrintDebug();
 
 	// 살인자에서 추가해줘야하는 부분
 	//if (bIsParkour)
@@ -123,6 +121,7 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 
 	DOREPLIFETIME(ADBD_Player, NearPallet);
 	DOREPLIFETIME(ADBD_Player, OtherSurvivor);
+	DOREPLIFETIME(ADBD_Player, IsFindGenerator);
 }
 
 // Input 설정 함수
@@ -142,8 +141,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::GeneratorSkillCheck);
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Completed, this, &ADBD_Player::ReleasedGeneratorSkillCheck);
 
-		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Started, this, &ADBD_Player::PushInteractGenerator);
-		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Completed, this, &ADBD_Player::NonPushInteractGenerator);
+		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Started, this, &ADBD_Player::ServerRPC_PushInteractGenerator);
+		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Completed, this, &ADBD_Player::ServerRPC_NonPushInteractGenerator);
 		EnhancedInputComponent->BindAction(RaiseUpAction, ETriggerEvent::Started, this, &ADBD_Player::Server_RaiseFallenSurvivor);
 		EnhancedInputComponent->BindAction(RaiseUpAction, ETriggerEvent::Completed, this, &ADBD_Player::NonRaiseFallenSurvivor);
 
@@ -308,14 +307,34 @@ void ADBD_Player::PushInteractGenerator()
 {
 	if (not IsFindGenerator) return;
 
+	MulticastRPC_PushInteractGenerator();
+}
+
+void ADBD_Player::ServerRPC_PushInteractGenerator_Implementation()
+{
+	PushInteractGenerator();
+}
+
+void ADBD_Player::MulticastRPC_PushInteractGenerator_Implementation()
+{
 	IsInteractGenerator = true;
 	GetCharacterMovement()->DisableMovement();
 }
+
+
 // 발전기와 상호작용을 위한 Input 함수 - 발전기와 상호작용 Off (발전기 게이지 종료)
 void ADBD_Player::NonPushInteractGenerator()
 {
-	//if (not IsReachGenerator) return;
-	//UE_LOG(LogTemp, Warning, TEXT("NonPushInteractGenerator"));
+	MulticastRPC_NonPushInteractGenerator();
+}
+
+void ADBD_Player::ServerRPC_NonPushInteractGenerator_Implementation()
+{
+	NonPushInteractGenerator();
+}
+
+void ADBD_Player::MulticastRPC_NonPushInteractGenerator_Implementation()
+{
 	IsInteractGenerator = false;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
@@ -414,7 +433,8 @@ void ADBD_Player::Interaction()
 
 				if (IsInteractGenerator)
 				{
-					NearGimmick->Interaction(); // 게이지 UI 생성 함수
+					
+					NearGimmick->Interaction(this); // 게이지 UI 생성 함수
 					IsSkillCheckZone = true;
 				}
 				else
@@ -691,6 +711,15 @@ void ADBD_Player::PrintDebug()
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] Health : %d"), *GetName(), Health));
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("[%s] State : %d"), *GetName(), (int)SurvivorState));
+	// drawdebugstring neargimmick
+	FString NearGimmickName = NearGimmick ? NearGimmick->GetGimmickName() : TEXT("None");
+	DrawDebugString(GetWorld(), GetActorLocation(), NearGimmickName, nullptr, FColor::Red, 0.0f, true);
+
+	FString IsFindGeneratorString = FString::Printf(TEXT("IsFindGenerator: %s"), IsFindGenerator ? TEXT("True") : TEXT("False"));
+	DrawDebugString(GetWorld(), GetActorLocation() + FVector(0, 0, 50), IsFindGeneratorString, nullptr, FColor::Green, 0.0f, true);
+
+	FString IsInteractGeneratorString = FString::Printf(TEXT("IsInteractGenerator: %s"), IsInteractGenerator ? TEXT("True") : TEXT("False"));
+	DrawDebugString(GetWorld(), GetActorLocation() + FVector(0, 0, 100), IsInteractGeneratorString, nullptr, FColor::Blue, 0.0f, true);
 }
 
 void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)

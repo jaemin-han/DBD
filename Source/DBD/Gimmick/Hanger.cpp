@@ -71,7 +71,7 @@ void AHanger::Tick(float DeltaTime)
 	}
 }
 
-void AHanger::Interaction(AActor* Caller)
+void AHanger::Interaction(APawn* Caller)
 {
 	AKiller* Killer = Cast<AKiller>(Caller);
 	if (Killer && Killer->CarriedSurvivor)

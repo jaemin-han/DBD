@@ -29,7 +29,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interaction(AActor* Caller = nullptr) override;
+	virtual void Interaction(APawn* Caller = nullptr) override;
 	virtual void FailedInteraction() override;
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;

@@ -36,7 +36,7 @@ void AWindows::Tick(float DeltaTime)
 
 }
 
-void AWindows::Interaction(AActor* Caller)
+void AWindows::Interaction(APawn* Caller)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Windows Interaction"));
 }

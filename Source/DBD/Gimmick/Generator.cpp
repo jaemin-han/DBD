@@ -4,6 +4,7 @@
 #include "Gimmick/Generator.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
 #include "UI/GaugeUI.h"
@@ -42,50 +43,60 @@ void AGenerator::BeginPlay()
 	}
 }
 
+void AGenerator::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGenerator, IsFullGauge);
+}
+
 // Called every frame
 void AGenerator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GaugeUI->GetIsFullGauge())
+	// drawdebugstring: Owner
+	FString OwnerName = GetOwner() ? GetOwner()->GetName() : TEXT("None");
+	DrawDebugString(GetWorld(), GetActorLocation(), OwnerName, nullptr, FColor::Green, DeltaTime);
+
+	// 서버에서만 실행
+	if (!HasAuthority()) return;
+
+	if (GetIsFullGauge())
 	{
 		IsActivated = true;
 	}
 }
 
-void AGenerator::Interaction(AActor* Caller)
+void AGenerator::Interaction(APawn* Caller)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Generator Interaction"));
-	GaugeUI->SetVisibility(ESlateVisibility::Visible);
-	GaugeUI->UpdateGauge(GetWorld()->DeltaTimeSeconds);
+	SetOwner(Caller);
+	
+	if (Caller)
+	{
+		// Caller client RPC
+		ClientRPC_SetGaugeUIVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Generator Interaction Caller is nullptr"));
+	}
+
+	UpdateGauge(GetWorld()->GetDeltaSeconds());
+
+	
 	//UE_LOG(LogTemp, Log, TEXT("Random %f"), GetWorld()->DeltaTimeSeconds); 
 	// 120프레임 -> 0.008초 -> random
 	// 60 프레임 -> 0.016초 -> random
 	// 30 프레임 -> 0.033초 -> random
-
-
-	if (not IsRoundGauge)
-	{
-		float random = FMath::RandRange(0.0f, 1.0f); // 1%
-		//UE_LOG(LogTemp, Log, TEXT("Random %f"), random);
-		//
-		if (random < GetWorld()->DeltaTimeSeconds * 0.5f)
-		{
-			IsRoundGauge = true;
-			float rand = FMath::RandRange(0.2f, 0.7f);
-			GaugeUI->SetSkillCheckZone(rand);
-			GaugeUI->SetActivatedRoundGauge(true);
-		}
-	}
-
-	UpdateRoundGauge();
 }
 
 void AGenerator::FailedInteraction()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
-	GaugeUI->SetVisibility(ESlateVisibility::Hidden);
+	UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
+	ClientRPC_SetGaugeUIVisibility(ESlateVisibility::Hidden);
 	IsRoundGauge = false;
+	SetOwner(nullptr);
 }
 
 FString AGenerator::GetGimmickName()
@@ -98,20 +109,36 @@ FString AGenerator::GetInteractKey()
 	return InteractKey;
 }
 
-void AGenerator::UpdateRoundGauge()
+// 서버에서만 실행됨
+void AGenerator::UpdateGauge(float time)
 {
-	if (IsRoundGauge)
+	if (Percent >= 1.0f)
 	{
-		GaugeUI->VisibleRondGauge(true);
-		if (GaugeUI->UpdateRoundPercent(GetWorld()->DeltaTimeSeconds))
-		{
-			IsRoundGauge = false;
-			GaugeUI->SetActivatedRoundGauge(false);
-		}
+		IsFullGauge = true;
+		return;
 	}
-	else
+	
+	// RoundGauge가 활성화 되어있다면 리턴 시켜주기
+	//if (ActivatedRoundGauge) return;
+
+
+	// time = 0.2로 들어오는데 이거를 100퍼로 나눴을때
+	// 초당 0.01씩 증가하게 만들기 위해서
+	// Percent += time * 0.011f;		// 실제 적용
+	Percent += time * 0.5f;			// 테스트용
+
+	MultiRPC_SetGaugeUIPercent(Percent);
+}
+
+void AGenerator::ClientRPC_SetGaugeUIVisibility_Implementation(ESlateVisibility visibility)
+{
+	if (GaugeUI)
 	{
-		GaugeUI->VisibleRondGauge(false);
+		GaugeUI->SetVisibility(visibility);
 	}
 }
 
+void AGenerator::MultiRPC_SetGaugeUIPercent_Implementation(float value)
+{
+	GaugeUI->SetPercent(value);
+}

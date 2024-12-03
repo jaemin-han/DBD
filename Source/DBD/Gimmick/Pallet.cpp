@@ -80,7 +80,7 @@ void APallet::Tick(float DeltaTime)
 	}
 }
 
-void APallet::Interaction(AActor* Caller)
+void APallet::Interaction(APawn* Caller)
 {
 	// 상호작용 중이 아니고, 판자가 서 있으면 판자 내리기 수행
 	if (bIsInteracted == false && bIsFallen == false && not Cast<AKiller>(Caller))
