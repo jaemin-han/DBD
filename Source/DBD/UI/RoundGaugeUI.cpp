@@ -11,7 +11,7 @@ void URoundGaugeUI::NativeConstruct()
 	Super::NativeConstruct();
 }
 
-void URoundGaugeUI::UpdatePercent()
+void URoundGaugeUI::UpdatePercent(float per)
 {
     if (not IMG_RoundGauge)
     {
@@ -27,5 +27,5 @@ void URoundGaugeUI::UpdatePercent()
         IMG_RoundGauge->SetBrushFromMaterial(MI_RoundProcessBar);
     }
 
-	MI_RoundProcessBar->SetScalarParameterValue(TEXT("Percent"), Percent);
+	MI_RoundProcessBar->SetScalarParameterValue(TEXT("Percent"), per);
 }

@@ -17,7 +17,7 @@ class DBD_API URoundGaugeUI : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
-	void UpdatePercent();
+	void UpdatePercent(float per);
 
 public:
 	UPROPERTY(meta = (BindWidget))

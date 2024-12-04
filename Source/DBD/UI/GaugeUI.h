@@ -20,6 +20,12 @@ class DBD_API UGaugeUI : public UUserWidget
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Gauge;
+
+	UPROPERTY(meta = (BindWidget))
+	class URoundGaugeUI* RoundGauge;
+
+	UPROPERTY(meta = (BindWidget))
+	class USkillCheckZoneUI* SkillCheckZone;
 	
 public:
 	void SetPercent(float value);
