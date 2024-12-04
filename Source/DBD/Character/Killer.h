@@ -8,6 +8,8 @@
 
 class UDBD_Interface_Gimmick;
 
+DECLARE_DELEGATE_OneParam(FOnHangSurvivorDelegate, TScriptInterface<class IDBD_Interface_Gimmick>);
+
 UCLASS()
 class DBD_API AKiller : public ADBDCharacter
 {
@@ -129,6 +131,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "GameState")
 	class ADBDGameState* DBDGameState;
+
+	FOnHangSurvivorDelegate OnHangSurvivor;
 
 private:
 	// attack montage

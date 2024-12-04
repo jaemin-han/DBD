@@ -421,12 +421,11 @@ void AKiller::HangSurvivorOnHook()
 	{
 		return;
 	}
-	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
-	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
-	if (!Hanger)
+	
+	if (NearGimmick->GetGimmickName() != TEXT("Hanger"))
 		return;
 
-	if (CarriedSurvivor && Hanger)
+	if (CarriedSurvivor)
 	{
 		MulticastRPC_HangSurvivorOnHook();
 	}
@@ -435,6 +434,7 @@ void AKiller::HangSurvivorOnHook()
 void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()
 {
 	HangSurvivorOnHook();
+	DisableInput(Cast<APlayerController>(GetController()));
 }
 
 void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()
@@ -446,6 +446,6 @@ void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()
 		DBDGameState->SetGeneratorCustomDepth(true);
 	}
 	
-	
+	OnHangSurvivor.ExecuteIfBound(NearGimmick);
 	PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
 }
