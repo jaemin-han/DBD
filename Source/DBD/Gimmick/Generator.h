@@ -34,8 +34,6 @@ public:
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
 
-	void UpdateRoundGauge();
-
 	inline bool SetIsActivatedSkillCheckZone(bool value) { return IsActivatedSkillCheckZone = value; }
 
 	UFUNCTION(Client, Reliable)
@@ -49,7 +47,7 @@ public:
 	UPROPERTY()
 	class UGaugeUI* GaugeUI;
 
-	bool IsRoundGauge = false;
+	
 
 	// 발전기 활성화가 됬는지 판단 여부 변수
 	UPROPERTY(EditAnywhere, Category = "Generator")
@@ -57,9 +55,7 @@ public:
 
 
 private:
-	// 스킬체크 존 활성화 여부
-	bool IsActivatedSkillCheckZone = false;
-
+	/// 발전기의 이름과 상호작용 키
 	FString Name = TEXT("Generator");
 	FString InteractKey = TEXT("LBM");
 
@@ -72,4 +68,37 @@ private:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiRPC_SetGaugeUIPercent(float value);
+
+
+
+
+
+
+
+/// RoundGaugeUI관련된 변수 및 함수
+
+	bool IsActivatedSkillCheckZone = false;			/// 스킬체크 존 활성화 여부
+	bool IsCheckRoundGauge = false;					/// 라운드 게이지 활성화 여부
+	float RoundPercent = 0.0f;						/// 라운드 게이지 퍼센트
+
+	float SkillCheckZoneStart = 0.0f;				/// 스킬체크 존 시작 지점
+	float SkillCheckZoneEnd = 0.0f;					/// 스킬체크 존 끝 지점
+
+	bool IsSuccessSkillCheck = false;				/// 스킬체크 성공 여부
+
+public:
+	void CheckRoundGauge(float frame);										// 라운드 게이지 활성화 여부 판단 함수
+	UFUNCTION(Client, Reliable)
+	void Client_VisibleRoundGauge(bool IsVisible);							// 라운드 게이지 활성화 여부 판단 함수 클라이언트 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetRoundGaugePercent(bool IsVisible, float per);				// 라운드 게이지 퍼센트 설정 함수
+
+
+	void SetSkillCheckZone(float value);									// 스킬체크 존 설정 함수 (서버에서 설정 -> Multicast로 클라이언트들에게 전달)
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetSkillCheckZone(float ran, FWidgetTransform newTrans);		// 스킬체크 존 설정 함수 (클라이언트에서 설정 -> Multicast로 서버에게 전달)
+
+
+	bool IsSuccessedSkillCheck();											// 스킱체크 활성화 됬을때 스킬체크가 성공했는지 실패했는지 판단 함수
 };

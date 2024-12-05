@@ -6,8 +6,13 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Character/DBD_Player.h"
+
 
 #include "UI/GaugeUI.h"
+#include "UI/RoundGaugeUI.h"
+#include "UI/SkillCheckZoneUI.h"
+
 
 // Sets default values
 AGenerator::AGenerator()
@@ -67,7 +72,7 @@ void AGenerator::Tick(float DeltaTime)
 		IsActivated = true;
 	}
 }
-
+// 서버에서만 실행됨
 void AGenerator::Interaction(APawn* Caller)
 {
 	SetOwner(Caller);
@@ -95,7 +100,8 @@ void AGenerator::FailedInteraction()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
 	ClientRPC_SetGaugeUIVisibility(ESlateVisibility::Hidden);
-	IsRoundGauge = false;
+	IsCheckRoundGauge = false;
+	RoundPercent = 0.0f;
 	SetOwner(nullptr);
 }
 
@@ -124,12 +130,30 @@ void AGenerator::UpdateGauge(float time)
 
 	// time = 0.2로 들어오는데 이거를 100퍼로 나눴을때
 	// 초당 0.01씩 증가하게 만들기 위해서
-	// Percent += time * 0.011f;		// 실제 적용
-	Percent += time * 0.5f;			// 테스트용
+	 Percent += time * 0.011f;		// 실제 적용
+	//Percent += time * 0.5f;			// 테스트용
+
+	// RoundGaugeUI 계속 업데이트
+	if (not IsCheckRoundGauge)
+	{
+		CheckRoundGauge(GetWorld()->GetDeltaSeconds());
+	}
+	else
+	{
+		if (IsSuccessedSkillCheck())
+		{
+			IsCheckRoundGauge = false;
+			RoundPercent = 0.0f;
+		}
+		
+		RoundPercent += GetWorld()->GetDeltaSeconds() * 0.5f;
+	}
+
+	Client_VisibleRoundGauge(IsCheckRoundGauge);
+	Multi_SetRoundGaugePercent(IsCheckRoundGauge, RoundPercent);
 
 	MultiRPC_SetGaugeUIPercent(Percent);
 }
-
 void AGenerator::ClientRPC_SetGaugeUIVisibility_Implementation(ESlateVisibility visibility)
 {
 	if (GaugeUI)
@@ -141,4 +165,118 @@ void AGenerator::ClientRPC_SetGaugeUIVisibility_Implementation(ESlateVisibility 
 void AGenerator::MultiRPC_SetGaugeUIPercent_Implementation(float value)
 {
 	GaugeUI->SetPercent(value);
+}
+
+
+// 서버에서만 실행됨
+void AGenerator::CheckRoundGauge(float frame)
+{	
+	float random = FMath::RandRange(0.0f,1.0f);
+	UE_LOG(LogTemp, Warning, TEXT("Random %f"), random);
+
+	if (random < frame)
+	{
+		// RoundGauge 활성화
+		IsCheckRoundGauge = true;
+
+		float skillCheckRandom = FMath::RandRange(0.4f, 0.7f);
+		SetSkillCheckZone(skillCheckRandom);
+	}
+	else
+	{
+		IsCheckRoundGauge = false;
+	}
+}
+
+void AGenerator::SetSkillCheckZone(float value)
+{
+	SkillCheckZoneStart = value;
+	
+	//UE_LOG(LogTemp, Log, TEXT("value %f"), value);
+	
+	float Random = FMath::RandRange(0.1f, 0.2f);
+	//UE_LOG(LogTemp, Log, TEXT("Random %f"), Random);
+	GaugeUI->SkillCheckZone->SetPercent(Random);
+	SkillCheckZoneEnd = SkillCheckZoneStart + Random;
+
+	// 0 ~ 1의 범위를 -180 ~ 180의 범위로 변환
+	SkillCheckZoneStart = ((value * 2) - 1) * 180.0f;
+	// SKillCheckZone의 RenderTransform의 Angle을 변경
+	//SkillCheckZone->RenderTransform.Angle = start;
+	
+	
+	FWidgetTransform newTransform = GaugeUI->SkillCheckZone->RenderTransform;
+	newTransform.Angle = SkillCheckZoneStart;
+	GaugeUI->SkillCheckZone->SetRenderTransform(newTransform);
+	
+	GaugeUI->SkillCheckZone->InvalidateLayoutAndVolatility();
+
+	Multi_SetSkillCheckZone(Random, newTransform);
+}
+
+void AGenerator::Multi_SetSkillCheckZone_Implementation(float ran, FWidgetTransform newTrans)
+{
+	GaugeUI->SkillCheckZone->SetPercent(ran);
+	GaugeUI->SkillCheckZone->SetRenderTransform(newTrans);
+}
+
+void AGenerator::Client_VisibleRoundGauge_Implementation(bool IsVisible)
+{
+	if (IsVisible)
+	{
+		GaugeUI->RoundGauge->SetVisibility(ESlateVisibility::Visible);
+		GaugeUI->SkillCheckZone->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		GaugeUI->RoundGauge->SetVisibility(ESlateVisibility::Hidden);
+		GaugeUI->SkillCheckZone->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+
+void AGenerator::Multi_SetRoundGaugePercent_Implementation(bool IsVisible, float per)
+{
+	if (IsVisible)
+	{
+		GaugeUI->RoundGauge->UpdatePercent(per);
+	}
+}
+
+
+
+bool AGenerator::IsSuccessedSkillCheck()
+{
+	// 게이지가 스킬체크 구역에 들어왔을때
+	if (RoundPercent >= SkillCheckZoneStart and RoundPercent <= SkillCheckZoneEnd)
+	{
+		
+		if (Cast<ADBD_Player>(GetOwner())->GetIsSpaceBar())
+		{
+			IsSuccessSkillCheck = true;
+		}
+	}
+	UE_LOG(LogTemp, Log, TEXT("RoundPercent : %.2f"), RoundPercent);
+
+ // 플레이어가 스페이스바를 눌렀는데 스킬체크에 성공했을때
+	if (Cast<ADBD_Player>(GetOwner())->GetIsSpaceBar() and IsSuccessSkillCheck)
+	{
+		RoundPercent = 0.0f;
+		IsSuccessSkillCheck = false;
+		return true;
+	}
+	// 게이지가 다 찼거나, 플레이거 스페이스바를 눌렀는데 스킬체크에 실패했을때
+	else if (RoundPercent >= 1.0f or (Cast<ADBD_Player>(GetOwner())->GetIsSpaceBar() and IsSuccessSkillCheck == false))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed SkillCheck"));
+		IsSuccessSkillCheck = false;		// 스킬체크성공여부는 다시 false로
+		RoundPercent = 0.0f;			// 게이지 초기화
+		if (Percent <= 0.02f)				// 게이지가 0.02보다 작다면 그냥 0으로 초기화
+		{
+			Percent = 0;
+		}
+		else Percent -= 0.02f;
+		return true;
+	}
+	else return false;
 }

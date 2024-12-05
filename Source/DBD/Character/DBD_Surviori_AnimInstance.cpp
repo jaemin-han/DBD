@@ -12,10 +12,10 @@ void UDBD_Surviori_AnimInstance::NativeInitializeAnimation()
 	Player = Cast<ADBD_Player>(TryGetPawnOwner());
 
 	// 구출을 실행할 때 이 함수를 실행함
-	Player->OnSetGimmickAtRescue.BindLambda([this](TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick)
-	{
-		Gimmick = NearGimmick;
-	});
+	//Player->OnSetGimmickAtRescue.BindLambda([this](TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick)
+	//{
+	//	Gimmick = NearGimmick;
+	//});
 }
 
 void UDBD_Surviori_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)

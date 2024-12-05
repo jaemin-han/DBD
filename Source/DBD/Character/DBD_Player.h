@@ -93,9 +93,17 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void Server_NonExitDoor();
 
+	UFUNCTION(Server, Reliable)
+	void Server_GeneratorSkillCheck();
+	UFUNCTION(Server, Reliable)
+	void Server_ReleasedGeneratorSkillCheck();
 
-	void GeneratorSkillCheck();
-	void ReleasedGeneratorSkillCheck();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_GeneratorSkillCheck();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_ReleasedGeneratorSkillCheck();
+
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Rescue();
 	UFUNCTION(NetMulticast, Reliable)
@@ -111,7 +119,7 @@ protected:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;		// 플레이어와 액터가 충돌할때 발생하는 함수들
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;		// -> 액터와만 오버랩 반응을 하게됨.
 
-	void RaiseFallenSurvivor(ADBD_Player* otherSuvivor);												// 플레이어가 넘어진 생존자를 일으켜세우는 함수
+	void RaiseFallenSurvivor(ADBD_Player* otherSuvivor);					// 플레이어가 넘어진 생존자를 일으켜세우는 함수
 	UFUNCTION(Server, Reliable)
 	void Server_RaiseFallenSurvivor();
 	UFUNCTION(NetMulticast, Reliable)

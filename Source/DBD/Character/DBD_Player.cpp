@@ -141,8 +141,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		// 추후 하나의 함수내에서 구분하여 처리할 예정
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::DropdownPallet);
-		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::GeneratorSkillCheck);
-		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Completed, this, &ADBD_Player::ReleasedGeneratorSkillCheck);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ADBD_Player::Server_GeneratorSkillCheck);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Completed, this, &ADBD_Player::Server_ReleasedGeneratorSkillCheck);
 
 		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Started, this, &ADBD_Player::ServerRPC_PushInteractGenerator);
 		EnhancedInputComponent->BindAction(GeneratorAction, ETriggerEvent::Completed, this, &ADBD_Player::ServerRPC_NonPushInteractGenerator);
@@ -367,7 +367,7 @@ void ADBD_Player::Server_ExitDoor_Implementation()
 
 
 		IsPressExitDoor = true;
-		UE_LOG(LogTemp, Warning, TEXT("ExitDoor"));
+		//UE_LOG(LogTemp, Warning, TEXT("ExitDoor"));
 		//Door->Interaction();
 		GetCharacterMovement()->DisableMovement();
 		Door->Interaction(this);
@@ -379,27 +379,30 @@ void ADBD_Player::Server_NonExitDoor_Implementation()
 	if (IsOverlapDoor)
 	{
 		IsPressExitDoor = false;
-		UE_LOG(LogTemp, Warning, TEXT("NonExitDoor"));
+		//UE_LOG(LogTemp, Warning, TEXT("NonExitDoor"));
 		//Door->Interaction();
 		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		Door->FailedInteraction();
 	}
 }
 
-void ADBD_Player::GeneratorSkillCheck()
+void ADBD_Player::Server_GeneratorSkillCheck_Implementation()
 {
-	if (IsSkillCheckZone)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GeneratorSkillCheck"));
-		IsSpaceBar = true;
-	}
+	Multi_GeneratorSkillCheck();
 }
-
-void ADBD_Player::ReleasedGeneratorSkillCheck()
+void ADBD_Player::Multi_GeneratorSkillCheck_Implementation()
 {
-	IsSkillCheckZone = false;
+	IsSpaceBar = true;
+}
+void ADBD_Player::Server_ReleasedGeneratorSkillCheck_Implementation()
+{
+	Multi_ReleasedGeneratorSkillCheck();
+}
+void ADBD_Player::Multi_ReleasedGeneratorSkillCheck_Implementation()
+{
 	IsSpaceBar = false;
 }
+
 
 void ADBD_Player::ServerRPC_Rescue_Implementation()
 {
@@ -441,7 +444,7 @@ void ADBD_Player::Interaction()
 		{
 			if (ADBD_Player* otherPlayer = Cast<ADBD_Player>(hitResult.GetActor()))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("OtherPlayer"));
+				//UE_LOG(LogTemp, Warning, TEXT("OtherPlayer"));
 				return;
 			}
 
@@ -567,7 +570,7 @@ void ADBD_Player::GetNearSurvivor()
 	if (NewNearSurvivor)
 	{
 		OtherSurvivor = NewNearSurvivor;
-		UE_LOG(LogTemp, Warning, TEXT("[%s] OtherSurvivor : %s"), *GetName(), *OtherSurvivor->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("[%s] OtherSurvivor : %s"), *GetName(), *OtherSurvivor->GetName());
 	}
 	else
 	{
@@ -585,7 +588,7 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 	ADBD_Player* otherPlayer = Cast<ADBD_Player>(OtherActor);
 	if (otherPlayer and OtherActor != this)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] OtherPlayer : %s"),*GetName(), *otherPlayer->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("[%s] OtherPlayer : %s"),*GetName(), *otherPlayer->GetName());
 		OtherSurvivor = otherPlayer;
 	}
 
@@ -594,7 +597,7 @@ void ADBD_Player::NotifyActorBeginOverlap(AActor* OtherActor)
 		// 만약 OtherActor가 Door라면
 		if (gimmick->GetGimmickName() == TEXT("Door"))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Door BeginOverlap"));
+			//UE_LOG(LogTemp, Warning, TEXT("Door BeginOverlap"));
 			IsOverlapDoor = true;
 			NearGimmick = OtherActor;			// UI를 띄워주기 위한 친구
 			Door = Cast<ADoor>(gimmick);
@@ -636,7 +639,7 @@ void ADBD_Player::NotifyActorEndOverlap(AActor* OtherActor)
 void ADBD_Player::RaiseFallenSurvivor(ADBD_Player* otherSurvivor)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Local RaiseFallenSurvivor"));
-	UE_LOG(LogTemp, Warning, TEXT("<Local> [%s] OtehrPlayer : %s"), *GetName(), *otherSurvivor->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("<Local> [%s] OtehrPlayer : %s"), *GetName(), *otherSurvivor->GetName());
 	//UE_LOG(LogTemp, Warning, TEXT("[%s] OtehrPlayer state : %d"), *GetName(), otherSuvivor->GetSurvivorState());
 	//if (otherSuvivor and otherSuvivor->GetSurvivorState() == ESurvivorState::Hp1)
 	{
@@ -668,7 +671,7 @@ void ADBD_Player::Multi_RaiseFallenSurvivor_Implementation(ADBD_Player* otherSur
 	//UE_LOG(LogTemp, Warning, TEXT("[%s] OtehrPlayer : %s"), *GetName(), *otherSuvivor->GetName());
 	//UE_LOG(LogTemp, Warning, TEXT("[%s] OtehrPlayer state : %d"), *GetName(), otherSuvivor->GetSurvivorState());
 	//
-	UE_LOG(LogTemp, Warning, TEXT("OtherPlayer healing"));
+	//UE_LOG(LogTemp, Warning, TEXT("OtherPlayer healing"));
 	otherSurvivor->PlusHp();
 }
 
@@ -684,11 +687,11 @@ void ADBD_Player::ActivatedGaugeUI(float time)
 
 
 	RaiseSurvivorTimer += time;
-	UE_LOG(LogTemp, Warning, TEXT("[%s] RaiseSurvivorTimer : %.2f"), *GetName(), RaiseSurvivorTimer);
+	//UE_LOG(LogTemp, Warning, TEXT("[%s] RaiseSurvivorTimer : %.2f"), *GetName(), RaiseSurvivorTimer);
 
 	if (RaiseSurvivorTimer >= 3.0f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] ActivatedGaugeUI"), *GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("[%s] ActivatedGaugeUI"), *GetName());
 		IsFinishRaiseSurvivor = true;
 		//NonRaiseFallenSurvivor();
 	}
@@ -789,7 +792,7 @@ void ADBD_Player::Client_VisibleInteractUI_Implementation(bool IsGenerator, bool
 
 	if (IsParkour or IsGenerator or isDoorOverlap)
 	{
-		UE_LOG(LogTemp, Error, TEXT("InteractUI turn Hidden"));
+		//UE_LOG(LogTemp, Error, TEXT("InteractUI turn Hidden"));
 		Client_HiddenInteractUI();
 		return;
 	}
