@@ -16,6 +16,7 @@
 #include "UI/ExitGaugeUI.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
+#include "GameMode/DBDGameState.h"
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
 #include "Gimmick/Hanger.h"
@@ -124,6 +125,14 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(ADBD_Player, OtherSurvivor);
 	DOREPLIFETIME(ADBD_Player, IsFindGenerator);
 	DOREPLIFETIME(ADBD_Player, Door);
+	DOREPLIFETIME(ADBD_Player, SacrificeTime);
+}
+
+void ADBD_Player::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	auto* GameState = GetWorld()->GetGameState<ADBDGameState>();
+	GameState->SetSurvivorCount(GameState->GetSurvivorCount() + 1);
 }
 
 // Input 설정 함수

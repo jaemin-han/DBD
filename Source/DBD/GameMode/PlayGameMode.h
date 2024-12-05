@@ -19,5 +19,6 @@ class DBD_API APlayGameMode : public AGameModeBase
 	UPROPERTY(EditAnywhere, Category = "PlayerClass")
 	TSubclassOf<class ADBD_Player> SurvivorClass;
 
+protected:
 	virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
 };

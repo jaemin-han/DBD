@@ -25,6 +25,7 @@ private:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
 	void AddDynamicMaterialToPostProcessVolume();
@@ -40,4 +41,15 @@ public:
 
 public:
 	void InitArrays();
+	// SurvivorCount getter, setter
+	int32 GetSurvivorCount() const { return SurvivorCount; }
+	void SetSurvivorCount(int32 Value) { SurvivorCount = Value; }
+	// game over
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_GameOver();
+
+private:
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Survivor")
+	int32 SurvivorCount = 0;
+	
 };

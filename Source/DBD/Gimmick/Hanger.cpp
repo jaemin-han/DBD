@@ -8,6 +8,8 @@
 #include "Character/Killer.h"
 #include "Components/ArrowComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameMode/DBDGameState.h"
+#include "GameMode/DBDPlayerController.h"
 #include "UI/HangerUI.h"
 
 // Sets default values
@@ -21,6 +23,8 @@ AHanger::AHanger()
 
 	HangPosition = CreateDefaultSubobject<UArrowComponent>(TEXT("HangPosition"));
 	HangPosition->SetupAttachment(RootComponent);
+
+	SetReplicates(true);
 }
 
 void AHanger::SetHangSurvivor(ADBD_Player* InHangSurvivor)
@@ -30,7 +34,6 @@ void AHanger::SetHangSurvivor(ADBD_Player* InHangSurvivor)
 	{
 		HangerUI->AddToViewport();
 	}
-
 
 	HangSurvivor = InHangSurvivor;
 }
@@ -53,22 +56,25 @@ void AHanger::Tick(float DeltaTime)
 	if (!HangSurvivor)
 		return;
 
+	if (HangerUI && HangerUI->IsInViewport() && HangSurvivor->IsLocallyControlled())
+	{
+		HangerUI->SetSacrifaceGagePercent(HangSurvivor->GetSacrificeTime() / HangSurvivor->TotalSacrificeTime);
+	}
+
+	// 서버에서만 실행
+	if (!HasAuthority())
+		return;
+
+
 	float NewSacrifaceTime = HangSurvivor->GetSacrificeTime() - DeltaTime;
 
 	if (NewSacrifaceTime <= 0.f)
 	{
-		// todo: 생존자 사망 처리
-		// delegate 사용할까??
+		ServerRPC_DestroyHangSurvivor();
+		return;
 	}
 
 	HangSurvivor->SetSacrificeTime(NewSacrifaceTime);
-
-	// HangerUI 가 유효하고
-	// HangerUI 가 Viewport 에 추가되어있을 때
-	if (HangerUI && HangerUI->IsInViewport())
-	{
-		HangerUI->SetSacrifaceGagePercent(NewSacrifaceTime / HangSurvivor->TotalSacrificeTime);
-	}
 }
 
 void AHanger::Interaction(APawn* Caller)
@@ -111,8 +117,6 @@ FString AHanger::GetInteractKey()
 
 void AHanger::Rescue()
 {
-	FString NetRole = HasAuthority() ? TEXT("Server") : TEXT("Client");
-	UE_LOG(LogTemp, Error, TEXT("Rescue called at %s"), *NetRole);
 	// 체력 2로 변경
 	HangSurvivor->ChangeSurvivorState(ESurvivorState::Hp2);
 	// 갈고리에서 해방
@@ -135,4 +139,34 @@ void AHanger::Rescue()
 	}
 
 	HangSurvivor = nullptr;
+}
+
+void AHanger::MultiRPC_DestroyHangSurvivor_Implementation()
+{
+	if (HangSurvivor->IsLocallyControlled() && HangerUI)
+	{
+		HangerUI->RemoveFromParent();
+	}
+	HangSurvivor = nullptr;
+}
+
+void AHanger::ServerRPC_DestroyHangSurvivor_Implementation()
+{
+	if (HangSurvivor)
+	{
+		auto* GameState = Cast<ADBDGameState>(GetWorld()->GetGameState());
+		GameState->SetSurvivorCount(GameState->GetSurvivorCount() - 1);
+		if (GameState->GetSurvivorCount() == 0)
+		{
+			HangSurvivor->Destroy();
+			MultiRPC_DestroyHangSurvivor();
+			GameState->MultiRPC_GameOver();
+		}
+		else
+		{
+			auto* PlayerController = Cast<ADBDPlayerController>(HangSurvivor->GetController());
+			MultiRPC_DestroyHangSurvivor();
+			PlayerController->ServerRPC_ChangeToSpector();
+		}
+	}
 }

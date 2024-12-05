@@ -8,6 +8,7 @@
 #include "Hanger.generated.h"
 
 class ADBD_Player;
+
 UCLASS()
 class DBD_API AHanger : public AActor, public IDBD_Interface_Gimmick
 {
@@ -61,4 +62,8 @@ private:
 
 private:
 	void Rescue();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_DestroyHangSurvivor();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_DestroyHangSurvivor();
 };
