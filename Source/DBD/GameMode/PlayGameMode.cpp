@@ -5,6 +5,12 @@
 
 #include "Character/DBD_Player.h"
 #include "Character/Killer.h"
+#include "DBDGameInstance.h"
+
+void APlayGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+}
 
 APawn* APlayGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
 {

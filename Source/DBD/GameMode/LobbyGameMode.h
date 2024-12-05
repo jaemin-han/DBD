@@ -17,10 +17,13 @@ class DBD_API ALobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 	virtual void BeginPlay() override;
+
+
 	virtual void Tick(float DeltaSeconds) override;
 	
-	virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
+	//virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
 	virtual AActor* ChoosePlayerStart(AController* Player);
+
 
 private:
 	int32 PlayerCount;

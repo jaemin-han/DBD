@@ -36,6 +36,14 @@ protected:
 	// 서버 등록 함수
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetCameraInLobby(class ACameraActor* cam);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetCameraInPlay(class ACameraActor* cam);
+
 /** 기본 상속 함수*/
 
 

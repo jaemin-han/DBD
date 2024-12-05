@@ -11,6 +11,7 @@ DECLARE_DELEGATE_TwoParams(FOnAddSessionDelegate, int32, FString);
 /**
  * 
  */
+
 UCLASS()
 class DBD_API UDBDGameInstance : public UGameInstance
 {
@@ -49,5 +50,4 @@ public:
 
 	// MainUI 에서 세션을 추가할 때 사용
 	FOnAddSessionDelegate OnAddSession;
-	
 };

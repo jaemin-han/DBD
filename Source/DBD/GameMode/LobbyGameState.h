@@ -15,11 +15,15 @@
  * 
  */
 UCLASS()
-class DBD_API ALobbyGameState : public AGameState
+class DBD_API ALobbyGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 	
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+public:
+	class ULobbyUI* GetLobbyUI();
 
 public:
 	// 플레이어들의 위치값을 저장해줄 배열
@@ -29,4 +33,11 @@ public:
 	// 플레이어들의 Ready 상태를 저장해줄 배열
 	UPROPERTY(EditAnywhere)
 	TArray<bool> PlayerReady;	// [0] = Survivor1, [1] = Survivor2, [2] = Survivor3, [3] = Survivor4, [4] = Killer
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ULobbyUI> LobbyUIFactor;
+
+	UPROPERTY()
+	class ULobbyUI* LobbyUI;
 };

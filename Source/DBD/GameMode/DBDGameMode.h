@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -13,6 +13,9 @@ class ADBDGameMode : public AGameModeBase
 
 public:
 	ADBDGameMode();
+
+	virtual void BeginPlay() override;
+
 
 	// main widget class
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))

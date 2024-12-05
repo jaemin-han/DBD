@@ -5,10 +5,13 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include <Online/OnlineSessionNames.h>
+#include "Net/UnrealNetwork.h"
 
 void UDBDGameInstance::Init()
 {
 	Super::Init();
+
+	UE_LOG(LogTemp, Log, TEXT("GameInstance Init"));
 
 	IOnlineSubsystem* Subsys = IOnlineSubsystem::Get();
 	if (Subsys)
@@ -202,3 +205,4 @@ void UDBDGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 		PlayerController->ClientTravel(URL, TRAVEL_Absolute);
 	}
 }
+

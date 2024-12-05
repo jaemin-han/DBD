@@ -7,6 +7,9 @@
 #include "EnhancedInputComponent.h"
 #include "Components/SphereComponent.h"
 
+
+#include "GameMode/LobbyGameState.h"
+#include "GameMode/PlayGameState.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Components/CapsuleComponent.h"
 #include "UI/InteractionUI.h"
@@ -14,6 +17,9 @@
 #include "Gimmick/Decal.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/ExitGaugeUI.h"
+#include "UI/LobbyUI.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "Gimmick/Pallet.h"
@@ -35,22 +41,66 @@ void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Health = MaxHealth;
-	SurvivorHp = Health;
-	SurvivorState= ESurvivorState::Hp3;
 
-	if (MainUIClass)
+	// GameState가져오기
+	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (lobbyGameState)
 	{
-		MainUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), MainUIClass));
-		if (MainUI)
+		UE_LOG(LogTemp, Error, TEXT("[BP_Player] LobbyGameState"));
+		ACameraActor* survivorCamera = nullptr;
+
+
+		TArray<AActor*> cameraActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), cameraActors);
+		for (auto cameraActor : cameraActors)
 		{
-			MainUI->AddToViewport();
-			UE_LOG(LogTemp, Log, TEXT("MainUI Create Success"));
-
-			MainUI->SetVisibility(ESlateVisibility::Hidden);
+			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
+			if(camera->GetActorLabel().Contains(TEXT("SurvivorCam")))
+			{
+				survivorCamera = camera;
+				break;
+			}
 		}
-	}
+		
+		
+		if (survivorCamera)
+		{
+			UE_LOG(LogTemp, Error, TEXT("[BP_Player] SurvivorCamera"));
+			Multi_SetCameraInLobby(survivorCamera);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[BP_Player] SurvivorCamera is nullptr"));
+		}
+	} 
 
+	//
+	APlayGameState* playGameState = Cast<APlayGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (playGameState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[BP_Player] PlayGameState"));
+		
+		Health = MaxHealth;
+		SurvivorHp = Health;
+		SurvivorState = ESurvivorState::Hp3;
+
+		if (MainUIClass)
+		{
+			MainUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), MainUIClass));
+			if (MainUI)
+			{
+				MainUI->AddToViewport();
+				UE_LOG(LogTemp, Log, TEXT("MainUI Create Success"));
+
+				MainUI->SetVisibility(ESlateVisibility::Hidden);
+			}
+		}
+
+		ACameraActor* camera = Cast<ACameraActor>(GetFollowCamera());
+
+		Multi_SetCameraInPlay(camera);
+	}
+	
 	// Interation 함수를 0.2초마다 호출
 	//FTimerHandle interactionTimer;
 	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
@@ -126,6 +176,18 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(ADBD_Player, Door);
 }
 
+void ADBD_Player::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+
+	// GameState 가져오고
+	ALobbyGameState* gameState = Cast<ALobbyGameState>(GetWorld()->GetGameState());
+	// GameUI 가져와서 PlayerStateUI 하나 만들어주세요
+	gameState->GetLobbyUI()->AddPlayerCountUI(NewPlayerState);
+}
+
+
+
 // Input 설정 함수
 void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -161,6 +223,31 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 }
 /** 기본 상속 함수*/
 
+
+
+void ADBD_Player::Multi_SetCameraInLobby_Implementation(ACameraActor* cam)
+{
+	if (cam)
+	{
+		// 카메라를 레벨에 있는 카메마로 전환해주기
+		APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		playerController->SetInputMode(FInputModeUIOnly());
+		playerController->SetShowMouseCursor(true);
+		playerController->SetViewTarget(cam);
+	}
+}
+
+void ADBD_Player::Multi_SetCameraInPlay_Implementation(ACameraActor* cam)
+{
+	if (cam)
+	{
+		// 카메라를 레벨에 있는 카메마로 전환해주기
+		APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		playerController->SetInputMode(FInputModeGameOnly());
+		playerController->SetShowMouseCursor(false);
+		playerController->SetViewTarget(cam);
+	}
+}
 
 
 /** 임시 변수*/

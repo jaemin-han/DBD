@@ -6,7 +6,7 @@
 #include "Character/Killer.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
-
+#include "DBDGameInstance.h"
 
 ADBDGameMode::ADBDGameMode()
 {
@@ -17,4 +17,9 @@ ADBDGameMode::ADBDGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+}
+
+void ADBDGameMode::BeginPlay()
+{
+	Super::BeginPlay();
 }
