@@ -25,7 +25,8 @@ class DBD_API ULobbyUI : public UUserWidget
 
 
 public:
-	void AddPlayerCountUI(APlayerState* ps);
+	void AddSurvivorCountUI(APlayerState* ps);
+	void AddKillerCountUI(APlayerState* ps);
 
 	void SetMyPlayerState();
 
@@ -60,7 +61,9 @@ public:
 	TSubclassOf<class UPlayerCountUI> playerCountUIFactory;
 
 	UPROPERTY()
-	TArray<class UPlayerCountUI*> allPlayerState;
+	TArray<class UPlayerCountUI*> allSurvivorState;
+	UPROPERTY()
+	TArray<class UPlayerCountUI*> allKillerState;
 
 	bool bIsClickedImagePlayer = false;
 };

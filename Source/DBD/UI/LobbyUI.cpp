@@ -61,31 +61,59 @@ void ULobbyUI::OnClickedImagePlayer()
 	}
 }
 
-void ULobbyUI::AddPlayerCountUI(APlayerState* ps)
+void ULobbyUI::AddSurvivorCountUI(APlayerState* ps)
 {
 	if (ps == nullptr) return;
 
 	// 만약에 ps 가 이미 추가 되어있다면 함수를 나가자.
-	bool isExist = allPlayerState.ContainsByPredicate([ps](UPlayerCountUI* p) {
+	bool isExist = allSurvivorState.ContainsByPredicate([ps](UPlayerCountUI* p) {
 		return p->LobbyPlayerState == ps;
 		});
 	if (isExist) return;
 
 	UPlayerCountUI* pcUI = CreateWidget<UPlayerCountUI>(GetWorld(), playerCountUIFactory);
+	ALobbyPlayerState* lobbyPlayerState = Cast<ALobbyPlayerState>(ps);
 
-	pcUI->Init(Cast<ALobbyPlayerState>(ps));
+	pcUI->Init(lobbyPlayerState);
 	//만들어진 pcUI를 나만의 Array에 추가하기
-	allPlayerState.Add(pcUI);
+	allSurvivorState.Add(pcUI);
 	// allPlayerState를 PlayerID 기준으로 정렬
 	//allPlayerState.Sort(FPlayerCountUISort());
 	
-	for (int32 i = 0; i < allPlayerState.Num(); i++)
+	for (int32 i = 0; i < allSurvivorState.Num(); i++)
 	{
-		VBox_SurvivorCount->AddChild(allPlayerState[i]);
-		UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(allPlayerState[i]->Slot);
+		VBox_SurvivorCount->AddChild(allSurvivorState[i]);
+		UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(allSurvivorState[i]->Slot);
 		slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
 
+	}
+}
+
+void ULobbyUI::AddKillerCountUI(APlayerState* ps)
+{
+	if (ps == nullptr) return;
+
+	// 만약에 ps 가 이미 추가 되어있다면 함수를 나가자.
+	bool isExist = allKillerState.ContainsByPredicate([ps](UPlayerCountUI* p) {
+		return p->LobbyPlayerState == ps;
+		});
+	if (isExist) return;
+
+	UPlayerCountUI* pcUI = CreateWidget<UPlayerCountUI>(GetWorld(), playerCountUIFactory);
+	ALobbyPlayerState* lobbyPlayerState = Cast<ALobbyPlayerState>(ps);
+
+	pcUI->Init(lobbyPlayerState);
+	//만들어진 pcUI를 나만의 Array에 추가하기
+	allKillerState.Add(pcUI);
+	// allPlayerState를 PlayerID 기준으로 정렬
+	//allPlayerState.Sort(FPlayerCountUISort());
+
+	for (int32 i = 0; i < allKillerState.Num(); i++)
+	{
+		VBox_KillerCount->AddChild(allKillerState[i]);
+		UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(allKillerState[i]->Slot);
+		slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	}
 }
 

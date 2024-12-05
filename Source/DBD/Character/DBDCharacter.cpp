@@ -12,6 +12,9 @@
 #include "InputActionValue.h"
 #include "GameMode/DBDGameMode.h"
 
+#include "UI/LobbyUI.h"
+#include "GameMode/LobbyPlayerState.h"
+#include "GameMode/LobbyGameState.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Animation/AnimInstance.h"
 #include "Gimmick/Windows.h"

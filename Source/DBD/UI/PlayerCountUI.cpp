@@ -12,8 +12,10 @@ void UPlayerCountUI::Init(ALobbyPlayerState* lps)
 	if (lps)
 	{
 		LobbyPlayerState = lps;
+		//UE_LOG(LogTemp, Error, TEXT("[UPlayerCountUI] lpsPlayerName : %s"), *lps->GetPlayerName());
+		UpdateName(lps->GetPlayerUniqueName());
 
-		UpdateName(lps->GetPlayerName());
+
 	}
 	else
 	{

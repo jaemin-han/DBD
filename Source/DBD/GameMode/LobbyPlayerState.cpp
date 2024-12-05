@@ -8,3 +8,22 @@ ALobbyPlayerState::ALobbyPlayerState(const FObjectInitializer& ObjectInitializer
 {
 	NetUpdateFrequency = 100;
 }
+
+FString ALobbyPlayerState::GetPlayerUniqueName()
+{
+	
+	if (HasAuthority())
+	{
+		PlayerUniqueName = FString::Printf(TEXT("Killer %d"), GetPlayerId());
+	}
+	else
+	{
+		Multi_GetPlayerUniqueName();
+	}
+	return PlayerUniqueName;
+}
+
+void ALobbyPlayerState::Multi_GetPlayerUniqueName_Implementation()
+{
+	PlayerUniqueName = FString::Printf(TEXT("Survivor %d"), GetPlayerId());
+}

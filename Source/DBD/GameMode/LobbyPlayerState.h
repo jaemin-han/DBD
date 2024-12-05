@@ -15,4 +15,15 @@ class DBD_API ALobbyPlayerState : public APlayerState
 	GENERATED_BODY()
 	
 	ALobbyPlayerState(const FObjectInitializer& ObjectInitializer);
+
+
+public:
+	FString GetPlayerUniqueName();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_GetPlayerUniqueName();
+public:
+	UPROPERTY()
+	FString PlayerUniqueName;
+
 };

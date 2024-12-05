@@ -14,7 +14,13 @@
 #include "Gimmick/Pallet.h"
 #include "Net/UnrealNetwork.h"
 #include "UI/InteractionUI.h"
+#include "GameMode/LobbyGameState.h"
+#include "GameMode/PlayGameState.h"
+#include "Kismet/GameplayStatics.h"
+#include "Camera/CameraActor.h"
 
+#include "GameMode/LobbyGameState.h"
+#include "UI/LobbyUI.h"
 
 // Sets default values
 AKiller::AKiller()
@@ -54,42 +60,106 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
-	ParkourSpeed = 0.5f;
 
-	// Interaction UI 생성
-	if (InteractionUIClass)
+	// LobbyGameState 가져오기
+	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (lobbyGameState)
 	{
-		InteractionUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), InteractionUIClass));
-		if (InteractionUI)
-		{
-			InteractionUI->AddToViewport();
-			UE_LOG(LogTemp, Log, TEXT("InteractionUI Create Success"));
+		UE_LOG(LogTemp, Error, TEXT("[Killer] LobbyGameState"));
+		ACameraActor* killerCamera = nullptr;
 
-			InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+		TArray<AActor*> cameraActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), cameraActors);
+		for (auto cameraActor : cameraActors)
+		{
+			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
+			if (camera->GetActorLabel().Contains(TEXT("KillerCam")))
+			{
+				killerCamera = camera;
+				break;
+			}
+		}
+
+		if (killerCamera)
+		{
+			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera"));
+			// 카메라를 레벨에 있는 카메마로 전환해주기
+			APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			playerController->SetInputMode(FInputModeUIOnly());
+			playerController->SetShowMouseCursor(true);
+			playerController->SetViewTarget(killerCamera);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("InteractionUI Create Failed"));
+			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera is nullptr"));
 		}
 	}
-	else
+
+	// PlayGameState 가져오기
+	APlayGameState* playGameState = Cast<APlayGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (playGameState)
 	{
-		UE_LOG(LogTemp, Error, TEXT("InteractionUIClass is nullptr"));
+		ParkourSpeed = 0.5f;
+
+		// Interaction UI 생성
+		if (InteractionUIClass)
+		{
+			InteractionUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), InteractionUIClass));
+			if (InteractionUI)
+			{
+				InteractionUI->AddToViewport();
+				UE_LOG(LogTemp, Log, TEXT("InteractionUI Create Success"));
+
+				InteractionUI->SetVisibility(ESlateVisibility::Hidden);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("InteractionUI Create Failed"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("InteractionUIClass is nullptr"));
+		}
+
+		// 파쿠르라 완료되지 않아도 애니메이션이 끝나면 FinishParkourFunc 함수를 호출
+		// 이렇게 하면 넘는 중에 공격 해도 괜찮음
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
+		}
+
+		ACameraActor* camera = Cast<ACameraActor>(GetFollowCamera());
+
+		if (camera)
+		{
+			// 카메라를 레벨에 있는 카메마로 전환해주기
+			APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			playerController->SetInputMode(FInputModeGameOnly());
+			playerController->SetShowMouseCursor(false);
+			playerController->SetViewTarget(camera);
+		}
 	}
 
-	// 파쿠르라 완료되지 않아도 애니메이션이 끝나면 FinishParkourFunc 함수를 호출
-	// 이렇게 하면 넘는 중에 공격 해도 괜찮음
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance)
-	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
-	}
+
+	
 	// SetActorTickEnabled(false);
 }
 
 void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+void AKiller::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+
+	// GameState 가져오고
+	ALobbyGameState* gameState = Cast<ALobbyGameState>(GetWorld()->GetGameState());
+	// GameUI 가져와서 PlayerStateUI 하나 만들어주세요
+	gameState->GetLobbyUI()->AddKillerCountUI(NewPlayerState);
 }
 
 void AKiller::Attack()

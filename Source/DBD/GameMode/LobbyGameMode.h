@@ -21,7 +21,7 @@ class DBD_API ALobbyGameMode : public AGameModeBase
 
 	virtual void Tick(float DeltaSeconds) override;
 	
-	//virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
+	virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
 	virtual AActor* ChoosePlayerStart(AController* Player);
 
 

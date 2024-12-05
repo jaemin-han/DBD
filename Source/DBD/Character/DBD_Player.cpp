@@ -46,7 +46,7 @@ void ADBD_Player::BeginPlay()
 	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (lobbyGameState)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[BP_Player] LobbyGameState"));
+		UE_LOG(LogTemp, Error, TEXT("[Player] LobbyGameState"));
 		ACameraActor* survivorCamera = nullptr;
 
 
@@ -65,12 +65,12 @@ void ADBD_Player::BeginPlay()
 		
 		if (survivorCamera)
 		{
-			UE_LOG(LogTemp, Error, TEXT("[BP_Player] SurvivorCamera"));
+			UE_LOG(LogTemp, Error, TEXT("[Player] SurvivorCamera"));
 			Multi_SetCameraInLobby(survivorCamera);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[BP_Player] SurvivorCamera is nullptr"));
+			UE_LOG(LogTemp, Error, TEXT("[Player] SurvivorCamera is nullptr"));
 		}
 	} 
 
@@ -78,7 +78,7 @@ void ADBD_Player::BeginPlay()
 	APlayGameState* playGameState = Cast<APlayGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (playGameState)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[BP_Player] PlayGameState"));
+		UE_LOG(LogTemp, Error, TEXT("[Player] PlayGameState"));
 		
 		Health = MaxHealth;
 		SurvivorHp = Health;
@@ -183,7 +183,7 @@ void ADBD_Player::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerStat
 	// GameState 가져오고
 	ALobbyGameState* gameState = Cast<ALobbyGameState>(GetWorld()->GetGameState());
 	// GameUI 가져와서 PlayerStateUI 하나 만들어주세요
-	gameState->GetLobbyUI()->AddPlayerCountUI(NewPlayerState);
+	gameState->GetLobbyUI()->AddSurvivorCountUI(NewPlayerState);
 }
 
 
