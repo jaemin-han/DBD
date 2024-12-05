@@ -100,7 +100,8 @@ void UDBDGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Session created successfully"), *SessionName.ToString());
 		// todo: listen server
-		GetWorld()->ServerTravel(TEXT("/Game/DBD/Level/PlayLevel?listen"));
+		//GetWorld()->ServerTravel(TEXT("/Game/DBD/Level/PlayLevel?listen"));
+		GetWorld()->ServerTravel(TEXT("/Game/DBD/Level/LobbyLevel?listen"));
 	}
 	else
 	{
@@ -171,7 +172,7 @@ void UDBDGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 
 			OnAddSession.ExecuteIfBound(Index, Info);
 		}
-
+		
 		UE_LOG(LogTemp, Warning, TEXT("Find Session Success"));
 	}
 	else
