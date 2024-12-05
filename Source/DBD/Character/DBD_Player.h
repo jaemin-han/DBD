@@ -295,6 +295,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* RescueMontage;
 
+	UPROPERTY()
+	class ADBDGameState* GameState;
+
 public:
 	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate
 	FOnSetGimmickAtRescueDelegate OnSetGimmickAtRescue;

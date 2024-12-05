@@ -3,6 +3,8 @@
 
 #include "DBDGameState.h"
 
+#include "Character/DBD_Player.h"
+#include "Character/Killer.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerState.h"
 #include "Gimmick/Generator.h"
@@ -54,6 +56,38 @@ void ADBDGameState::SetHangerCustomDepth(bool bIsVisible)
 	for (auto* Hanger : Hangers)
 	{
 		Hanger->GetMeshComp()->SetRenderCustomDepth(bIsVisible);
+	}
+}
+
+void ADBDGameState::SetCustomDepthSurvivors(ADBD_Player* CurrentPlayer, bool bIsVisible)
+{
+	// 로컬 플레이어 인 경우에만 실행
+	if (CurrentPlayer->IsLocallyControlled())
+	{
+		for (APlayerState* PlayerState : PlayerArray)
+		{
+			ADBD_Player* Survivor = Cast<ADBD_Player>(PlayerState->GetPawn());
+			if (Survivor && Survivor != CurrentPlayer)
+			{
+				Survivor->GetMesh()->SetRenderCustomDepth(bIsVisible);
+			}
+		}
+	}
+}
+
+void ADBDGameState::SetCustomDepthOnThisSurvivor_Implementation(class ADBD_Player* CurrentPlayer, bool bIsVisible)
+{
+	// 로컬 플레이어가 아닌 경우에만 실행 , multiRPC 라서 CurrentPlayer 가 설정되기 전에 실행되는 경우 방지
+	if (CurrentPlayer && !CurrentPlayer->IsLocallyControlled())
+	{
+		// 첫 번째 local player controller 가 killer 인 경우 실행하지 않음
+		auto* PlayerController = GetWorld()->GetFirstPlayerController();
+		if (PlayerController->GetPawn()->IsA(AKiller::StaticClass()))
+		{
+			return;
+		}
+		
+		CurrentPlayer->GetMesh()->SetRenderCustomDepth(bIsVisible);
 	}
 }
 

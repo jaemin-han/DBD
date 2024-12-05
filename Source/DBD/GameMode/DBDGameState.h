@@ -39,6 +39,12 @@ public:
 	TArray<class AHanger*> Hangers;
 	void SetHangerCustomDepth(bool bIsVisible);
 
+	// 다른 생존자의 윤곽 조정
+	void SetCustomDepthSurvivors(ADBD_Player* CurrentPlayer, bool bIsVisible);
+	// 이 생존자가 다른 컴퓨터에서 윤곽 조정
+	UFUNCTION(NetMulticast, Reliable)
+	void SetCustomDepthOnThisSurvivor(class ADBD_Player* CurrentPlayer, bool bIsVisible);
+
 public:
 	void InitArrays();
 	// SurvivorCount getter, setter
@@ -51,5 +57,4 @@ public:
 private:
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Survivor")
 	int32 SurvivorCount = 0;
-	
 };

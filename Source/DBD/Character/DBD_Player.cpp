@@ -35,7 +35,13 @@ ADBD_Player::ADBD_Player()
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	if (GameState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::BeginPlay() GameState"));
+		GameState = GetWorld()->GetGameState<ADBDGameState>();
+	}
+	
 	Health = MaxHealth;
 	SurvivorHp = Health;
 	SurvivorState= ESurvivorState::Hp3;
@@ -55,6 +61,8 @@ void ADBD_Player::BeginPlay()
 	// Interation 함수를 0.2초마다 호출
 	//FTimerHandle interactionTimer;
 	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
+
+
 }
 
 // 기본 Tick 함수
@@ -131,7 +139,11 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 void ADBD_Player::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	auto* GameState = GetWorld()->GetGameState<ADBDGameState>();
+	if (GameState == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::PossessedBy() GameState"));
+		GameState = GetWorld()->GetGameState<ADBDGameState>();
+	}
 	GameState->SetSurvivorCount(GameState->GetSurvivorCount() + 1);
 }
 
@@ -900,8 +912,8 @@ void ADBD_Player::MulticastRPC_UpdateHP_Implementation(int32 Value)
 		Health = 1;
 	}
 	SurvivorHp = Health;
-	SurvivorState = (ESurvivorState)Health;
-
+	// SurvivorState = (ESurvivorState)Health;
+	ChangeSurvivorState(static_cast<ESurvivorState>(Health));
 
 	UpdateSpeed();
 	// 임시
@@ -952,9 +964,22 @@ void ADBD_Player::ChangePlayerAnimation()
 void ADBD_Player::ChangeSurvivorState(ESurvivorState survivorState)
 {
 	SurvivorState = survivorState;
+
+	if (SurvivorState == ESurvivorState::Hp2 || SurvivorState == ESurvivorState::Hp3)
+	{
+		GameState->SetCustomDepthSurvivors(this, false);
+		GameState->SetCustomDepthOnThisSurvivor(this, false);
+	}
+	else
+	{
+		GameState->SetCustomDepthSurvivors(this, true);
+		GameState->SetCustomDepthOnThisSurvivor(this, true);
+	}
 	
 	// Health 와 SurvivorState를 연동
 	Health = static_cast<int>(survivorState);
+	// hp 갱신
+	SurvivorHp = Health;
 	
 	// ChangeSurvivorState 를 호출했을 때도 Speed 변경
 	UpdateSpeed();
