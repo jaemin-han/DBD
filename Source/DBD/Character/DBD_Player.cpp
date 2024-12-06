@@ -10,6 +10,8 @@
 
 #include "GameMode/LobbyGameState.h"
 #include "GameMode/PlayGameState.h"
+#include "GameMode/DBDGameState.h"
+
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Components/CapsuleComponent.h"
 #include "UI/InteractionUI.h"
@@ -76,9 +78,12 @@ void ADBD_Player::BeginPlay()
 	} 
 
 	//
-	APlayGameState* playGameState = Cast<APlayGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (playGameState)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::BeginPlay() GameState"));
+		GameState = GetWorld()->GetGameState<ADBDGameState>();
+
 		UE_LOG(LogTemp, Error, TEXT("[Player] PlayGameState"));
 		
 		Health = MaxHealth;

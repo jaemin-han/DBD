@@ -100,7 +100,7 @@ void AKiller::BeginPlay()
 	}
 
 	// PlayGameState 가져오기
-	APlayGameState* playGameState = Cast<APlayGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (playGameState)
 	{
 		ParkourSpeed = 0.5f;
@@ -133,6 +133,17 @@ void AKiller::BeginPlay()
 		{
 			AnimInstance->OnMontageEnded.AddDynamic(this, &ADBDCharacter::OnParkourMontageEnded);
 		}
+
+		if (IsLocallyControlled())
+		{
+			DBDGameState = Cast<ADBDGameState>(GetWorld()->GetGameState());
+			if (DBDGameState)
+			{
+				DBDGameState->InitArrays();
+				DBDGameState->SetGeneratorCustomDepth(true);
+			}
+		}
+
 
 		ACameraActor* camera = Cast<ACameraActor>(GetFollowCamera());
 
