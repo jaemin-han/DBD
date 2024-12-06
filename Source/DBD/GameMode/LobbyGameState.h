@@ -22,8 +22,12 @@ class DBD_API ALobbyGameState : public AGameStateBase
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+
 public:
 	class ULobbyUI* GetLobbyUI();
+
+
+
 
 public:
 	// 플레이어들의 위치값을 저장해줄 배열

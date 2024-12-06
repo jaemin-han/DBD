@@ -6,6 +6,14 @@
 #include "Components/Image.h"
 
 #include "GameMode/LobbyPlayerState.h"
+#include "Net/UnrealNetwork.h"
+
+void UPlayerCountUI::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UPlayerCountUI, Image_Check);
+}
 
 void UPlayerCountUI::Init(ALobbyPlayerState* lps)
 {
@@ -13,9 +21,8 @@ void UPlayerCountUI::Init(ALobbyPlayerState* lps)
 	{
 		LobbyPlayerState = lps;
 		//UE_LOG(LogTemp, Error, TEXT("[UPlayerCountUI] lpsPlayerName : %s"), *lps->GetPlayerName());
-		UpdateName(lps->GetPlayerUniqueName());
-
-
+		lps->Server_SetPlayerUniqueName();
+		UpdateName(lps->PlayerUniqueName);
 	}
 	else
 	{

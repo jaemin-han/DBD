@@ -13,6 +13,8 @@ UCLASS()
 class DBD_API UPlayerCountUI : public UUserWidget
 {
 	GENERATED_BODY()
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
 	void Init(class ALobbyPlayerState* lps);
@@ -27,6 +29,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_PlayerName;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(Replicated, meta = (BindWidget))
 	class UImage* Image_Check;
 };

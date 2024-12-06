@@ -3,17 +3,15 @@
 
 #include "GameMode/LobbyGameState.h"
 
+#include "LobbyPlayerState.h"
 #include "UI/LobbyUI.h"
+#include "UI/PlayerCountUI.h"
+#include "Components/Button.h"
+#include "Components/Image.h"
 
 void ALobbyGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//LobbyUI = CreateWidget<ULobbyUI>(GetWorld(), LobbyUIFactor);
-	//if (LobbyUI)
-	//{
-	//	LobbyUI->AddToViewport();
-	//}
 }
 
 void ALobbyGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)

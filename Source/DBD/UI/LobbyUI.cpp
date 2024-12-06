@@ -9,10 +9,12 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
+#include "Components/SizeBox.h"
+#include "Components/TextBlock.h"
 
 #include "PlayerCountUI.h"
 #include "GameMode/LobbyPlayerState.h"
-
+#include "GameMode/LobbyGameState.h"
 
 
 class FPlayerCountUISort
@@ -30,11 +32,12 @@ void ULobbyUI::NativeConstruct()
 	UE_LOG(LogTemp, Log, TEXT("NativeConstruct called"));
 
 
+
+
 	Image_Player->OnMouseButtonDownEvent.BindUFunction(this, "OnClickedImagePlayer");
 
-
 	// Btn_Ready이 눌렸을때 호출되는 함수
-	Btn_Ready->OnClicked.AddDynamic(this, &ULobbyUI::OnClickedBtnReady);
+	Btn_Ready->OnClicked.AddDynamic(this, &ULobbyUI::Server_OnClickedBtnReady);
 
 	// 나의 PlayerState 찾아오는 Timer 돌리자
 	GetWorld()->GetTimerManager().SetTimer(playerStateHandle, this, &ULobbyUI::SetMyPlayerState, 0.1f, true);
@@ -43,6 +46,14 @@ void ULobbyUI::NativeConstruct()
 void ULobbyUI::OnClickedBtnReady()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[LobbyUI] Btn_Ready Clicked"));
+
+	ALobbyPlayerState* ps = Cast<ALobbyPlayerState>(GetWorld()->GetFirstPlayerController()->PlayerState);
+	ps->Server_OnClickedBtnReady();
+}
+
+void ULobbyUI::Server_OnClickedBtnReady_Implementation()
+{
+	OnClickedBtnReady();
 }
 
 void ULobbyUI::OnClickedImagePlayer()
@@ -61,6 +72,7 @@ void ULobbyUI::OnClickedImagePlayer()
 	}
 }
 
+
 void ULobbyUI::AddSurvivorCountUI(APlayerState* ps)
 {
 	if (ps == nullptr) return;
@@ -71,9 +83,11 @@ void ULobbyUI::AddSurvivorCountUI(APlayerState* ps)
 		});
 	if (isExist) return;
 
+	VBox_SurvivorCount->ClearChildren();
+
 	UPlayerCountUI* pcUI = CreateWidget<UPlayerCountUI>(GetWorld(), playerCountUIFactory);
 	ALobbyPlayerState* lobbyPlayerState = Cast<ALobbyPlayerState>(ps);
-
+	
 	pcUI->Init(lobbyPlayerState);
 	//만들어진 pcUI를 나만의 Array에 추가하기
 	allSurvivorState.Add(pcUI);
@@ -85,8 +99,14 @@ void ULobbyUI::AddSurvivorCountUI(APlayerState* ps)
 		VBox_SurvivorCount->AddChild(allSurvivorState[i]);
 		UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(allSurvivorState[i]->Slot);
 		slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	}
 
-
+	for (int32 i = 0; i < 6 - allSurvivorState.Num(); i++)
+	{
+		USizeBox* sizeBox = NewObject<USizeBox>(this);
+		VBox_SurvivorCount->AddChild(sizeBox);
+		UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(sizeBox->Slot);
+		slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	}
 }
 
@@ -102,19 +122,24 @@ void ULobbyUI::AddKillerCountUI(APlayerState* ps)
 
 	UPlayerCountUI* pcUI = CreateWidget<UPlayerCountUI>(GetWorld(), playerCountUIFactory);
 	ALobbyPlayerState* lobbyPlayerState = Cast<ALobbyPlayerState>(ps);
-
+	
 	pcUI->Init(lobbyPlayerState);
 	//만들어진 pcUI를 나만의 Array에 추가하기
 	allKillerState.Add(pcUI);
 	// allPlayerState를 PlayerID 기준으로 정렬
 	//allPlayerState.Sort(FPlayerCountUISort());
-
+	
 	for (int32 i = 0; i < allKillerState.Num(); i++)
 	{
 		VBox_KillerCount->AddChild(allKillerState[i]);
 		UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(allKillerState[i]->Slot);
 		slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	}
+
+	USizeBox* sizeBox = NewObject<USizeBox>(this);
+	VBox_KillerCount->AddChild(sizeBox);
+	UVerticalBoxSlot* slot = Cast<UVerticalBoxSlot>(sizeBox->Slot);
+	slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 }
 
 void ULobbyUI::SetMyPlayerState()
@@ -129,4 +154,5 @@ void ULobbyUI::SetMyPlayerState()
 		}
 	}
 }
+
 

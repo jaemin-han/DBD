@@ -61,13 +61,16 @@ void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (not HasAuthority()) return; 
+
+
 	// LobbyGameState 가져오기
 	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (lobbyGameState)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Killer] LobbyGameState"));
 		ACameraActor* killerCamera = nullptr;
-
+	
 		TArray<AActor*> cameraActors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), cameraActors);
 		for (auto cameraActor : cameraActors)
@@ -79,7 +82,7 @@ void AKiller::BeginPlay()
 				break;
 			}
 		}
-
+	
 		if (killerCamera)
 		{
 			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera"));
@@ -155,11 +158,16 @@ void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLif
 void AKiller::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+	//if(not HasAuthority()) return;
+
 
 	// GameState 가져오고
 	ALobbyGameState* gameState = Cast<ALobbyGameState>(GetWorld()->GetGameState());
 	// GameUI 가져와서 PlayerStateUI 하나 만들어주세요
-	gameState->GetLobbyUI()->AddKillerCountUI(NewPlayerState);
+	if (gameState)
+	{
+		gameState->GetLobbyUI()->AddKillerCountUI(NewPlayerState);
+	}
 }
 
 void AKiller::Attack()

@@ -13,17 +13,38 @@ UCLASS()
 class DBD_API ALobbyPlayerState : public APlayerState
 {
 	GENERATED_BODY()
+
+	virtual void BeginPlay() override;
 	
 	ALobbyPlayerState(const FObjectInitializer& ObjectInitializer);
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	FString GetPlayerUniqueName();
 
+	void SetPlayerUniqueName();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetPlayerUniqueName();
+
+
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_GetPlayerUniqueName();
+	void Multi_SetPlayerUniqueName(const FString& name);
+
+
+
+	void OnClickedBtnReady();
+
+	UFUNCTION(Server, Reliable)
+	void Server_OnClickedBtnReady();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_OnClickedBtnReady(class ALobbyGameState* lgs);
+
 public:
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	FString PlayerUniqueName;
 
+	bool bIsSurvivorReady = false;
+	bool bIsAllReady = false;
 };

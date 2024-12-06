@@ -40,7 +40,7 @@ ADBD_Player::ADBD_Player()
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
-
+	if (HasAuthority()) return;
 
 	// GameState가져오기
 	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
@@ -178,12 +178,17 @@ void ADBD_Player::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 
 void ADBD_Player::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
+	//if (not HasAuthority()) return;
+
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 
 	// GameState 가져오고
 	ALobbyGameState* gameState = Cast<ALobbyGameState>(GetWorld()->GetGameState());
 	// GameUI 가져와서 PlayerStateUI 하나 만들어주세요
+	if (gameState)
+	{
 	gameState->GetLobbyUI()->AddSurvivorCountUI(NewPlayerState);
+	}
 }
 
 

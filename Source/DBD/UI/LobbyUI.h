@@ -17,8 +17,14 @@ class DBD_API ULobbyUI : public UUserWidget
 	
 	virtual void NativeConstruct() override;
 
+
+public:
 	UFUNCTION()
 	void OnClickedBtnReady();
+
+	UFUNCTION(Server, Reliable)
+	void Server_OnClickedBtnReady();
+
 
 	UFUNCTION()
 	void OnClickedImagePlayer();
@@ -49,6 +55,7 @@ public:
 	class UImage* Image_Ready;
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Btn_Ready;
+
 
 	UPROPERTY()
 	class ALobbyPlayerState* myPlayerState;
