@@ -44,6 +44,8 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetCameraInPlay(class ACameraActor* cam);
 
+	virtual void PossessedBy(AController* NewController) override;
+
 /** 기본 상속 함수*/
 
 
@@ -302,12 +304,15 @@ private:
 	class AWindows* Window;									// 창문 액터 저장 변수
 
 	// todo: 재민추가 // 생존자 남은 희생 시간, 기본 2분 (120초)
-	UPROPERTY(EditDefaultsOnly, Replicated, Category = "Hanger")
+	UPROPERTY(EditAnywhere, Replicated, Category = "Hanger")
 	float SacrificeTime = TotalSacrificeTime;
 
 	// todo: 재민추가 // Rescue Montage
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* RescueMontage;
+
+	UPROPERTY()
+	class ADBDGameState* GameState;
 
 public:
 	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate

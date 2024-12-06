@@ -8,6 +8,9 @@
 
 class UDBD_Interface_Gimmick;
 
+DECLARE_DELEGATE_OneParam(FOnHangSurvivorDelegate, TScriptInterface<class IDBD_Interface_Gimmick>);
+DECLARE_DELEGATE_OneParam(FOnDestroyPalletDelegate, class APallet*);
+
 UCLASS()
 class DBD_API AKiller : public ADBDCharacter
 {
@@ -126,6 +129,12 @@ public:
 	bool bStunned = false;
 	// 킬러가 공격 중인가요?
 	bool bIsAttacking = false;
+
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	class ADBDGameState* DBDGameState;
+
+	FOnHangSurvivorDelegate OnHangSurvivor;
+	FOnDestroyPalletDelegate OnDestroyPallet;
 
 private:
 	// attack montage

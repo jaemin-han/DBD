@@ -39,6 +39,8 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_SetGaugeUIVisibility(ESlateVisibility visibility);
 
+	UStaticMeshComponent* GetMeshComp() const { return GeneratorMeshComp; }
+
 public:
 	// 발전기 게이지 UI
 	UPROPERTY(EditAnywhere, Category = "UI")

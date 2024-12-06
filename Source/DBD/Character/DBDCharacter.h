@@ -51,6 +51,7 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* ParkourMontage;
 
+	UPROPERTY(VisibleAnywhere, Category = "SurvivorState")
 	int32 SurvivorHp;
 
 

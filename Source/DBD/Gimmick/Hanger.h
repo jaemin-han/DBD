@@ -8,6 +8,7 @@
 #include "Hanger.generated.h"
 
 class ADBD_Player;
+
 UCLASS()
 class DBD_API AHanger : public AActor, public IDBD_Interface_Gimmick
 {
@@ -32,6 +33,8 @@ public:
 	class ADBD_Player* GetHangSurvivor() const { return HangSurvivor; }
 	// set HangSurvivor
 	void SetHangSurvivor(class ADBD_Player* InHangSurvivor);
+
+	UMeshComponent* GetMeshComp() const { return MeshComp; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -59,4 +62,8 @@ private:
 
 private:
 	void Rescue();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_DestroyHangSurvivor();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_DestroyHangSurvivor();
 };

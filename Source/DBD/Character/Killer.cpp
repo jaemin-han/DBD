@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameMode/DBDGameState.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
 #include "Gimmick/Hanger.h"
 #include "Gimmick/Pallet.h"
@@ -196,9 +197,9 @@ void AKiller::MulticastRPC_Attack_Implementation()
 // Called every frame
 void AKiller::Tick(float DeltaTime)
 {
-
 	Super::Tick(DeltaTime);
-	
+
+
 	// InteractionUI 표시
 	if (IsLocallyControlled() && InteractionUI)
 	{
@@ -210,7 +211,6 @@ void AKiller::Tick(float DeltaTime)
 	GetNearSurvivor();
 	GetNearGimmick();
 	Debug();
-
 }
 
 // Called to bind functionality to input
@@ -235,7 +235,7 @@ void AKiller::GetNearSurvivor()
 	// SearchGimmickSphere 와 겹치는 엑터 중, IDBD_Interface_Gimmick 인터페이스를 구현한 엑터를 찾아 NearGimmick 에 할당
 	TArray<AActor*> OverlappingActors;
 	SearchGimmickSphere->GetOverlappingActors(OverlappingActors);
-	
+
 	ADBD_Player* NewNearSurvivor = nullptr;
 	float MinDistance = std::numeric_limits<float>::max();
 
@@ -413,6 +413,14 @@ void AKiller::ServerRPC_CarrySurvivor_Implementation()
 
 void AKiller::MulticastRPC_CarrySurvivor_Implementation()
 {
+	// post process
+	if (IsLocallyControlled())
+	{
+		DBDGameState->SetGeneratorCustomDepth(false);
+		DBDGameState->SetHangerCustomDepth(true);
+	}
+
+
 	NearSurvivor->ChangeSurvivorState(ESurvivorState::Piggyback);
 
 	CarriedSurvivor = NearSurvivor;
@@ -452,6 +460,13 @@ void AKiller::ServerRPC_DropDownSurvivor_Implementation()
 
 void AKiller::MulticastRPC_DropDownSurvivor_Implementation()
 {
+	// post process
+	if (IsLocallyControlled())
+	{
+		DBDGameState->SetGeneratorCustomDepth(true);
+		DBDGameState->SetHangerCustomDepth(false);
+	}
+
 	CarriedSurvivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	// 충돌 판정을 담당하는 capsule component 와 skeletal mesh component 의 충돌을 켬
 	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(CarriedSurvivor->GetRootComponent());
@@ -474,12 +489,11 @@ void AKiller::HangSurvivorOnHook()
 	{
 		return;
 	}
-	// Todo: 에니메이션이 추가된다면, 해당 에니메이션을 실행하고, 에니메이션이 끝나면 아래 코드를 실행하도록 수정
-	AHanger* Hanger = Cast<AHanger>(NearGimmick.GetObject());
-	if (!Hanger)
+
+	if (NearGimmick->GetGimmickName() != TEXT("Hanger"))
 		return;
 
-	if (CarriedSurvivor && Hanger)
+	if (CarriedSurvivor)
 	{
 		MulticastRPC_HangSurvivorOnHook();
 	}
@@ -488,9 +502,18 @@ void AKiller::HangSurvivorOnHook()
 void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()
 {
 	HangSurvivorOnHook();
+	DisableInput(Cast<APlayerController>(GetController()));
 }
 
 void AKiller::MulticastRPC_HangSurvivorOnHook_Implementation()
 {
+	// post process
+	if (IsLocallyControlled())
+	{
+		DBDGameState->SetHangerCustomDepth(false);
+		DBDGameState->SetGeneratorCustomDepth(true);
+	}
+
+	OnHangSurvivor.ExecuteIfBound(NearGimmick);
 	PlayAnimMontage(KillerMontage, 1.0f, FName("HangSurvivorOnHook"));
 }
