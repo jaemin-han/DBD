@@ -21,9 +21,14 @@ protected:
 	class AKiller* Killer;
 	UPROPERTY(VisibleAnywhere, Category = "Gimmick")
 	class AHanger* Hanger;
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Gimmick")
+	class APallet* Pallet;
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	UFUNCTION()
 	void AnimNotify_HangOnHook();
-	
+	UFUNCTION()
+	void AnimNotify_DestroyPallet();
 };

@@ -7,6 +7,8 @@
 #include "Character/Killer.h"
 #include "Components/ArrowComponent.h"
 #include "Gimmick/Hanger.h"
+#include "Gimmick/Pallet.h"
+#include "Net/UnrealNetwork.h"
 
 void UAI_Killer::NativeInitializeAnimation()
 {
@@ -18,7 +20,21 @@ void UAI_Killer::NativeInitializeAnimation()
 		{
 			Hanger = Cast<AHanger>(Gimmick.GetObject());
 		});
+		Killer->OnDestroyPallet.BindLambda([this](APallet* Gimmick)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAI_Killer::NativeInitializeAnimation - OnDestroyPallet"));
+			//  debug Gimmick
+			UE_LOG(LogTemp, Warning, TEXT("Gimmick : %s"), *Gimmick->GetName());
+			Pallet = Gimmick;
+		});
 	}
+}
+
+void UAI_Killer::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UAI_Killer, Pallet);
 }
 
 void UAI_Killer::AnimNotify_HangOnHook()
@@ -40,4 +56,14 @@ void UAI_Killer::AnimNotify_HangOnHook()
 
 	// EnableInput
 	Killer->EnableInput(Cast<APlayerController>(Killer->GetController()));
+}
+
+void UAI_Killer::AnimNotify_DestroyPallet()
+{
+	if (Killer == nullptr)
+		return;
+	UE_LOG(LogTemp, Warning, TEXT("UAI_Killer::AnimNotify_DestroyPallet"));
+	if (Pallet == nullptr)
+		return;
+	Pallet->DestroyPallet();
 }

@@ -9,6 +9,7 @@
 class UDBD_Interface_Gimmick;
 
 DECLARE_DELEGATE_OneParam(FOnHangSurvivorDelegate, TScriptInterface<class IDBD_Interface_Gimmick>);
+DECLARE_DELEGATE_OneParam(FOnDestroyPalletDelegate, class APallet*);
 
 UCLASS()
 class DBD_API AKiller : public ADBDCharacter
@@ -133,6 +134,7 @@ public:
 	class ADBDGameState* DBDGameState;
 
 	FOnHangSurvivorDelegate OnHangSurvivor;
+	FOnDestroyPalletDelegate OnDestroyPallet;
 
 private:
 	// attack montage

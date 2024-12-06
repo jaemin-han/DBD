@@ -4,6 +4,7 @@
 #include "Gimmick/Pallet.h"
 
 #include "Character/Killer.h"
+#include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -18,20 +19,34 @@ APallet::APallet()
 
 	// wall comp
 	WallComp = CreateDefaultSubobject<UBoxComponent>(TEXT("WallComp"));
-	WallComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	WallComp->SetCollisionObjectType(ECC_WorldStatic);
-	WallComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WallComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	WallComp->SetCollisionProfileName(FName("Search"));
+	WallComp->SetBoxExtent(FVector(50, 90, 96));
 	SetRootComponent(WallComp);
 
+	// PalletMeshComp
 	PalletMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PalletMeshComp"));
+	PalletMeshComp->SetCollisionProfileName(FName("Gimmick"));
+	PalletMeshComp->SetRelativeLocation(FVector(0, -100, -90));
+	PalletMeshComp->SetRelativeScale3D(FVector(1.2));
 	PalletMeshComp->SetupAttachment(RootComponent);
 
 	// Front, Back Indicator
 	FrontIndicator = CreateDefaultSubobject<USphereComponent>(TEXT("FrontIndicator"));
+	FrontIndicator->SetCollisionProfileName(FName("NoCollision"));
+	FrontIndicator->SetRelativeLocation(FVector(100, 7, -2));
 	FrontIndicator->SetupAttachment(RootComponent);
+	
 	BackIndicator = CreateDefaultSubobject<USphereComponent>(TEXT("BackIndicator"));
+	BackIndicator->SetCollisionProfileName(FName("NoCollision"));
+	BackIndicator->SetRelativeLocation(FVector(-100, 7, -2));
 	BackIndicator->SetupAttachment(RootComponent);
+
+	// ArrowComp
+	ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+	ArrowComp->SetRelativeLocation(FVector(0, 7, -5));
+	ArrowComp->SetupAttachment(RootComponent);
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -55,9 +70,9 @@ void APallet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLif
 void APallet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	// debug
-	// DebugOwner();
+	DebugOwner();
 
 	if (bIsFallen)
 		return;
@@ -85,7 +100,7 @@ void APallet::Interaction(APawn* Caller)
 	// 상호작용 중이 아니고, 판자가 서 있으면 판자 내리기 수행
 	if (bIsInteracted == false && bIsFallen == false && not Cast<AKiller>(Caller))
 	{
-		ServerRPC_PalletFall();
+ 		ServerRPC_PalletFall();
 		return;
 	}
 	// 상호작용 중이 아니고, 판자가 넘어져 있고, 상호작용하는 엑터가 킬러라면 판자를 부셔요
@@ -93,6 +108,7 @@ void APallet::Interaction(APawn* Caller)
 	{
 		if (AKiller* Killer = Cast<AKiller>(Caller))
 		{
+			Killer->OnDestroyPallet.ExecuteIfBound(this);
 			Killer->DestroyPallet();
 		}
 		else
@@ -128,6 +144,9 @@ void APallet::PalletFall()
 
 	for (AActor* Actor : OverlappingActors)
 	{
+		// 본인은 무시해야겠죠
+		if (Actor == this)
+			continue;
 		float FrontDistance = FVector::Dist(FrontIndicator->GetComponentLocation(), Actor->GetActorLocation());
 		float BackDistance = FVector::Dist(BackIndicator->GetComponentLocation(), Actor->GetActorLocation());
 
@@ -157,6 +176,12 @@ void APallet::DebugOwner()
 	// debug owner
 	DrawDebugString(GetWorld(), GetActorLocation(), GetOwner() ? GetOwner()->GetName() : TEXT("None"), nullptr, FColor::Red, 0.0f, true);
 }
+
+void APallet::DestroyPallet_Implementation()
+{
+	Destroy();
+}
+
 
 void APallet::MulticastRPC_PalletFall_Implementation(AActor* Actor, FVector Position)
 {

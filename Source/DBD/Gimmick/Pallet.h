@@ -22,6 +22,8 @@ class DBD_API APallet : public AActor, public IDBD_Interface_Gimmick
 	class USphereComponent* FrontIndicator;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	class USphereComponent* BackIndicator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	class UArrowComponent* ArrowComp;
 
 	// 판자가 내려간 후, 플레이어가 판자를 넘어갈 수 없게 보이지 않는 벽을 생성한다
 	// 판자를 내린 후에 물리적 충돌이 활성화되고, 플레이어가 판자를 넘어갈 수 없게 된다.
@@ -75,6 +77,7 @@ public:
 	void DebugOwner();
 
 
-	UFUNCTION(BlueprintImplementableEvent)
+	// todo: chaos destruction
+	UFUNCTION(BlueprintNativeEvent)
 	void DestroyPallet();
 };
