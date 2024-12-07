@@ -43,6 +43,38 @@ ADBD_Player::ADBD_Player()
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (playGameState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::BeginPlay() GameState"));
+		GameState = GetWorld()->GetGameState<ADBDGameState>();
+
+		UE_LOG(LogTemp, Error, TEXT("[Player] PlayGameState"));
+		
+		Health = MaxHealth;
+		SurvivorHp = Health;
+		SurvivorState = ESurvivorState::Hp3;
+
+		if (MainUIClass)
+		{
+			MainUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), MainUIClass));
+			if (MainUI)
+			{
+				MainUI->AddToViewport();
+				UE_LOG(LogTemp, Log, TEXT("MainUI Create Success"));
+
+				MainUI->SetVisibility(ESlateVisibility::Hidden);
+			}
+		}
+
+		ACameraActor* camera = Cast<ACameraActor>(GetFollowCamera());
+
+		Multi_SetCameraInPlay(camera);
+	}
+
+	// todo: lobby 에서 사용되는 부분
+	
 	if (HasAuthority()) return;
 
 	// GameState가져오기
@@ -76,41 +108,6 @@ void ADBD_Player::BeginPlay()
 			UE_LOG(LogTemp, Error, TEXT("[Player] SurvivorCamera is nullptr"));
 		}
 	} 
-
-	//
-	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
-	if (playGameState)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::BeginPlay() GameState"));
-		GameState = GetWorld()->GetGameState<ADBDGameState>();
-
-		UE_LOG(LogTemp, Error, TEXT("[Player] PlayGameState"));
-		
-		Health = MaxHealth;
-		SurvivorHp = Health;
-		SurvivorState = ESurvivorState::Hp3;
-
-		if (MainUIClass)
-		{
-			MainUI = Cast<UInteractionUI>(CreateWidget(GetWorld(), MainUIClass));
-			if (MainUI)
-			{
-				MainUI->AddToViewport();
-				UE_LOG(LogTemp, Log, TEXT("MainUI Create Success"));
-
-				MainUI->SetVisibility(ESlateVisibility::Hidden);
-			}
-		}
-
-		ACameraActor* camera = Cast<ACameraActor>(GetFollowCamera());
-
-		Multi_SetCameraInPlay(camera);
-	}
-	
-	// Interation 함수를 0.2초마다 호출
-	//FTimerHandle interactionTimer;
-	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
-
 
 }
 
@@ -993,6 +990,16 @@ void ADBD_Player::ServerRPC_UpdateHP_Implementation(int32 Damage)
 
 void ADBD_Player::MulticastRPC_UpdateHP_Implementation(int32 Value)
 {
+	// debug: server client
+	FString DeBugString = HasAuthority() ? TEXT("Server") : TEXT("Client");
+	UE_LOG(LogTemp, Warning, TEXT("[%s] UpdateHP : %d"), *DeBugString, Value);
+	if (HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Server UpdateHP"));
+		// debug Health
+	}
+		UE_LOG(LogTemp, Warning, TEXT("Health : %d"), Health);
+	
 	// Value : Damage or Heal
 	Health -= Value;
 	
