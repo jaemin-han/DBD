@@ -105,8 +105,17 @@ void ALobbyPlayerState::Multi_OnClickedBtnReady_Implementation(ALobbyGameState* 
 	{
 		if (p->LobbyPlayerState == this)
 		{
-			p->Image_Check->SetColorAndOpacity(FLinearColor::Red);
-			p->LobbyPlayerState->bIsSurvivorReady = true;
+			p->LobbyPlayerState->bIsSurvivorReady = !p->LobbyPlayerState->bIsSurvivorReady;
+
+			if (p->LobbyPlayerState->bIsSurvivorReady)
+			{
+				p->Image_Check->SetColorAndOpacity(FLinearColor::Red);
+			}
+			else
+			{
+				p->Image_Check->SetColorAndOpacity(FLinearColor::White);
+			}
+
 			break;
 		}
 	}

@@ -193,7 +193,11 @@ void ADBD_Player::PossessedBy(AController* NewController)
 		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::PossessedBy() GameState"));
 		GameState = GetWorld()->GetGameState<ADBDGameState>();
 	}
+
+	if (GameState)
+	{
 	GameState->SetSurvivorCount(GameState->GetSurvivorCount() + 1);
+	}
 }
 
 void ADBD_Player::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)

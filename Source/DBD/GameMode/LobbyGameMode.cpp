@@ -5,6 +5,8 @@
 
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
+#include "Kismet/GameplayStatics.h"
+
 
 #include "DBDGameInstance.h"
 #include "Character/DBD_Player.h"
@@ -13,6 +15,14 @@
 void ALobbyGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	index = 1;
+}
+
+void ALobbyGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	PlayerCount = 0;
+	index = 1;
 }
 
 void ALobbyGameMode::Tick(float DeltaSeconds)
@@ -25,16 +35,13 @@ void ALobbyGameMode::Tick(float DeltaSeconds)
 
 APawn* ALobbyGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
 {
-	//Super::SpawnDefaultPawnFor_Implementation(NewPlayer, StartSpot);
-
-
 	PlayerCount++;
 	UE_LOG(LogTemp, Warning, TEXT("PlayerCount : %d"), PlayerCount);
 	UE_LOG(LogTemp, Warning, TEXT("SpawnDefaultPawnFor_Implementation"));
 
-	StartSpot = ChoosePlayerStart(NewPlayer);
-	//UE_LOG(LogTemp, Warning, TEXT("startSpot pos X : %.2f, Y : %.2f, Z : %.2f"), StartSpot->GetActorLocation().X, StartSpot->GetActorLocation().Y, StartSpot->GetActorLocation().Z);
-	//UE_LOG(LogTemp, Warning, TEXT("startSpot rot roll : %.2f, pitch : %.2f, yaw : %.2f"), StartSpot->GetActorRotation().Roll, StartSpot->GetActorRotation().Pitch, StartSpot->GetActorRotation().Yaw);
+	//StartSpot = ChoosePlayerStart(NewPlayer);
+	UE_LOG(LogTemp, Warning, TEXT("StartSpot Label : %s"), *StartSpot->GetActorLabel());
+
 	if (NewPlayer->IsLocalController())
 	{
 		return GetWorld()->SpawnActor<AKiller>(KillerClass, 
@@ -49,58 +56,32 @@ APawn* ALobbyGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer
 	}
 }
 
-AActor* ALobbyGameMode::ChoosePlayerStart(AController* Player)
+AActor* ALobbyGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
-	static int32 num = 1;
-	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
-	{
-		APlayerStart* playerStart = *It;
-		FString tag = "Survivor" + FString::FromInt(num);
+	TArray<AActor*> foundPlayerStarts;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), foundPlayerStarts);
 
-		if (playerStart->PlayerStartTag == "Killer")
+	for (AActor* playerStart : foundPlayerStarts)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerStart Label : %s"), *playerStart->GetActorLabel());
+		UE_LOG(LogTemp, Warning, TEXT("index : %d"), index);
+		if (Player->IsLocalController())
 		{
-			if (Player->IsLocalController())
+			if (playerStart->GetActorLabel().Contains(TEXT("PlayerStart_Killer")))
 			{
 				return playerStart;
 			}
-			else continue;
 		}
-		else if (playerStart->PlayerStartTag == tag)
+		else
 		{
-			if (Player->IsLocalController())
+			FString tag = "PlayerStart_Survivor" + FString::FromInt(index);
+			if (playerStart->GetActorLabel().Contains(tag))
 			{
-				continue;
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("playerStart[%s] pos X : %.2f, Y : %.2f, Z : %.2f"), *tag, playerStart ->GetActorLocation().X, playerStart->GetActorLocation().Y, playerStart->GetActorLocation().Z);
-				UE_LOG(LogTemp, Warning, TEXT("playerStart[%s] rot roll : %.2f, pitch : %.2f, yaw : %.2f"), *tag, playerStart->GetActorRotation().Roll, playerStart->GetActorRotation().Pitch, playerStart->GetActorRotation().Yaw);
-				num++;
+				index++;
 				return playerStart;
 			}
 		}
-		
-		//if(Player->IsLocalController())
-		//{
-		//	if (playerStart->PlayerStartTag == "Killer")
-		//	{
-		//		return playerStart;
-		//	}
-		//}
-		//else //if (!Player->IsLocalController())
-		//{
-		//	UE_LOG(LogTemp, Warning, TEXT("Local ChoosePlayerStart"));
-		//	FString tag = "Survivor" + FString::FromInt(num);
-		//	if (playerStart->PlayerStartTag == tag)
-		//	{
-		//		UE_LOG(LogTemp, Warning, TEXT("playerStart[%s] pos X : %.2f, Y : %.2f, Z : %.2f"), *tag, playerStart-//>GetActorLocation().X, playerStart->GetActorLocation().Y, playerStart->GetActorLocation().Z);
-		//		UE_LOG(LogTemp, Warning, TEXT("playerStart[%s] rot roll : %.2f, pitch : %.2f, yaw : %.2f"), *tag, //playerStart->GetActorRotation().Roll, playerStart->GetActorRotation().Pitch, playerStart-/>GetActorRotation/().Yaw);
-		//		num++;
-		//		return playerStart;
-		//	}
-		//	//return Super::ChoosePlayerStart(Player);
-		//}
 	}
 	
-	return Super::ChoosePlayerStart(Player);
+	return Super::ChoosePlayerStart_Implementation(Player);
 }

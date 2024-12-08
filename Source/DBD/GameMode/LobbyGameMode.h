@@ -17,19 +17,22 @@ class DBD_API ALobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 
 	virtual void Tick(float DeltaSeconds) override;
 	
 	virtual APawn* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot) override;
-	virtual AActor* ChoosePlayerStart(AController* Player);
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player);
 
 
 private:
 	int32 PlayerCount;
-
+	
 	UPROPERTY(EditAnywhere, Category = "PlayerClass")
 	TSubclassOf<class ADBDCharacter> KillerClass;
 	UPROPERTY(EditAnywhere, Category = "PlayerClass")
 	TSubclassOf<class ADBD_Player> SurvivorClass;
+
+	int32 index;
 };
