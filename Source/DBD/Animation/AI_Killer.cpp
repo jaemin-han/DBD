@@ -69,6 +69,22 @@ void UAI_Killer::AnimNotify_DestroyPallet()
 	Pallet->DestroyPallet();
 }
 
+void UAI_Killer::AnimNotify_DestroyPalletSound()
+{
+	if (Killer)
+	{
+		// 일시적으로 Killer->FootStepAttenuation 의 max distance 를 1500 으로 설정
+		// 기존 값 저장
+		float OriginalMaxDistance = Killer->FootStepAttenuation->Attenuation.FalloffDistance;
+		Killer->FootStepAttenuation->Attenuation.FalloffDistance = 1500;
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->DestroyPalletSound, Killer->GetActorLocation(), 1, 1, 0,
+		                                      Killer->FootStepAttenuation);
+
+		// 기존 값 복구
+		Killer->FootStepAttenuation->Attenuation.FalloffDistance = OriginalMaxDistance;
+	}
+}
+
 void UAI_Killer::AnimNotify_OnFootStep()
 {
 	if (Killer)
@@ -97,5 +113,15 @@ void UAI_Killer::AnimNotify_AttackSound()
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->AttackSound, Killer->GetActorLocation(), 1,
 		                                      1, 0, Killer->FootStepAttenuation);
+	}
+}
+
+void UAI_Killer::AnimNotify_StunSound()
+{
+	if (Killer)
+	{
+		int32 RandomIndex = FMath::RandRange(0, Killer->StunSound.Num() - 1);
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->StunSound[RandomIndex], Killer->GetActorLocation(),
+		                                      1, 1, 0, Killer->FootStepAttenuation);
 	}
 }

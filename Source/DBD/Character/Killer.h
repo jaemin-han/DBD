@@ -142,6 +142,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	class USoundBase* AttackSound;
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* DestroyPalletSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	TArray<class USoundBase*> StunSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	class USoundAttenuation* FootStepAttenuation;
 
 private:
