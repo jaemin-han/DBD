@@ -120,7 +120,7 @@ void ADBD_Player::BeginPlay()
 		{
 			UE_LOG(LogTemp, Error, TEXT("[Player] SurvivorCamera"));
 			FTimerHandle timerhandle;
-			GetWorld()->GetTimerManager().SetTimer(timerhandle, this, &ADBD_Player::Multi_SetCameraInLobby, 0.01f,false);
+			GetWorld()->GetTimerManager().SetTimer(timerhandle, this, &ADBD_Player::Multi_SetCameraInLobby, 0.05f,false);
 		}
 		else
 		{
