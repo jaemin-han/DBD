@@ -33,6 +33,9 @@ public:
 	virtual void FailedInteraction() override;
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
+
+	UStaticMeshComponent* GetMeshComp() const { return WindowFrameMeshComp; }
+
 private:
 	FString Name = TEXT("Windows");
 	FString InteractKey = TEXT("Space");

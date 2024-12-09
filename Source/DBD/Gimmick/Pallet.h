@@ -53,6 +53,8 @@ public:
 	FORCEINLINE virtual FString GetGimmickName() override;
 	FORCEINLINE virtual FString GetInteractKey() override;
 
+	UStaticMeshComponent* GetMeshComp() const { return PalletMeshComp; }
+
 
 	// board 가 이미 넘어진 상태인가
 	UPROPERTY(Replicated, VisibleAnywhere)

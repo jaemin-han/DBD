@@ -7,6 +7,9 @@
 #include "DBD_Interface_Gimmick.h"
 #include "Generator.generated.h"
 
+DECLARE_DELEGATE(FOnGenerateFail);
+
+
 // 발전기 액터 클래스 -> 생존자의 발전기 애니메이션 상호작용
 UCLASS()
 class DBD_API AGenerator : public AActor, public IDBD_Interface_Gimmick
@@ -49,8 +52,12 @@ public:
 	UPROPERTY()
 	class UGaugeUI* GaugeUI;
 
+	//UPROPERTY()
+	FOnGenerateFail OnGenerateFail;
 	
-
+	UPROPERTY(EditAnywhere)
+	class UAudioComponent* GeneratorSoundComp;
+	float GeneratorSoundTimer = 0.0f;
 	// 발전기 활성화가 됬는지 판단 여부 변수
 	UPROPERTY(EditAnywhere, Category = "Generator")
 	bool IsActivated = false;
@@ -91,7 +98,7 @@ private:
 public:
 	void CheckRoundGauge(float frame);										// 라운드 게이지 활성화 여부 판단 함수
 	UFUNCTION(Client, Reliable)
-	void Client_VisibleRoundGauge(bool IsVisible);							// 라운드 게이지 활성화 여부 판단 함수 클라이언트 함수
+	void Client_VisibleRoundGauge(float time, bool IsVisible);							// 라운드 게이지 활성화 여부 판단 함수 클라이언트 함수
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetRoundGaugePercent(bool IsVisible, float per);				// 라운드 게이지 퍼센트 설정 함수
 

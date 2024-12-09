@@ -107,6 +107,7 @@ void ADBDCharacter::SetBezierPoint()
 		// 서버에게 요청을 보낸 캐릭터가 NearGimmick이 window인지 체크해서 맞다면 모든 클라이언트한테 요청
 		if (AWindows* window = Cast<AWindows>(NearGimmick.GetObject()))
 		{
+			PP_Window = window;
 			FVector loc = GetActorLocation();
 			FVector up = GetActorUpVector();
 			FVector forward = GetActorForwardVector();
@@ -116,6 +117,7 @@ void ADBDCharacter::SetBezierPoint()
 		
 		if (APallet* pallet = Cast<APallet>(NearGimmick.GetObject()))
 		{
+			PP_Pallet = pallet;
 			FVector loc = GetActorLocation();
 			FVector up = GetActorUpVector();
 			FVector forward = GetActorForwardVector();
@@ -264,16 +266,26 @@ void ADBDCharacter::ParkourFunc()
 	if (IsAttacking()) return;
 	if (SurvivorHp == 1 or SurvivorHp > 3) return;
 
-
 	UE_LOG(LogTemp, Log, TEXT("[%s] SurvivorHp : %d"), *GetName(), SurvivorHp);
+	
 
 	if (bIsFindWindows)
 	{
 		UE_LOG(LogTemp, Log, TEXT("[%s] ParkourFunc Gimmick[%s]"), *GetName(), *NearGimmick->GetGimmickName());
 		UE_LOG(LogTemp, Log, TEXT("[%s] bIsFindPallet : %d"), *GetName(), bIsFindPallet);
+		//AWindows* window = Cast<AWindows>(NearGimmick.GetObject());
+		//window->GetMeshComp()->SetRenderCustomDepth(true);
 
 		// 베지에 곡선 좌표 설정하라고 서버에서 전달해주기
 		Server_ReportBezierPoints();
+
+		PP_Window->GetMeshComp()->SetRenderCustomDepth(true);
+
+		FTimerHandle timeWindowHandle;
+		GetWorld()->GetTimerManager().SetTimer(timeWindowHandle, [this](){
+			PP_Window->GetMeshComp()->SetRenderCustomDepth(false);
+		}, 
+		2.0f, false);
 
 
 		// 모든 
@@ -291,6 +303,14 @@ void ADBDCharacter::ParkourFunc()
 
 		// 베지에 곡선 좌표 설정하라고 서버에서 전달해주기
 		Server_ReportBezierPoints();
+
+		PP_Pallet->GetMeshComp()->SetRenderCustomDepth(true);
+		FTimerHandle timerPalletHandle;
+		GetWorld()->GetTimerManager().SetTimer(timerPalletHandle, [this]() {
+			PP_Pallet->GetMeshComp()->SetRenderCustomDepth(false);
+			},
+			2.0f, false);
+
 
 		bIsParkour = true;
 		bIsPushKey = true;
@@ -311,7 +331,7 @@ void ADBDCharacter::Multicast_ParkourFunc_Implementation()
 	{
 		PlayAnimMontage(ParkourMontage, ParkourSpeed, TEXT("Parkour"));
 	}
-
+	
 	GetCharacterMovement()->DisableMovement();
 }
 

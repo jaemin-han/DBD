@@ -114,6 +114,9 @@ public:
 	void MulticastRPC_HangSurvivorOnHook();
 	
 
+	// 생존자가 발전기 실패할 때 델리게이트로 호출될 함수
+	void GeneratorFail();
+
 public:
 	// 특정 거리 내에 있는 Gimmick을 가져오는 함수
 	// TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
@@ -145,4 +148,8 @@ private:
 	TSubclassOf<class UInteractionUI> InteractionUIClass; // 이후 플레이 UI가 추가된다면 InteractionUI 클래스로 변경
 	UPROPERTY()
 	class UInteractionUI* InteractionUI;
+
+	// 폭발 사운드 추가
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* ExplosionSound;
 };

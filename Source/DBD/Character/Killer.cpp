@@ -19,6 +19,8 @@
 #include "Camera/CameraActor.h"
 
 #include "UI/LobbyUI.h"
+#include "Gimmick/Generator.h"
+#include "Gimmick/Windows.h"
 
 // Sets default values
 AKiller::AKiller()
@@ -52,6 +54,13 @@ AKiller::AKiller()
 	SearchGimmickSphere->SetSphereRadius(100.0f);
 
 	SetActorScale3D(FVector(1.2f));
+
+
+	ConstructorHelpers::FObjectFinder<USoundBase> explosionSound(TEXT("/Script/Engine.SoundWave'/Game/DBD/Sound/ExplosionSound.ExplosionSound'"));
+	if (explosionSound.Succeeded())
+	{
+		ExplosionSound = explosionSound.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -101,6 +110,17 @@ void AKiller::BeginPlay()
 			{
 				DBDGameState->InitArrays();
 				DBDGameState->SetGeneratorCustomDepth(true);
+			}
+		}
+
+		TArray<AActor*> Actors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGenerator::StaticClass(), Actors);
+		for (auto generatorActor : Actors)
+		{
+			AGenerator* generator = Cast<AGenerator>(generatorActor);
+			if (generator)
+			{
+				generator->OnGenerateFail.BindUObject(this, &AKiller::GeneratorFail);
 			}
 		}
 
@@ -503,6 +523,12 @@ void AKiller::HangSurvivorOnHook()
 	{
 		MulticastRPC_HangSurvivorOnHook();
 	}
+}
+
+void AKiller::GeneratorFail()
+{
+	UE_LOG(LogTemp, Error, TEXT("The survivor Failed to interact with the Generator"));
+	UGameplayStatics::PlaySound2D(GetWorld(), ExplosionSound);
 }
 
 void AKiller::ServerRPC_HangSurvivorOnHook_Implementation()

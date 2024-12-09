@@ -11,6 +11,7 @@
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
+#include "Components/Slider.h"
 
 #include "PlayerCountUI.h"
 #include "GameMode/LobbyPlayerState.h"
@@ -31,6 +32,7 @@ void ULobbyUI::NativeConstruct()
 	Super::NativeConstruct();
 	UE_LOG(LogTemp, Log, TEXT("NativeConstruct called"));
 
+	LobbyPlayerState = Cast<ALobbyPlayerState>(GetWorld()->GetGameState());
 
 
 
@@ -38,6 +40,19 @@ void ULobbyUI::NativeConstruct()
 
 	// Btn_Ready이 눌렸을때 호출되는 함수
 	Btn_Ready->OnClicked.AddDynamic(this, &ULobbyUI::Server_OnClickedBtnReady);
+
+	// Image_Player_Color이 눌렸을때 호출되는 함수
+	Image_Player_Color->OnMouseButtonDownEvent.BindUFunction(this, "OnCLickedImagePlayerColor");
+
+	//Slider_PColor_R->OnValueChanged.AddDynamic(this, &ULobbyUI::SetPrimaryColor_R);
+	//Slider_PColor_G->OnValueChanged.AddDynamic(this, &ULobbyUI::SetPrimaryColor_G);
+	//Slider_PColor_B->OnValueChanged.AddDynamic(this, &ULobbyUI::SetPrimaryColor_B);
+	//
+	//Slider_SColor_R->OnValueChanged.AddDynamic(this, &ULobbyUI::SetSecondaryColor_R);
+	//Slider_SColor_G->OnValueChanged.AddDynamic(this, &ULobbyUI::SetSecondaryColor_G);
+	//Slider_SColor_B->OnValueChanged.AddDynamic(this, &ULobbyUI::SetSecondaryColor_B);
+
+
 
 	// 나의 PlayerState 찾아오는 Timer 돌리자
 	GetWorld()->GetTimerManager().SetTimer(playerStateHandle, this, &ULobbyUI::SetMyPlayerState, 0.1f, true);
@@ -61,7 +76,7 @@ void ULobbyUI::OnClickedImagePlayer()
 	UE_LOG(LogTemp, Warning, TEXT("[LobbyUI] Image_Player Clicked"));
 
 	bIsClickedImagePlayer = !bIsClickedImagePlayer;
-
+	Canvas_PlayerColor->SetVisibility(ESlateVisibility::Hidden);
 	if (bIsClickedImagePlayer)
 	{
 		Canvas_PlayerCount->SetVisibility(ESlateVisibility::Visible);
@@ -69,6 +84,22 @@ void ULobbyUI::OnClickedImagePlayer()
 	else
 	{
 		Canvas_PlayerCount->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void ULobbyUI::OnCLickedImagePlayerColor()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyUI] Image_Player_Color Clicked"));
+
+	bIsClickedImagePlayerColor = !bIsClickedImagePlayerColor;
+	Canvas_PlayerCount->SetVisibility(ESlateVisibility::Hidden);
+	if (bIsClickedImagePlayerColor)
+	{
+		Canvas_PlayerColor->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		Canvas_PlayerColor->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
@@ -155,4 +186,38 @@ void ULobbyUI::SetMyPlayerState()
 	}
 }
 
+void ULobbyUI::SetPrimaryColor_R(float Value)
+{
+	Slider_PColor_R->SetValue(Value);
+	LobbyPlayerState->SetMeshColor();
+}
 
+void ULobbyUI::SetPrimaryColor_G(float Value)
+{
+	Slider_PColor_G->SetValue(Value);
+	LobbyPlayerState->SetMeshColor();
+}
+
+void ULobbyUI::SetPrimaryColor_B(float Value)
+{
+	Slider_PColor_B->SetValue(Value);
+	LobbyPlayerState->SetMeshColor();
+}
+
+void ULobbyUI::SetSecondaryColor_R(float Value)
+{
+	Slider_SColor_R->SetValue(Value);
+	LobbyPlayerState->SetMeshColor();
+}
+
+void ULobbyUI::SetSecondaryColor_G(float Value)
+{
+	Slider_SColor_G->SetValue(Value);
+	LobbyPlayerState->SetMeshColor();
+}
+
+void ULobbyUI::SetSecondaryColor_B(float Value)
+{
+	Slider_SColor_B->SetValue(Value);
+	LobbyPlayerState->SetMeshColor();
+}

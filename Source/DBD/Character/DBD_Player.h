@@ -8,6 +8,7 @@
 
 DECLARE_DELEGATE_OneParam(FOnSetGimmickAtRescueDelegate, TScriptInterface<class IDBD_Interface_Gimmick>);
 
+
 UENUM(BlueprintType)
 enum class ESurvivorState : uint8
 {

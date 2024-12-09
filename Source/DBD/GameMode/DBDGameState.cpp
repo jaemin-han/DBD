@@ -10,6 +10,8 @@
 #include "GameFramework/PlayerState.h"
 #include "Gimmick/Generator.h"
 #include "Gimmick/Hanger.h"
+#include "Gimmick/Windows.h"
+#include "Gimmick/Pallet.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -58,6 +60,18 @@ void ADBDGameState::SetHangerCustomDepth(bool bIsVisible)
 	{
 		Hanger->GetMeshComp()->SetRenderCustomDepth(bIsVisible);
 	}
+}
+
+void ADBDGameState::SetWindowCustomDepth(class AWindows* window, bool bIsVisible)
+{
+	if (window)
+	{
+		window->GetMeshComp()->SetRenderCustomDepth(bIsVisible);
+	}
+}
+
+void ADBDGameState::SetPalletCustomDepth(bool bIsVisible)
+{
 }
 
 void ADBDGameState::SetCustomDepthSurvivors(ADBD_Player* CurrentPlayer, bool bIsVisible)

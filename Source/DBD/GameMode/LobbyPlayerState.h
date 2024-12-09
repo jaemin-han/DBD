@@ -41,9 +41,16 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_OnClickedBtnReady(class ALobbyGameState* lgs);
 
+
+	void SetMeshColor();
+
+
 public:
 	UPROPERTY(Replicated)
 	FString PlayerUniqueName;
+
+	UPROPERTY()
+	class ALobbyGameState* LobbyGameState;
 
 	bool bIsSurvivorReady = false;
 	bool bIsAllReady = false;

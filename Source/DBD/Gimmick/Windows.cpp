@@ -5,6 +5,9 @@
 
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Character/DBDCharacter.h"
+#include "Character/DBD_Player.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AWindows::AWindows()
@@ -26,7 +29,6 @@ AWindows::AWindows()
 void AWindows::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -54,4 +56,3 @@ FString AWindows::GetInteractKey()
 {
 	return InteractKey;
 }
-

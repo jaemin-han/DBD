@@ -479,6 +479,8 @@ void ADBD_Player::MulticastRPC_NonPushInteractGenerator_Implementation()
 // 판자와 상호작용을 위한 Input 함수 - 판자와 상호작용 On (판자 내리기)
 void ADBD_Player::DropdownPallet()
 {
+	if (SurvivorHp == 1 or SurvivorHp > 3) return;
+
 	if (NearPallet)
 	{
 		NearPallet->Interaction(this);
@@ -564,6 +566,8 @@ void ADBD_Player::MulticastRPC_Rescue_Implementation()
 // 라인트레이스를 활용한 상호작용 함수
 void ADBD_Player::Interaction()
 {
+	if (SurvivorHp == 1 or SurvivorHp > 3) return;
+
 	FVector startPos = GetActorLocation();
 	FVector endPos = startPos + GetActorForwardVector() * 100.0f;
 

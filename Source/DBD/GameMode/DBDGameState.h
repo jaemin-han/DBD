@@ -39,6 +39,14 @@ public:
 	TArray<class AHanger*> Hangers;
 	void SetHangerCustomDepth(bool bIsVisible);
 
+	UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<class AWindows*> Windows;
+	void SetWindowCustomDepth(class AWindows* window, bool bIsVisible);
+
+	UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<class APallet*> Pallets;
+	void SetPalletCustomDepth(bool bIsVisible);
+
 	// 다른 생존자의 윤곽 조정
 	void SetCustomDepthSurvivors(ADBD_Player* CurrentPlayer, bool bIsVisible);
 	// 이 생존자가 다른 컴퓨터에서 윤곽 조정

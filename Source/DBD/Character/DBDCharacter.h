@@ -72,6 +72,8 @@ protected:
 	UPROPERTY()
 	float ParkourSpeed = 1.0f;
 
+
+
 	void ParkourFunc();
 	UFUNCTION(Server, Reliable)
 	void Server_ParkourFunc();
@@ -119,6 +121,12 @@ public:
 
 	UPROPERTY(Replicated)
 	TScriptInterface<class IDBD_Interface_Gimmick> NearGimmick;
+
+	UPROPERTY()
+	class AWindows* PP_Window;
+
+	UPROPERTY()
+	class APallet* PP_Pallet;
 
 protected:
 	/** Follow camera */

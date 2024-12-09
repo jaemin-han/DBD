@@ -9,10 +9,20 @@
 #include "Net/UnrealNetwork.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
+#include "Components/Slider.h"
+
+#include "Character/DBD_Player.h"
+#include "Character/Killer.h"
+#include "Materials/MaterialInterface.h"
+
 
 void ALobbyPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
+
+	LobbyGameState = Cast<ALobbyGameState>(GetWorld()->GetGameState());
+
+
 }
 
 ALobbyPlayerState::ALobbyPlayerState(const FObjectInitializer& ObjectInitializer)
@@ -58,6 +68,30 @@ void ALobbyPlayerState::OnClickedBtnReady()
 	{
 		Multi_OnClickedBtnReady(lobbyGameState);
 	}
+}
+
+void ALobbyPlayerState::SetMeshColor()
+{
+	ULobbyUI* LobbyUI = Cast<ULobbyUI>(LobbyGameState->LobbyUI);
+	ADBD_Player* player = Cast<ADBD_Player>(GetOwner());
+
+
+	FVector PrimaryColor = FVector(LobbyUI->Slider_PColor_R->GetValue(), LobbyUI->Slider_PColor_G->GetValue(), LobbyUI->Slider_PColor_B->GetValue());
+	UMaterialInterface* Material0 = player->GetMesh()->GetMaterial(0);
+	UMaterialInstanceDynamic* DynamicPrimaryMaterial = UMaterialInstanceDynamic::Create(Material0, player);
+
+	DynamicPrimaryMaterial->SetVectorParameterValue(TEXT("Tint"), PrimaryColor);
+	player->GetMesh()->SetMaterial(0, DynamicPrimaryMaterial);
+
+
+
+
+	FVector SecondaryColor = FVector(LobbyUI->Slider_SColor_R->GetValue(), LobbyUI->Slider_SColor_G->GetValue(), LobbyUI->Slider_SColor_B->GetValue());
+	UMaterialInterface* Material1 = player->GetMesh()->GetMaterial(1);
+	UMaterialInstanceDynamic* DynamicSecondaryMaterial = UMaterialInstanceDynamic::Create(Material1, player);
+
+	DynamicSecondaryMaterial->SetVectorParameterValue(TEXT("Tint"), SecondaryColor);
+	player->GetMesh()->SetMaterial(1, DynamicSecondaryMaterial);
 }
 
 

@@ -12,6 +12,9 @@
 #include "UI/GaugeUI.h"
 #include "UI/RoundGaugeUI.h"
 #include "UI/SkillCheckZoneUI.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundWave.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values
@@ -26,6 +29,9 @@ AGenerator::AGenerator()
 	{
 		GeneratorMeshComp->SetStaticMesh(generatorMeshCompAsset.Object);
 	}
+
+	GeneratorSoundComp = CreateDefaultSubobject<UAudioComponent>(TEXT("GeneratorSoundComp"));
+	GeneratorSoundComp->SetVolumeMultiplier(0.0f);
 }
 
 // Called when the game starts or when spawned
@@ -86,6 +92,7 @@ void AGenerator::Interaction(APawn* Caller)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Generator Interaction Caller is nullptr"));
 	}
+	
 
 	UpdateGauge(GetWorld()->GetDeltaSeconds());
 
@@ -102,6 +109,9 @@ void AGenerator::FailedInteraction()
 	ClientRPC_SetGaugeUIVisibility(ESlateVisibility::Hidden);
 	IsCheckRoundGauge = false;
 	RoundPercent = 0.0f;
+	GeneratorSoundComp->SetVolumeMultiplier(0.0f);
+	GeneratorSoundComp->Stop();
+	GeneratorSoundTimer = 0.0f;
 	SetOwner(nullptr);
 }
 
@@ -132,7 +142,7 @@ void AGenerator::UpdateGauge(float time)
 	// 초당 0.01씩 증가하게 만들기 위해서
 	 Percent += time * 0.011f;		// 실제 적용
 	//Percent += time * 0.5f;			// 테스트용
-
+	 
 	// RoundGaugeUI 계속 업데이트
 	if (not IsCheckRoundGauge)
 	{
@@ -149,7 +159,7 @@ void AGenerator::UpdateGauge(float time)
 		RoundPercent += GetWorld()->GetDeltaSeconds() * 0.5f;
 	}
 
-	Client_VisibleRoundGauge(IsCheckRoundGauge);
+	Client_VisibleRoundGauge(time, IsCheckRoundGauge);
 	Multi_SetRoundGaugePercent(IsCheckRoundGauge, RoundPercent);
 
 	MultiRPC_SetGaugeUIPercent(Percent);
@@ -220,8 +230,18 @@ void AGenerator::Multi_SetSkillCheckZone_Implementation(float ran, FWidgetTransf
 	GaugeUI->SkillCheckZone->SetRenderTransform(newTrans);
 }
 
-void AGenerator::Client_VisibleRoundGauge_Implementation(bool IsVisible)
+void AGenerator::Client_VisibleRoundGauge_Implementation(float time, bool IsVisible)
 {
+	GeneratorSoundTimer -= time;
+	if (GeneratorSoundTimer <= 0.0f)
+	{
+		GeneratorSoundTimer = 0.5f;
+		GeneratorSoundComp->SetVolumeMultiplier(1.0f);
+		//GeneratorSoundComp->Stop();
+		GeneratorSoundComp->Play();
+		GeneratorSoundTimer = 7.0f;
+	}
+
 	if (IsVisible)
 	{
 		GaugeUI->RoundGauge->SetVisibility(ESlateVisibility::Visible);
@@ -276,6 +296,13 @@ bool AGenerator::IsSuccessedSkillCheck()
 			Percent = 0;
 		}
 		else Percent -= 0.02f;
+
+		// 델리게이트 호출
+		if (OnGenerateFail.IsBound())
+		{
+			OnGenerateFail.Execute();
+		}
+
 		return true;
 	}
 	else return false;
