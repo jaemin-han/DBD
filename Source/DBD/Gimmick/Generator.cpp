@@ -130,7 +130,7 @@ void AGenerator::UpdateGauge(float time)
 
 	// time = 0.2로 들어오는데 이거를 100퍼로 나눴을때
 	// 초당 0.01씩 증가하게 만들기 위해서
-	 Percent += time * 0.011f;		// 실제 적용
+	 Percent += time * 0.011f * RepairMultiplier;		// 실제 적용
 	//Percent += time * 0.5f;			// 테스트용
 
 	// RoundGaugeUI 계속 업데이트
