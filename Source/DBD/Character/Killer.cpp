@@ -11,16 +11,13 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameMode/DBDGameState.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
-#include "Gimmick/Hanger.h"
 #include "Gimmick/Pallet.h"
-#include "Net/UnrealNetwork.h"
 #include "UI/InteractionUI.h"
 #include "GameMode/LobbyGameState.h"
 #include "GameMode/PlayGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Camera/CameraActor.h"
 
-#include "GameMode/LobbyGameState.h"
 #include "UI/LobbyUI.h"
 
 // Sets default values
@@ -61,43 +58,6 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (not HasAuthority()) return; 
-
-
-	// LobbyGameState 가져오기
-	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
-	if (lobbyGameState)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Killer] LobbyGameState"));
-		ACameraActor* killerCamera = nullptr;
-	
-		TArray<AActor*> cameraActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), cameraActors);
-		for (auto cameraActor : cameraActors)
-		{
-			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
-			if (camera->GetActorLabel().Contains(TEXT("KillerCam")))
-			{
-				killerCamera = camera;
-				break;
-			}
-		}
-	
-		if (killerCamera)
-		{
-			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera"));
-			// 카메라를 레벨에 있는 카메마로 전환해주기
-			APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-			playerController->SetInputMode(FInputModeUIOnly());
-			playerController->SetShowMouseCursor(true);
-			playerController->SetViewTarget(killerCamera);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera is nullptr"));
-		}
-	}
 
 	// PlayGameState 가져오기
 	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
@@ -158,8 +118,43 @@ void AKiller::BeginPlay()
 	}
 
 
-	
-	// SetActorTickEnabled(false);
+	// todo: lobby 에서 사용되는 코드
+	if (not HasAuthority()) return;
+
+
+	// LobbyGameState 가져오기
+	ALobbyGameState* lobbyGameState = Cast<ALobbyGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (lobbyGameState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Killer] LobbyGameState"));
+		ACameraActor* killerCamera = nullptr;
+
+		TArray<AActor*> cameraActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), cameraActors);
+		for (auto cameraActor : cameraActors)
+		{
+			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
+			if (camera->GetActorLabel().Contains(TEXT("KillerCam")))
+			{
+				killerCamera = camera;
+				break;
+			}
+		}
+
+		if (killerCamera)
+		{
+			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera"));
+			// 카메라를 레벨에 있는 카메마로 전환해주기
+			APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			playerController->SetInputMode(FInputModeUIOnly());
+			playerController->SetShowMouseCursor(true);
+			playerController->SetViewTarget(killerCamera);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[Killer] KillerCamera is nullptr"));
+		}
+	}
 }
 
 void AKiller::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
