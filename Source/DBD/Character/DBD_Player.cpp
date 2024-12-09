@@ -73,7 +73,7 @@ void ADBD_Player::BeginPlay()
 		Multi_SetCameraInPlay(camera);
 	}
 
-	// todo: lobby 에서 사용되는 부분
+	/// todo: lobby 에서 사용되는 부분
 	
 	if (HasAuthority()) return;
 
@@ -82,8 +82,8 @@ void ADBD_Player::BeginPlay()
 	if (lobbyGameState)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Player] LobbyGameState"));
-		ACameraActor* survivorCamera = nullptr;
-
+		//ACameraActor* survivorCamera = nullptr;
+		SurvivorLobbyCam = nullptr;
 
 		TArray<AActor*> cameraActors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), cameraActors);
@@ -92,16 +92,17 @@ void ADBD_Player::BeginPlay()
 			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
 			if(camera->GetActorLabel().Contains(TEXT("SurvivorCam")))
 			{
-				survivorCamera = camera;
+				SurvivorLobbyCam = camera;
 				break;
 			}
 		}
 		
 		
-		if (survivorCamera)
+		if (SurvivorLobbyCam)
 		{
 			UE_LOG(LogTemp, Error, TEXT("[Player] SurvivorCamera"));
-			Multi_SetCameraInLobby(survivorCamera);
+			FTimerHandle timerhandle;
+			GetWorld()->GetTimerManager().SetTimer(timerhandle, this, &ADBD_Player::Multi_SetCameraInLobby, 0.01f,false);
 		}
 		else
 		{
@@ -250,16 +251,13 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 
 
-void ADBD_Player::Multi_SetCameraInLobby_Implementation(ACameraActor* cam)
+void ADBD_Player::Multi_SetCameraInLobby_Implementation()
 {
-	if (cam)
-	{
-		// 카메라를 레벨에 있는 카메마로 전환해주기
-		APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-		playerController->SetInputMode(FInputModeUIOnly());
-		playerController->SetShowMouseCursor(true);
-		playerController->SetViewTarget(cam);
-	}
+	// 카메라를 레벨에 있는 카메마로 전환해주기
+	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	playerController->SetInputMode(FInputModeUIOnly());
+	playerController->SetShowMouseCursor(true);
+	playerController->SetViewTarget(SurvivorLobbyCam);
 }
 
 void ADBD_Player::Multi_SetCameraInPlay_Implementation(ACameraActor* cam)

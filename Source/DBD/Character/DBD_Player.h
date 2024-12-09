@@ -39,7 +39,7 @@ protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_SetCameraInLobby(class ACameraActor* cam);
+	void Multi_SetCameraInLobby();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetCameraInPlay(class ACameraActor* cam);
@@ -313,6 +313,9 @@ private:
 
 	UPROPERTY()
 	class ADBDGameState* GameState;
+
+	ACameraActor* SurvivorLobbyCam;
+
 
 public:
 	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate
