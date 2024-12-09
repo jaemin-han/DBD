@@ -3,6 +3,7 @@
 
 #include "DBDGameState.h"
 
+#include "DBDGameInstance.h"
 #include "Character/DBD_Player.h"
 #include "Character/Killer.h"
 #include "GameFramework/Character.h"
@@ -121,5 +122,17 @@ void ADBDGameState::MultiRPC_GameOver_Implementation()
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this]()
 	{
 		UGameplayStatics::SetGamePaused(GetWorld(), true);
+
+		if (HasAuthority())
+		{
+			GetWorld()->ServerTravel(TEXT("/Game/DBD/Level/LobbyLevel?listen"));
+		}
+		
+		// auto* GameInstance = Cast<UDBDGameInstance>(GetWorld()->GetGameInstance());
+		// if (GameInstance)
+		// {
+		// 	GameInstance->DestroySession(GameInstance->SName);
+		// }
+		
 	}), 3.0f, false);
 }
