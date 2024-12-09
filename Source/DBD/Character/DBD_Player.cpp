@@ -22,6 +22,10 @@
 #include "UI/LobbyUI.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
+#include "Sound/DBD_SoundManager.h"
+#include "Components/AudioComponent.h"
+#include "Killer.h"
+#include "Sound/SoundComponent.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "GameMode/DBDGameState.h"
@@ -37,16 +41,30 @@ ADBD_Player::ADBD_Player()
 {
 	SearchGimmickSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SearchGimmickSphere"));
 	SearchGimmickSphere->SetupAttachment(RootComponent);
+
+	ConstructorHelpers::FObjectFinder<USoundBase> heartSound(TEXT("/Script/Engine.SoundWave'/Game/DBD/Sound/HeartBeat.HeartBeat'"));
+	if (heartSound.Succeeded())
+	{
+		KillerHeartSound = heartSound.Object;
+	}
+
+	SoundComp = CreateDefaultSubobject<USoundComponent>(TEXT("SoundComponent"));
+
 }
 
 // 기본 BeginPlay 함수
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
- 
+	
+
 	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (playGameState)
 	{
+		Killer = Cast<AKiller>(UGameplayStatics::GetActorOfClass(GetWorld(), AKiller::StaticClass()));
+		SoundComp->AddSound(TEXT("HeartBeat"), KillerHeartSound);
+		SoundComp->SetSoundVolume(TEXT("HeartBeat"), 0.0f);
+
 		UE_LOG(LogTemp, Warning, TEXT("ADBD_Player::BeginPlay() GameState"));
 		GameState = GetWorld()->GetGameState<ADBDGameState>();
 
@@ -108,7 +126,7 @@ void ADBD_Player::BeginPlay()
 		{
 			UE_LOG(LogTemp, Error, TEXT("[Player] SurvivorCamera is nullptr"));
 		}
-	} 
+	}
 }
 
 // 기본 Tick 함수
@@ -139,7 +157,13 @@ void ADBD_Player::Tick(float DeltaTime)
 	//	}
 	//}
 	
-
+	if (Killer)
+	{
+		float distance = FVector::Distance(GetActorLocation(), Killer->GetActorLocation());
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Distance : %f"), distance));
+		Client_PlayHeartSound(DeltaTime, distance);
+	}
+	
 	
 
 	Interaction();
@@ -840,6 +864,26 @@ void ADBD_Player::SpawnDecal()
 	FRotator rotL = GetActorRotation() + FRotator(GetActorRotation().Pitch, 90, FMath::RandRange(0.0f, 360.0f));
 	decalLR->SetActorRotation(rotL);
 	decalLR->SetActorScale3D(FVector(0.80f, 0.3f, 0.26f));
+}
+
+void ADBD_Player::Client_PlayHeartSound_Implementation(float deltatime, float dist)
+{
+	if (dist < 1000.0f)
+	{
+		HeartSoundTime -= deltatime;
+		float volume = 1.5f - dist / 1000.0f;
+		SoundComp->SetSoundVolume(TEXT("HeartBeat"), volume);
+		if (HeartSoundTime <= 0.0f)
+		{
+			SoundComp->PlaySound(TEXT("HeartBeat"));
+			HeartSoundTime = 3.0f;
+		}
+	}
+	else
+	{
+		HeartSoundTime = 0.0f;
+		SoundComp->StopSound(TEXT("HeartBeat"));
+	}
 }
 
 void ADBD_Player::PrintDebug()

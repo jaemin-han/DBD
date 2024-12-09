@@ -179,6 +179,9 @@ public:
 	void Client_HiddenInteractUI();
 	
 	void SpawnDecal();														// 플레이어가 뛰었을때 발생하는 데칼 생성 함수
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlayHeartSound(float deltatime, float dist);
 /** 생존자 설정 함수*/
 
 
@@ -316,6 +319,16 @@ private:
 
 	ACameraActor* SurvivorLobbyCam;
 
+
+	// 사운드
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundBase* KillerHeartSound;
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundComponent* SoundComp;
+
+	float HeartSoundTime = 1.0f;
+	class AKiller* Killer;
+	//TSubclassOf<class USoundComponent> Sounds;
 
 public:
 	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate
