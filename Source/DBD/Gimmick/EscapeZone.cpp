@@ -4,6 +4,7 @@
 #include "EscapeZone.h"
 
 #include "Components/BoxComponent.h"
+#include "GameMode/DBDGameInstance.h"
 #include "GameMode/DBDGameState.h"
 #include "GameMode/DBDPlayerController.h"
 
@@ -43,15 +44,22 @@ void AEscapeZone::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompone
                                           UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
                                           bool bFromSweep, const FHitResult& SweepResult)
 {
+	auto* pawn = Cast<APawn>(OtherActor);
+	// game instance setting, for game over UI
+	if (pawn->IsLocallyControlled())
+	{
+		auto* GameInstance = Cast<UDBDGameInstance>(GetWorld()->GetGameInstance());
+		GameInstance->SetIsEscaped(true);
+	}
+	
 	// 서버에서만 처리
 	if (!HasAuthority())
 		return;
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("AEscapeZone::OnComponentBeginOverlap"));
 	// overlap 한 엑터가 Survivor 이름을 포함하는지 확인
 	if (OtherActor->GetName().Contains(TEXT("Survivor")))
 	{
-		// todo: 생존자 탈출 처리
 		GameState->SetSurvivorCount(GameState->GetSurvivorCount() - 1);
 
 		// 남은 생존자가 0명이라면 게임 오버
@@ -62,7 +70,7 @@ void AEscapeZone::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompone
 		else
 		{
 			// 생존자 엑터를 spector로 변경
-			if (auto* pawn = Cast<APawn>(OtherActor))
+			if (pawn)
 			{
 				if (auto* pc = Cast<ADBDPlayerController>(pawn->GetController()))
 				{

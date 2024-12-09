@@ -52,4 +52,30 @@ public:
 	FOnAddSessionDelegate OnAddSession;
 
 	FString SName;
+
+#pragma region GameOverUI
+
+private:
+	// 이 컴퓨터에서 플레이한 캐릭터가 킬러인지 생존자인지
+	bool bIsKiller;
+
+	// killer
+	// 킬러가 살해한 생존자 몇 명?
+	int32 killerKillCount;
+
+	// Survivor
+	// 생존자의 탈출 여부
+	bool bIsEscaped;
+
+public:
+	bool GetIsKiller() const { return bIsKiller; };
+	void SetIsKiller(const bool IsKiller) { bIsKiller = IsKiller; };
+
+	int32 GetKillerKillCount() const { return killerKillCount; };
+	void SetKillerKillCount(const int32 KillCount) { killerKillCount = KillCount; };
+
+	bool GetIsEscaped() const { return bIsEscaped; };
+	void SetIsEscaped(const bool IsEscaped) { bIsEscaped = IsEscaped; };
+
+#pragma endregion
 };

@@ -26,6 +26,10 @@ void UDBDGameInstance::Init()
 		SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UDBDGameInstance::OnFindSessionsComplete);
 		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UDBDGameInstance::OnJoinSessionComplete);
 	}
+	
+	SetIsKiller(false);
+	SetKillerKillCount(0);
+	SetIsEscaped(false);
 }
 
 void UDBDGameInstance::CreateSession(FString DisplayName, int32 PlayerCount)

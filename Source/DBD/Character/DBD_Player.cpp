@@ -24,6 +24,7 @@
 #include "Camera/CameraComponent.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
+#include "GameMode/DBDGameInstance.h"
 #include "GameMode/DBDGameState.h"
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
@@ -43,6 +44,13 @@ ADBD_Player::ADBD_Player()
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// game instance setting - for game over UI
+	if (IsLocallyControlled())
+	{
+		auto* GameInstance = Cast<UDBDGameInstance>(GetGameInstance());
+		GameInstance->SetIsKiller(false);
+	}
  
 	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (playGameState)
