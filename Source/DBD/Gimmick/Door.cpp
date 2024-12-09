@@ -216,8 +216,8 @@ void ADoor::Multi_OpenExitDoor_Implementation()
 	
 
 	FVector Movloc = DoorMesh->GetRelativeLocation() + GetActorUpVector();
-	UE_LOG(LogTemp, Log, TEXT("[%s] Local Movloc X : %.2f, Y : %.2f, Z : %.2f"),
-		*GetOwner()->GetName(), Movloc.X, Movloc.Y, Movloc.Z);
+	// UE_LOG(LogTemp, Log, TEXT("[%s] Local Movloc X : %.2f, Y : %.2f, Z : %.2f"),
+	// 	*GetOwner()->GetName(), Movloc.X, Movloc.Y, Movloc.Z);
 
 
 	DoorMesh->SetRelativeLocation(Movloc);
