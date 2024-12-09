@@ -50,4 +50,6 @@ public:
 
 	// MainUI 에서 세션을 추가할 때 사용
 	FOnAddSessionDelegate OnAddSession;
+
+	FString SName;
 };

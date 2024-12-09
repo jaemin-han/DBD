@@ -5,6 +5,8 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include <Online/OnlineSessionNames.h>
+
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void UDBDGameInstance::Init()
@@ -74,6 +76,7 @@ void UDBDGameInstance::CreateSession(FString DisplayName, int32 PlayerCount)
 				if (NetID.IsValid())
 				{
 					// Create the session
+					SName = DisplayName;
 					SessionInterface->CreateSession(*NetID, FName(DisplayName), SessionSettings);
 				}
 				else
@@ -122,6 +125,7 @@ void UDBDGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSucc
 	if (bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Session destroyed successfully"), *SessionName.ToString());
+		UGameplayStatics::OpenLevel(GetWorld(), TEXT("SeqLevel"));
 	}
 	else
 	{
@@ -189,6 +193,7 @@ void UDBDGameInstance::JoinOtherSession(int32 Index)
 	TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
 
 	FString DisplayName;
+	SName = DisplayName;
 	SearchResults[Index].Session.SessionSettings.Get(TEXT("DP_NAME"), DisplayName);
 
 	SessionInterface->JoinSession(0, FName(DisplayName), SearchResults[Index]);
