@@ -866,6 +866,16 @@ void ADBD_Player::PrintDebug()
 	DrawDebugString(GetWorld(), GetActorLocation() + FVector(0, 0, 100), IsInteractGeneratorString, nullptr, FColor::Blue, 0.0f, true);
 }
 
+void ADBD_Player::OnHit_Implementation(FVector HitLocation)
+{
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitLocation, 1, 1, 0,
+			FootStepAttenuation);
+	}
+}
+
+
 void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
 {
 	if (MainUI)

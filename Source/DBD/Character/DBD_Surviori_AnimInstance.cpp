@@ -87,7 +87,7 @@ void UDBD_Surviori_AnimInstance::AnimNotify_OnFootStep()
 		{
 			float RandomPitch = FMath::RandRange(0.9f, 1.2f);
 
-			UGameplayStatics::PlaySoundAtLocation(Player->GetWorld(), Player->FootStepSound, HitResult.Location, 1, RandomPitch, 0, Player->FootStepAttenuation);
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), Player->FootStepSound, HitResult.Location, 1, RandomPitch, 0, Player->FootStepAttenuation);
 		}
 	}
 }

@@ -15,14 +15,14 @@ void UANS_Attack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
 	// 이미 공격이 발생했었으면 더 이상 공격을 처리하지 않음
 	if (bHasValidHitOccurred)
 		return;
-	
+
 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
 
-	PerformSphereTrace(MeshComp);	
+	PerformSphereTrace(MeshComp);
 }
 
 void UANS_Attack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference)
+                            const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
@@ -32,8 +32,6 @@ void UANS_Attack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase*
 
 FHitResult UANS_Attack::PerformSphereTrace(USkeletalMeshComponent* MeshComp)
 {
-
-	
 	if (!MeshComp || !MeshComp->GetOwner())
 		return FHitResult();
 
@@ -54,18 +52,20 @@ FHitResult UANS_Attack::PerformSphereTrace(USkeletalMeshComponent* MeshComp)
 		FName("KillerWeapon"),
 		FCollisionShape::MakeSphere(SphereRadius),
 		Params
-		);
+	);
 
 	if (bHit)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Sphere Trace hit: %s"), *HitResult.GetActor()->GetName());
 
 		// HitResult 의 결과가 ADBD_Player 인 경우, 플레이어에게 데미지를 입히는 로직을 추가
-		auto* Survivor =Cast <ADBD_Player>(HitResult.GetActor());
-		if (Survivor)
+		auto* Survivor = Cast<ADBD_Player>(HitResult.GetActor());
+		if (Survivor && (Survivor->GetSurvivorState() == ESurvivorState::Hp2 || Survivor->GetSurvivorState() == ESurvivorState::Hp3))
 		{
 			// Todo: 플레이어에게 데미지를 입히는 로직 추가, 승호님과 상의 필요
 			Survivor->UpdateHP(1);
+			// 피격 사운드와 이펙트를 재생하기 위해 피격 위치를 전달
+			Survivor->OnHit(HitResult.ImpactPoint);
 			// 중복 공격을 막기 위해 유효한 공격이 발생했음을 표시
 			bHasValidHitOccurred = true;
 		}

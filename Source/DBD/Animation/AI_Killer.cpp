@@ -85,8 +85,17 @@ void UAI_Killer::AnimNotify_OnFootStep()
 			int32 RandomIndex = FMath::RandRange(0, Killer->FootStepSound.Num() - 1);
 			float RandomPitch = FMath::RandRange(0.9f, 1.2f);
 
-			UGameplayStatics::PlaySoundAtLocation(Killer->GetWorld(), Killer->FootStepSound[RandomIndex],
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->FootStepSound[RandomIndex],
 			                                      HitResult.Location, 1, RandomPitch, 0, Killer->FootStepAttenuation);
 		}
+	}
+}
+
+void UAI_Killer::AnimNotify_AttackSound()
+{
+	if (Killer)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->AttackSound, Killer->GetActorLocation(), 1,
+		                                      1, 0, Killer->FootStepAttenuation);
 	}
 }

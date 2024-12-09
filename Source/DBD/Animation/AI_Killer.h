@@ -33,4 +33,6 @@ public:
 	void AnimNotify_DestroyPallet();
 	UFUNCTION()
 	void AnimNotify_OnFootStep();
+	UFUNCTION()
+	void AnimNotify_AttackSound();
 };

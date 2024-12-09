@@ -140,6 +140,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	TArray<class USoundBase*> FootStepSound;
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* AttackSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	class USoundAttenuation* FootStepAttenuation;
 
 private:
