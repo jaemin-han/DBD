@@ -110,40 +110,16 @@ void ADBD_Player::BeginPlay()
 	// Interation 함수를 0.2초마다 호출
 	//FTimerHandle interactionTimer;
 	//GetWorld()->GetTimerManager().SetTimer(interactionTimer, this, &ADBD_Player::Interaction, 0.2f, true);
-
-
 }
 
 // 기본 Tick 함수
 void ADBD_Player::Tick(float DeltaTime)
 {
-
 	Super::Tick(DeltaTime);
 	
-	PrintDebug();
+	//PrintDebug();
 
-	
 	if (!HasAuthority()) return;
-
-	//if (IsLocallyControlled())
-	//{
-	//	if (NearGimmick && NearGimmick->GetGimmickName() != "Pallet")
-	//	{
-	//		VisibleMainUI(true, NearGimmick->GetGimmickName(), NearGimmick->GetInteractKey());
-	//	}
-	//	// 판자가 있고, 내려가있지 않다면
-	//	else if (NearPallet && !NearPallet->bIsFallen)
-	//	{
-	//		VisibleMainUI(true, NearPallet->GetGimmickName(), NearPallet->GetInteractKey());
-	//	}
-	//	else
-	//	{
-	//		VisibleMainUI(false, TEXT(""), TEXT(""));
-	//	}
-	//}
-	
-
-	
 
 	Interaction();
 	GetNearPallet();
@@ -196,7 +172,7 @@ void ADBD_Player::PossessedBy(AController* NewController)
 
 	if (GameState)
 	{
-	GameState->SetSurvivorCount(GameState->GetSurvivorCount() + 1);
+		GameState->SetSurvivorCount(GameState->GetSurvivorCount() + 1);
 	}
 }
 

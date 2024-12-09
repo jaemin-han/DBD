@@ -90,7 +90,7 @@ protected:
 	void Server_ReportBezierPoints();
 	// 서버가 베지에 곡선 좌표를 모든 클라이언트에게 전달하는 함수
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_BroadcastBezierPoints();
+	void Multicast_BroadcastBezierPoints(FVector loc, FVector up, FVector forward, float dist);
 
 public:
 	// 파쿠르 애니메이션 종료 함수

@@ -105,7 +105,23 @@ void ADBDCharacter::SetBezierPoint()
 	if (bIsFindWindows or bIsFindPallet)
 	{
 		// 서버에게 요청을 보낸 캐릭터가 NearGimmick이 window인지 체크해서 맞다면 모든 클라이언트한테 요청
-		Multicast_BroadcastBezierPoints();
+		if (AWindows* window = Cast<AWindows>(NearGimmick.GetObject()))
+		{
+			FVector loc = GetActorLocation();
+			FVector up = GetActorUpVector();
+			FVector forward = GetActorForwardVector();
+			float dist = FVector::Distance(loc, window->GetActorLocation());
+			Multicast_BroadcastBezierPoints(loc, up, forward, dist);
+		}
+		
+		if (APallet* pallet = Cast<APallet>(NearGimmick.GetObject()))
+		{
+			FVector loc = GetActorLocation();
+			FVector up = GetActorUpVector();
+			FVector forward = GetActorForwardVector();
+			float dist = FVector::Distance(loc, pallet->GetActorLocation());
+			Multicast_BroadcastBezierPoints(loc, up, forward, dist);
+		}
 	}
 }
 
@@ -114,29 +130,13 @@ void ADBDCharacter::Server_ReportBezierPoints_Implementation()
 	SetBezierPoint();
 }
 
-void ADBDCharacter::Multicast_BroadcastBezierPoints_Implementation()
+void ADBDCharacter::Multicast_BroadcastBezierPoints_Implementation(FVector loc, FVector up, FVector forward, float dist)
 {
-	if (AWindows* window = Cast<AWindows>(NearGimmick.GetObject()))
-	{
-		float dist = FVector::Distance(GetActorLocation(), window->GetActorLocation());
-		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
-		vP0 = GetActorLocation();
-		vP1 = vP0 + GetActorUpVector() * 120.0f;
-		vP2 = vP1 + GetActorForwardVector() * dist * 2;
-		vP3 = vP0 + GetActorForwardVector() * dist * 2;
-		return;
-	}
-
-	if (APallet* pallet = Cast<APallet>(NearGimmick.GetObject()))
-	{
-		float dist = FVector::Distance(GetActorLocation(), pallet->GetActorLocation());
-		// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
-		vP0 = GetActorLocation();
-		vP1 = vP0 + GetActorUpVector() * 120.0f;
-		vP2 = vP1 + GetActorForwardVector() * dist * 2;
-		vP3 = vP0 + GetActorForwardVector() * dist * 2;
-		return;
-	}
+	// 창문의 위치를 가져와서 베지에 곡선 좌표 설정
+	vP0 = loc;
+	vP1 = vP0 + up * 120.0f;
+	vP2 = vP1 + forward * dist * 2;
+	vP3 = vP0 + forward * dist * 2;
 }
 
 FVector ADBDCharacter::FCalculateBezierPoint(float t, const FVector& p0, const FVector& p1, const FVector& p2,
