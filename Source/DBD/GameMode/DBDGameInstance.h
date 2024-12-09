@@ -55,7 +55,14 @@ public:
 
 #pragma region GameOverUI
 
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UGameOverUI> GameOverUIClass;
+
+	UPROPERTY()
+	class UGameOverUI* GameOverUI;
 private:
+	
 	// 이 컴퓨터에서 플레이한 캐릭터가 킬러인지 생존자인지
 	bool bIsKiller;
 
@@ -68,13 +75,19 @@ private:
 	bool bIsEscaped;
 
 public:
+	UFUNCTION(BlueprintCallable)
 	bool GetIsKiller() const { return bIsKiller; };
+	UFUNCTION(BlueprintCallable)
 	void SetIsKiller(const bool IsKiller) { bIsKiller = IsKiller; };
 
+	UFUNCTION(BlueprintCallable)
 	int32 GetKillerKillCount() const { return killerKillCount; };
+	UFUNCTION(BlueprintCallable)
 	void SetKillerKillCount(const int32 KillCount) { killerKillCount = KillCount; };
 
+	UFUNCTION(BlueprintCallable)
 	bool GetIsEscaped() const { return bIsEscaped; };
+	UFUNCTION(BlueprintCallable)
 	void SetIsEscaped(const bool IsEscaped) { bIsEscaped = IsEscaped; };
 
 #pragma endregion
