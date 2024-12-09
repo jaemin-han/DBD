@@ -320,4 +320,10 @@ private:
 public:
 	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate
 	FOnSetGimmickAtRescueDelegate OnSetGimmickAtRescue;
+
+	// sound 관련 변수
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* FootStepSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundAttenuation* FootStepAttenuation;
 };

@@ -31,4 +31,6 @@ public:
 	void AnimNotify_HangOnHook();
 	UFUNCTION()
 	void AnimNotify_DestroyPallet();
+	UFUNCTION()
+	void AnimNotify_OnFootStep();
 };

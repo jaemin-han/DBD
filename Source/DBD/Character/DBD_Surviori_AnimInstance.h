@@ -51,5 +51,8 @@ public:
 	UFUNCTION()
 	void AnimNotify_OnRescueFinish();
 
+	UFUNCTION()
+	void AnimNotify_OnFootStep();
+
 	TScriptInterface<class IDBD_Interface_Gimmick> Gimmick;
 };

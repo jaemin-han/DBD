@@ -8,6 +8,7 @@
 #include "Components/ArrowComponent.h"
 #include "Gimmick/Hanger.h"
 #include "Gimmick/Pallet.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void UAI_Killer::NativeInitializeAnimation()
@@ -66,4 +67,26 @@ void UAI_Killer::AnimNotify_DestroyPallet()
 	if (Pallet == nullptr)
 		return;
 	Pallet->DestroyPallet();
+}
+
+void UAI_Killer::AnimNotify_OnFootStep()
+{
+	if (Killer)
+	{
+		// killer 에서 z 방향으로 -200 만큼 line trace 를 진행해서, 땅에 닿은 경우 발자국 소리를 출력
+		FVector Start = Killer->GetActorLocation();
+		FVector End = Start - FVector(0, 0, 200);
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(Killer);
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility,
+		                                         CollisionParams))
+		{
+			int32 RandomIndex = FMath::RandRange(0, Killer->FootStepSound.Num() - 1);
+			float RandomPitch = FMath::RandRange(0.9f, 1.2f);
+
+			UGameplayStatics::PlaySoundAtLocation(Killer->GetWorld(), Killer->FootStepSound[RandomIndex],
+			                                      HitResult.Location, 1, RandomPitch, 0, Killer->FootStepAttenuation);
+		}
+	}
 }
