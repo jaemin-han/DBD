@@ -111,6 +111,9 @@ void ALobbyPlayerState::Multi_OnClickedBtnReady_Implementation(ALobbyGameState* 
 		if (p->LobbyPlayerState == this)
 		{
 			int32 count = 0;
+
+			if (lgs->LobbyUI->allSurvivorState.Num() == 0) return;
+
 			for (auto ps : lgs->LobbyUI->allSurvivorState)
 			{
 				if (ps->LobbyPlayerState->bIsSurvivorReady)
