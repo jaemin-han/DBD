@@ -878,13 +878,15 @@ void ADBD_Player::SpawnDecal()
 
 void ADBD_Player::Client_PlayHeartSound_Implementation(float deltatime, float dist)
 {
-	if (dist < 1000.0f)
+	if (dist < 2000.0f)
 	{
 		HeartSoundTime -= deltatime;
-		float volume = 1.5f - dist / 1000.0f;
+		float volume = 4.0f - dist / 2000.0f;
 		SoundComp->SetSoundVolume(TEXT("HeartBeat"), volume);
+
 		if (HeartSoundTime <= 0.0f)
 		{
+			SoundComp->SetPitchMultiplier(5.0f);
 			SoundComp->PlaySound(TEXT("HeartBeat"));
 			HeartSoundTime = 3.0f;
 		}
