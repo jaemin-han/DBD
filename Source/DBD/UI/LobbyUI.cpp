@@ -32,7 +32,7 @@ void ULobbyUI::NativeConstruct()
 	Super::NativeConstruct();
 	UE_LOG(LogTemp, Log, TEXT("NativeConstruct called"));
 
-	LobbyPlayerState = Cast<ALobbyPlayerState>(GetWorld()->GetGameState());
+	LobbyPlayerState = Cast<ALobbyPlayerState>(GetWorld()->GetFirstPlayerController()->PlayerState);
 
 
 

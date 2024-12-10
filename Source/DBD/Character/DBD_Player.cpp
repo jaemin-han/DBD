@@ -25,6 +25,7 @@
 #include "Components/AudioComponent.h"
 #include "Killer.h"
 #include "Sound/SoundComponent.h"
+#include "GameFramework/Actor.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
 #include "GameMode/DBDGameInstance.h"
@@ -114,7 +115,7 @@ void ADBD_Player::BeginPlay()
 		for (auto cameraActor : cameraActors)
 		{
 			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
-			if(camera->GetActorLabel().Contains(TEXT("SurvivorCam")))
+			if(camera->GetName().Contains(TEXT("CameraActor_0")))
 			{
 				SurvivorLobbyCam = camera;
 				break;
@@ -251,8 +252,8 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(PlusHpAction, ETriggerEvent::Started, this, &ADBD_Player::PlusHp);
-		EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
+		//EnhancedInputComponent->BindAction(PlusHpAction, ETriggerEvent::Started, this, &ADBD_Player::PlusHp);
+		//EnhancedInputComponent->BindAction(MinusHpAction, ETriggerEvent::Started, this, &ADBD_Player::MinusHp);
 
 		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Triggered, this, &ADBD_Player::Server_ExitDoor);
 		EnhancedInputComponent->BindAction(ExitAction, ETriggerEvent::Completed, this, &ADBD_Player::Server_NonExitDoor);
@@ -271,7 +272,7 @@ void ADBD_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ADBD_Player::Run);
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ADBD_Player::RunStop);
 
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ADBD_Player::Crouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ADBD_Player::Crouchs);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADBD_Player::CrouchStop);
 
 		EnhancedInputComponent->BindAction(RescueAction, ETriggerEvent::Started, this, &ADBD_Player::ServerRPC_Rescue);
@@ -393,7 +394,7 @@ void ADBD_Player::MulticastRPC_RunStop_Implementation()
 }
 
 // 앉기 적용 함수 (적용O)
-void ADBD_Player::Crouch()
+void ADBD_Player::Crouchs()
 {
 	//// Health가 3일때만 작동
 	//if (Health != 3) return;

@@ -19,7 +19,7 @@ void URoundGaugeUI::UpdatePercent(float per)
     }
 
 	// Material Instacne 생성하기
-	UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(IMG_RoundGauge->Brush.GetResourceObject());
+	UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(IMG_RoundGauge->GetBrush().GetResourceObject());
     if (not MI_RoundProcessBar)
     {
         MI_RoundProcessBar = UMaterialInstanceDynamic::Create(MaterialInterface, this);

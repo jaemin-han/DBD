@@ -71,7 +71,7 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_RunStop();
 
-	void Crouch();
+	void Crouchs();
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Crouch();
 	UFUNCTION(NetMulticast, Reliable)

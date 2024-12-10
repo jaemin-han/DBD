@@ -18,6 +18,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Camera/CameraActor.h"
 #include "GameMode/DBDGameInstance.h"
+#include "GameFramework/Actor.h"
 
 #include "UI/LobbyUI.h"
 #include "Gimmick/Generator.h"
@@ -162,8 +163,9 @@ void AKiller::BeginPlay()
 		for (auto cameraActor : cameraActors)
 		{
 			ACameraActor* camera = Cast<ACameraActor>(cameraActor);
-			if (camera->GetActorLabel().Contains(TEXT("KillerCam")))
+			if (camera->GetName().Contains(TEXT("CameraActor_1")))
 			{
+			UE_LOG(LogTemp, Error, TEXT("[%s] LobbyGameState"), *camera->GetName());	
 				killerCamera = camera;
 				break;
 			}
@@ -421,7 +423,7 @@ void AKiller::Stun_Implementation()
 void AKiller::Interact()
 {
 	// NearGimmick 이 유효한 경우 Interaction 함수 호출
-	if (NearGimmick.GetObject() && !bStunned && !bIsAttacking)
+	if (NearGimmick.GetObject() && !bStunned && !bIsAttacking && NearGimmick->GetGimmickName() != TEXT("Generator"))
 	{
 		NearGimmick->Interaction(this);
 	}

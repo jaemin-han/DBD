@@ -44,19 +44,19 @@ AActor* APlayGameMode::ChoosePlayerStart_Implementation(AController* Player)
 
 	for (AActor* playerStart : foundPlayerStarts)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerStart Label : %s"), *playerStart->GetActorLabel());
+		UE_LOG(LogTemp, Warning, TEXT("PlayerStart Label : %s"), *playerStart->GetName());
 		UE_LOG(LogTemp, Warning, TEXT("index : %d"), index);
 		if (Player->IsLocalController())
 		{
-			if (playerStart->GetActorLabel().Contains(TEXT("PlayerStart_Killer")))
+			if (playerStart->GetName().Contains(TEXT("PlayerStart_0")))
 			{
 				return playerStart;
 			}
 		}
 		else
 		{
-			FString tag = "PlayerStart_Survivor" + FString::FromInt(index);
-			if (playerStart->GetActorLabel().Contains(tag))
+			FString tag = "PlayerStart_" + FString::FromInt(index);
+			if (playerStart->GetName().Contains(tag))
 			{
 				index++;
 				return playerStart;

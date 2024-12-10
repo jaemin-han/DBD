@@ -14,7 +14,7 @@ void USkillCheckZoneUI::UpdatePercent(float percent)
     }
 
     // Material Instacne 생성하기
-    UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(IMG_SkillCheckZone->Brush.GetResourceObject());
+    UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(IMG_SkillCheckZone->GetBrush().GetResourceObject());
     if (not MI_SkillCheckZone)
     {
         MI_SkillCheckZone = UMaterialInstanceDynamic::Create(MaterialInterface, this);
@@ -31,7 +31,7 @@ void USkillCheckZoneUI::SetPercent(float percent)
     {
         return;
     }
-    UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(IMG_SkillCheckZone->Brush.GetResourceObject());
+    UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(IMG_SkillCheckZone->GetBrush().GetResourceObject());
     if (not MI_SkillCheckZone)
     {
         MI_SkillCheckZone = UMaterialInstanceDynamic::Create(MaterialInterface, this);

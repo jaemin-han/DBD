@@ -16,7 +16,6 @@
 #include "Sound/SoundWave.h"
 #include "Sound/SoundCue.h"
 
-
 // Sets default values
 AGenerator::AGenerator()
 {
@@ -84,6 +83,7 @@ void AGenerator::Tick(float DeltaTime)
 // 서버에서만 실행됨
 void AGenerator::Interaction(APawn* Caller)
 {
+
 	SetOwner(Caller);
 	
 	if (Caller)
@@ -232,7 +232,7 @@ void AGenerator::SetSkillCheckZone(float value)
 	//SkillCheckZone->RenderTransform.Angle = start;
 	
 	
-	FWidgetTransform newTransform = GaugeUI->SkillCheckZone->RenderTransform;
+	FWidgetTransform newTransform = GaugeUI->SkillCheckZone->GetRenderTransform();
 	newTransform.Angle = angle;
 	GaugeUI->SkillCheckZone->SetRenderTransform(newTransform);
 	
