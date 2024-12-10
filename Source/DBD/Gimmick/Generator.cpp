@@ -76,6 +76,9 @@ void AGenerator::Tick(float DeltaTime)
 	if (GetIsFullGauge())
 	{
 		IsActivated = true;
+		GeneratorSoundTimer = 7.0f;
+		GeneratorSoundComp->Stop();
+		Client_VisibleRoundGauge(0.0f, false);
 	}
 }
 // 서버에서만 실행됨
@@ -143,6 +146,7 @@ void AGenerator::UpdateGauge(float time)
 	if (Percent >= 1.0f)
 	{
 		IsFullGauge = true;
+
 		return;
 	}
 	
@@ -196,7 +200,7 @@ void AGenerator::CheckRoundGauge(float frame)
 	float random = FMath::RandRange(0.0f,1.0f);
 	UE_LOG(LogTemp, Warning, TEXT("Random %f"), random);
 
-	if (random < frame * 0.2f)
+	if (random < frame * 0.3f)
 	{
 		// RoundGauge 활성화
 		IsCheckRoundGauge = true;
@@ -246,7 +250,9 @@ void AGenerator::Multi_SetSkillCheckZone_Implementation(float ran, FWidgetTransf
 void AGenerator::Client_VisibleRoundGauge_Implementation(float time, bool IsVisible)
 {
 	GeneratorSoundTimer -= time;
-	if (GeneratorSoundTimer <= 0.0f)
+
+
+	if (GeneratorSoundTimer <= 0.0f and not GetIsFullGauge())
 	{
 		GeneratorSoundTimer = 0.5f;
 		GeneratorSoundComp->SetVolumeMultiplier(1.0f);
