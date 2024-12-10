@@ -28,6 +28,15 @@ void ADBDGameState::BeginPlay()
 	PostProcessVolume = GetWorld()->SpawnActor<APostProcessVolume>();
 	PostProcessVolume->bUnbound = true;
 	AddDynamicMaterialToPostProcessVolume();
+
+	// 게임이 시작할 때 gamestate 의 옵션 초기화
+	auto* GameInstance = Cast<UDBDGameInstance>(GetWorld()->GetGameInstance());
+	if (GameInstance)
+	{
+		GameInstance->SetIsKiller(false);
+		GameInstance->SetKillerKillCount(0);
+		GameInstance->SetIsEscaped(false);
+	}
 }
 
 void ADBDGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
