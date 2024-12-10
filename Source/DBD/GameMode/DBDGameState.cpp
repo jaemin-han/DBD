@@ -139,7 +139,7 @@ void ADBDGameState::MultiRPC_GameOver_Implementation()
 
 		if (HasAuthority())
 		{
-			GetWorld()->ServerTravel(TEXT("/Game/DBD/Level/LobbyLevel?listen"));
+			GetWorld()->ServerTravel(TEXT("/Game/DBD/Level/GameOverLevel?listen"));
 		}
 		
 		// auto* GameInstance = Cast<UDBDGameInstance>(GetWorld()->GetGameInstance());

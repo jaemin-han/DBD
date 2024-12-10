@@ -27,6 +27,7 @@
 #include "Sound/SoundComponent.h"
 
 // 아래 두개는 추후 종속성 제거 예정 -> Interface로 전부 가능하도록 변경 예정
+#include "GameMode/DBDGameInstance.h"
 #include "GameMode/DBDGameState.h"
 #include "Gimmick/Pallet.h"
 #include "Gimmick/Door.h"
@@ -55,8 +56,14 @@ ADBD_Player::ADBD_Player()
 void ADBD_Player::BeginPlay()
 {
 	Super::BeginPlay();
-	
 
+	// game instance setting - for game over UI
+	if (IsLocallyControlled())
+	{
+		auto* GameInstance = Cast<UDBDGameInstance>(GetGameInstance());
+		GameInstance->SetIsKiller(false);
+	}
+ 
 	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
 	if (playGameState)
 	{
@@ -904,6 +911,16 @@ void ADBD_Player::PrintDebug()
 	FString IsInteractGeneratorString = FString::Printf(TEXT("IsInteractGenerator: %s"), IsInteractGenerator ? TEXT("True") : TEXT("False"));
 	DrawDebugString(GetWorld(), GetActorLocation() + FVector(0, 0, 100), IsInteractGeneratorString, nullptr, FColor::Blue, 0.0f, true);
 }
+
+void ADBD_Player::OnHit_Implementation(FVector HitLocation)
+{
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitLocation, 1, 1, 0,
+			FootStepAttenuation);
+	}
+}
+
 
 void ADBD_Player::VisibleMainUI(bool IsVisible, FString Name, FString Key)
 {

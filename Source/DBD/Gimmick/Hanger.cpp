@@ -8,6 +8,7 @@
 #include "Character/Killer.h"
 #include "Components/ArrowComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameMode/DBDGameInstance.h"
 #include "GameMode/DBDGameState.h"
 #include "GameMode/DBDPlayerController.h"
 #include "UI/HangerUI.h"
@@ -154,6 +155,10 @@ void AHanger::ServerRPC_DestroyHangSurvivor_Implementation()
 {
 	if (HangSurvivor)
 	{
+		// game instance setting - for game over UI
+		auto* GameInstance = Cast<UDBDGameInstance>(GetWorld()->GetGameInstance());
+		GameInstance->SetKillerKillCount(GameInstance->GetKillerKillCount() + 1);
+		
 		auto* GameState = Cast<ADBDGameState>(GetWorld()->GetGameState());
 		GameState->SetSurvivorCount(GameState->GetSurvivorCount() - 1);
 		if (GameState->GetSurvivorCount() == 0)

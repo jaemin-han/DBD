@@ -31,4 +31,14 @@ public:
 	void AnimNotify_HangOnHook();
 	UFUNCTION()
 	void AnimNotify_DestroyPallet();
+	// Destroy Pallet Sound
+	UFUNCTION()
+	void AnimNotify_DestroyPalletSound();
+	UFUNCTION()
+	void AnimNotify_OnFootStep();
+	UFUNCTION()
+	void AnimNotify_AttackSound();
+	// stun sound
+	UFUNCTION()
+	void AnimNotify_StunSound();
 };

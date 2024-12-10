@@ -4,6 +4,7 @@
 #include "Character/DBD_Surviori_AnimInstance.h"
 #include "DBD_Player.h"
 #include "Gimmick/DBD_Interface_Gimmick.h"
+#include "Kismet/GameplayStatics.h"
 
 void UDBD_Surviori_AnimInstance::NativeInitializeAnimation()
 {
@@ -69,5 +70,24 @@ void UDBD_Surviori_AnimInstance::AnimNotify_OnRescueFinish()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player is null"));
+	}
+}
+
+void UDBD_Surviori_AnimInstance::AnimNotify_OnFootStep()
+{
+	if (Player)
+	{
+		// killer 에서 z 방향으로 -200 만큼 line trace 를 진행해서, 땅에 닿은 경우 발자국 소리를 출력
+		FVector Start = Player->GetActorLocation();
+		FVector End = Start - FVector(0, 0, 200);
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(Player);
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, CollisionParams))
+		{
+			float RandomPitch = FMath::RandRange(0.9f, 1.2f);
+
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), Player->FootStepSound, HitResult.Location, 1, RandomPitch, 0, Player->FootStepAttenuation);
+		}
 	}
 }

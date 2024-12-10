@@ -139,6 +139,18 @@ public:
 	FOnHangSurvivorDelegate OnHangSurvivor;
 	FOnDestroyPalletDelegate OnDestroyPallet;
 
+	// sound 관련 변수
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	TArray<class USoundBase*> FootStepSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* AttackSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* DestroyPalletSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	TArray<class USoundBase*> StunSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundAttenuation* FootStepAttenuation;
+
 private:
 	// attack montage
 	UPROPERTY(EditAnywhere, Category = Animation, meta = (AllowPrivate))

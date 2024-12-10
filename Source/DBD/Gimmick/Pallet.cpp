@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -171,6 +172,15 @@ void APallet::PalletFall()
 	}
 }
 
+void APallet::MulticastRPC_PlayPalletFallSound_Implementation()
+{
+	if (PalletFallSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), PalletFallSound, GetActorLocation(),
+			1, 1, 0, PalletFallAttenuation);
+	}
+}
+
 void APallet::DebugOwner()
 {
 	// debug owner
@@ -192,4 +202,5 @@ void APallet::MulticastRPC_PalletFall_Implementation(AActor* Actor, FVector Posi
 void APallet::ServerRPC_PalletFall_Implementation()
 {
 	PalletFall();
+	MulticastRPC_PlayPalletFallSound();
 }

@@ -72,6 +72,8 @@ private:
 	FString InteractKey = TEXT("LBM");
 
 	float Percent = 0.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float RepairMultiplier = 1.0f;
 	UPROPERTY(Replicated, VisibleAnywhere)
 	bool IsFullGauge = false;
 	

@@ -75,6 +75,9 @@ public:
 	// multicast rpc for pallet fall
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_PalletFall(AActor* Actor, FVector Position);
+	// play pallet fall sound
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PlayPalletFallSound();
 	// DrawdebugString
 	void DebugOwner();
 
@@ -82,4 +85,10 @@ public:
 	// todo: chaos destruction
 	UFUNCTION(BlueprintNativeEvent)
 	void DestroyPallet();
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* PalletFallSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundAttenuation* PalletFallAttenuation;
 };

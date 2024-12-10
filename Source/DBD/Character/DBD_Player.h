@@ -334,4 +334,17 @@ private:
 public:
 	// rescue 실행 시 anim instance 에 neargimmick 을 set 하는 delegate
 	FOnSetGimmickAtRescueDelegate OnSetGimmickAtRescue;
+
+	// sound 관련 변수
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* FootStepSound;
+	// 피격 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundBase* HitSound;
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	class USoundAttenuation* FootStepAttenuation;
+
+	// 피격 시 처리를 진행할 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void OnHit(FVector HitLocation);
 };

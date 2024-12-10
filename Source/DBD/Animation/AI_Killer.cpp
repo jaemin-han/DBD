@@ -8,6 +8,7 @@
 #include "Components/ArrowComponent.h"
 #include "Gimmick/Hanger.h"
 #include "Gimmick/Pallet.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void UAI_Killer::NativeInitializeAnimation()
@@ -66,4 +67,61 @@ void UAI_Killer::AnimNotify_DestroyPallet()
 	if (Pallet == nullptr)
 		return;
 	Pallet->DestroyPallet();
+}
+
+void UAI_Killer::AnimNotify_DestroyPalletSound()
+{
+	if (Killer)
+	{
+		// 일시적으로 Killer->FootStepAttenuation 의 max distance 를 1500 으로 설정
+		// 기존 값 저장
+		float OriginalMaxDistance = Killer->FootStepAttenuation->Attenuation.FalloffDistance;
+		Killer->FootStepAttenuation->Attenuation.FalloffDistance = 1500;
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->DestroyPalletSound, Killer->GetActorLocation(), 1, 1, 0,
+		                                      Killer->FootStepAttenuation);
+
+		// 기존 값 복구
+		Killer->FootStepAttenuation->Attenuation.FalloffDistance = OriginalMaxDistance;
+	}
+}
+
+void UAI_Killer::AnimNotify_OnFootStep()
+{
+	if (Killer)
+	{
+		// killer 에서 z 방향으로 -200 만큼 line trace 를 진행해서, 땅에 닿은 경우 발자국 소리를 출력
+		FVector Start = Killer->GetActorLocation();
+		FVector End = Start - FVector(0, 0, 200);
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(Killer);
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility,
+		                                         CollisionParams))
+		{
+			int32 RandomIndex = FMath::RandRange(0, Killer->FootStepSound.Num() - 1);
+			float RandomPitch = FMath::RandRange(0.9f, 1.2f);
+
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->FootStepSound[RandomIndex],
+			                                      HitResult.Location, 1, RandomPitch, 0, Killer->FootStepAttenuation);
+		}
+	}
+}
+
+void UAI_Killer::AnimNotify_AttackSound()
+{
+	if (Killer)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->AttackSound, Killer->GetActorLocation(), 1,
+		                                      1, 0, Killer->FootStepAttenuation);
+	}
+}
+
+void UAI_Killer::AnimNotify_StunSound()
+{
+	if (Killer)
+	{
+		int32 RandomIndex = FMath::RandRange(0, Killer->StunSound.Num() - 1);
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Killer->StunSound[RandomIndex], Killer->GetActorLocation(),
+		                                      1, 1, 0, Killer->FootStepAttenuation);
+	}
 }

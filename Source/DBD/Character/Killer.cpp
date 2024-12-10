@@ -17,6 +17,7 @@
 #include "GameMode/PlayGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Camera/CameraActor.h"
+#include "GameMode/DBDGameInstance.h"
 
 #include "UI/LobbyUI.h"
 #include "Gimmick/Generator.h"
@@ -67,6 +68,13 @@ AKiller::AKiller()
 void AKiller::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// game instance setting - for game over UI
+	if (IsLocallyControlled())
+	{
+		auto* GameInstance = Cast<UDBDGameInstance>(GetGameInstance());
+		GameInstance->SetIsKiller(true);
+	}
 
 	// PlayGameState 가져오기
 	ADBDGameState* playGameState = Cast<ADBDGameState>(UGameplayStatics::GetGameState(GetWorld()));
