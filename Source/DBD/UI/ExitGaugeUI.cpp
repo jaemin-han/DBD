@@ -27,7 +27,7 @@ void UExitGaugeUI::Server_UpdateExitGauge_Implementation()
 		UE_LOG(LogTemp, Warning, TEXT("Server_ IsFullGauge : %d"), IsFullGauge);
 		return;
 	}
-	Percent += GetWorld()->GetDeltaSeconds() * 0.625;
+	Percent += GetWorld()->GetDeltaSeconds() * 0.0625;
 	UE_LOG(LogTemp, Warning, TEXT("Server_ Percent : %f"), Percent);
 	//ExitGauge->SetPercent(Percent);
 

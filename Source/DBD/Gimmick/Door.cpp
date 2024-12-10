@@ -82,8 +82,13 @@ void ADoor::Tick(float DeltaTime)
 
 	for (AGenerator* generator : Generators)
 	{
-		if (not generator->IsActivated) return;
+		if (generator->IsActivated)
+		{
+			GeneratorClearCount++;
+		}
 	}
+
+	if (GeneratorClearCount < Generators.Num() - 2) return;
 
 	IsDoorActivated = true;
 }

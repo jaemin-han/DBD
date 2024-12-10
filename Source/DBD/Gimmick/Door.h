@@ -92,4 +92,7 @@ private:
 	// 문 활성화 상태판단 여부
 	UPROPERTY(EditAnywhere, Category = "Door")
 	bool IsDoorActivated = false;
+
+
+	int32 GeneratorClearCount = 0;
 };

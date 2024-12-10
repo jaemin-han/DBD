@@ -107,12 +107,14 @@ void AGenerator::FailedInteraction()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Generator FailedInteraction"));
 	ClientRPC_SetGaugeUIVisibility(ESlateVisibility::Hidden);
-	IsCheckRoundGauge = false;
-	RoundPercent = 0.0f;
-	GeneratorSoundComp->SetVolumeMultiplier(0.0f);
-	GeneratorSoundComp->Stop();
-	GeneratorSoundTimer = 0.0f;
-	SetOwner(nullptr);
+	//IsCheckRoundGauge = false;
+	//RoundPercent = 0.0f;
+	//GeneratorSoundComp->SetVolumeMultiplier(0.0f);
+	//GeneratorSoundComp->Stop();
+	//GeneratorSoundTimer = 0.0f;
+	//SetOwner(nullptr);
+
+	Multi_FailedInteract();
 }
 
 FString AGenerator::GetGimmickName()
@@ -123,6 +125,16 @@ FString AGenerator::GetGimmickName()
 FString AGenerator::GetInteractKey()
 {
 	return InteractKey;
+}	
+
+void AGenerator::Multi_FailedInteract_Implementation()
+{
+	IsCheckRoundGauge = false;
+	RoundPercent = 0.0f;
+	GeneratorSoundComp->SetVolumeMultiplier(0.0f);
+	GeneratorSoundComp->Stop();
+	GeneratorSoundTimer = 0.0f;
+	SetOwner(nullptr);
 }
 
 // 서버에서만 실행됨
@@ -140,7 +152,7 @@ void AGenerator::UpdateGauge(float time)
 
 	// time = 0.2로 들어오는데 이거를 100퍼로 나눴을때
 	// 초당 0.01씩 증가하게 만들기 위해서
-	 Percent += time * 0.011f;		// 실제 적용
+	Percent += time * 0.011f;		// 실제 적용
 	//Percent += time * 0.5f;			// 테스트용
 	 
 	// RoundGaugeUI 계속 업데이트
@@ -184,7 +196,7 @@ void AGenerator::CheckRoundGauge(float frame)
 	float random = FMath::RandRange(0.0f,1.0f);
 	UE_LOG(LogTemp, Warning, TEXT("Random %f"), random);
 
-	if (random < frame)
+	if (random < frame * 0.2f)
 	{
 		// RoundGauge 활성화
 		IsCheckRoundGauge = true;
@@ -210,13 +222,14 @@ void AGenerator::SetSkillCheckZone(float value)
 	SkillCheckZoneEnd = SkillCheckZoneStart + Random;
 
 	// 0 ~ 1의 범위를 -180 ~ 180의 범위로 변환
-	SkillCheckZoneStart = ((value * 2) - 1) * 180.0f;
+	//SkillCheckZoneStart = ((value * 2) - 1) * 180.0f;
+	float angle = ((value * 2) - 1) * 180.0f;
 	// SKillCheckZone의 RenderTransform의 Angle을 변경
 	//SkillCheckZone->RenderTransform.Angle = start;
 	
 	
 	FWidgetTransform newTransform = GaugeUI->SkillCheckZone->RenderTransform;
-	newTransform.Angle = SkillCheckZoneStart;
+	newTransform.Angle = angle;
 	GaugeUI->SkillCheckZone->SetRenderTransform(newTransform);
 	
 	GaugeUI->SkillCheckZone->InvalidateLayoutAndVolatility();
@@ -276,11 +289,14 @@ bool AGenerator::IsSuccessedSkillCheck()
 			IsSuccessSkillCheck = true;
 		}
 	}
+	UE_LOG(LogTemp, Log, TEXT("SkillCheckZoneStart : %.2f"), SkillCheckZoneStart);
 	UE_LOG(LogTemp, Log, TEXT("RoundPercent : %.2f"), RoundPercent);
+	UE_LOG(LogTemp, Log, TEXT("SkillCheckZoneEnd : %.2f"), SkillCheckZoneEnd);
 
  // 플레이어가 스페이스바를 눌렀는데 스킬체크에 성공했을때
 	if (Cast<ADBD_Player>(GetOwner())->GetIsSpaceBar() and IsSuccessSkillCheck)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Success SkillCheck"));
 		RoundPercent = 0.0f;
 		IsSuccessSkillCheck = false;
 		return true;

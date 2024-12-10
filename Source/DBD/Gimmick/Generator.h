@@ -42,6 +42,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_SetGaugeUIVisibility(ESlateVisibility visibility);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_FailedInteract();
+
 	UStaticMeshComponent* GetMeshComp() const { return GeneratorMeshComp; }
 
 public:
